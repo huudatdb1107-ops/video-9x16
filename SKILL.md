@@ -1,9 +1,9 @@
 ---
-name: VIDEO-9X16-Br
-description: Tạo video dọc 9:16 TikTok/Reels có voice + animation tự động từ script. Trigger - Boss gõ "/VIDEO-9X16-Br", "/video-tiktok", "tạo video 9:16", "video reels".
+name: video-9x16
+description: Tạo video dọc 9:16 TikTok/Reels có voice + animation tự động từ script. Trigger - Boss gõ "/video-9x16", "/video-tiktok", "tạo video 9:16", "video reels".
 ---
 
-# VIDEO-9X16-Br — Skill tạo video 9:16 tự động
+# video-9x16 — Skill tạo video 9:16 tự động
 
 > **META**: Skill chuyên biệt cho video dọc 1080×1920 TikTok/Reels có narration voice + GSAP animation timeline. Khác với `/html-anything-Br` (chỉ HTML tĩnh).
 
@@ -20,7 +20,7 @@ description: Tạo video dọc 9:16 TikTok/Reels có voice + animation tự đ�
 
 ## ⚡ COMMANDS
 
-- **Slash**: `/VIDEO-9X16-Br`
+- **Slash**: `/video-9x16`
 - **Trigger phrases**: "tạo video 9:16", "video TikTok", "video reels", "video dọc"
 
 ---
