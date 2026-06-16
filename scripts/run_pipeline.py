@@ -1,0 +1,434 @@
+"""run_pipeline.py — orchestrator chính cho skill VIDEO-9X16-Br.
+
+Pipeline 8 bước:
+  1. Match template (heuristic)
+  2. Fill content.json (LLM)
+  3. Gen voice (OMNI bridge)
+  4. Transcribe voice (faster-whisper)
+  5. Update timeline trong content.json từ transcript
+  6. Compose: skeleton + tokens + content → index.html
+  7. Render mp4 (hyperframes)
+  8. Done — báo path mp4
+
+Usage:
+  python run_pipeline.py \
+    --topic "Trẻ em hiếu động vs tăng động" \
+    --script-file script.txt \
+    --voice TT_06 \
+    --output-dir E:/HuuDat/BrianD/TOOL_BrianD/TEST/_videos/my_video/
+
+Optional flags:
+  --template <name>     bỏ qua match, dùng template chỉ định
+  --skip-voice          dùng narration.wav có sẵn trong output-dir
+  --skip-llm            dùng content.json có sẵn (Boss fill manual)
+  --skip-render         dừng sau compose, chỉ ra index.html
+"""
+import sys, argparse, pathlib, subprocess, json, time
+sys.stdout.reconfigure(encoding="utf-8")
+
+SCRIPT_DIR = pathlib.Path(__file__).parent
+ROOT       = pathlib.Path(r"E:\HuuDat\BrianD\TOOL_BrianD")
+TEMPLATES  = ROOT / "TEST" / "_templates"
+PY = r"C:\Users\Admin\AppData\Local\Programs\Python\Python311\python.exe"
+
+PAGE_PROFILES = {
+    "vicon": {
+        "output_dir": r"F:\VIDEO\09_POST\FACEBOOK\01__Vi_Con",
+        "default_voice": "TT_06",
+        "default_template": "01_Text",
+        "brand_watermark": "PK NHI BOOM BOOM",
+        "default_hashtag": "#NuoiDayCon"
+    }
+}
+
+def step(num, name):
+    print(f"\n{'='*60}\n[{num}/8] {name}\n{'='*60}")
+
+def run(cmd, **kwargs):
+    print(f"  $ {' '.join(str(c) for c in cmd[:6])}...")
+    return subprocess.run(cmd, **kwargs)
+
+def update_timeline_from_transcript(out_dir: pathlib.Path, wav_filename: str = "narration.wav"):
+    """Đọc transcript.json + content.json → chia scenes + detect element_times từ keyword segments."""
+    import re
+    tr_file = out_dir / "transcript.json"
+    co_file = out_dir / "content.json"
+    if not tr_file.exists() or not co_file.exists():
+        print("  ⚠ transcript.json hoặc content.json missing, giữ timeline cũ.")
+        return
+    tr = json.loads(tr_file.read_text(encoding="utf-8"))
+    co = json.loads(co_file.read_text(encoding="utf-8"))
+    duration = tr.get("duration", 60)
+    segments = tr.get("segments", [])
+    n_scenes = len(co.get("scenes", {}))
+    if n_scenes < 2: return
+
+    # Detect SCENE BOUNDARIES từ transcript (anchor keywords per scene).
+    # Template 01_Text: s1=hook, s2=stat, s3=3 cards, s4=quote, s5=cha mẹ items, s6=CTA
+    # Anchor = từ khoá nhận diện scene START trong voice transcript.
+    SCENE_ANCHORS = {
+        "s2": ["theo thống kê", "cứ 10", "cứ mười", "1/10"],
+        "s3": ["ba dấu hiệu", "3 dấu hiệu", "ba điều", "3 điều"],
+        "s4": ["khi cha mẹ", "khi nghi ngờ", "đừng chờ đợi", "điều quan trọng nhất"],
+        "s5": ["hãy đưa con", "chuyên gia", "cha mẹ cần", "cha mẹ nên"],
+        "s6": ["phát hiện sớm", "món quà", "đừng bỏ lỡ"],
+    }
+    def find_first_anchor(keywords):
+        for seg in segments:
+            t = seg["text"].lower()
+            for kw in keywords:
+                if kw in t:
+                    return round(seg["start"], 2)
+        return None
+
+    sids_sorted = sorted(co["scenes"].keys())
+    raw = {sids_sorted[0]: 0.0}
+    for sid in sids_sorted[1:]:
+        raw[sid] = find_first_anchor(SCENE_ANCHORS.get(sid, []))
+
+    # Fallback: chia đều giữa 2 anchor biết trước (linear interpolate)
+    boundaries = dict(raw)
+    last_known_sid, last_known_t = sids_sorted[0], 0.0
+    for i, sid in enumerate(sids_sorted):
+        if boundaries[sid] is not None:
+            last_known_sid, last_known_t = sid, boundaries[sid]
+            continue
+        # tìm next known anchor
+        next_idx, next_t = len(sids_sorted), duration
+        for j in range(i+1, len(sids_sorted)):
+            if boundaries[sids_sorted[j]] is not None:
+                next_idx, next_t = j, boundaries[sids_sorted[j]]; break
+        gap = next_t - last_known_t
+        steps = next_idx - sids_sorted.index(last_known_sid)
+        boundaries[sid] = round(last_known_t + gap * (i - sids_sorted.index(last_known_sid)) / steps, 2)
+
+    timeline = {}
+    for i, sid in enumerate(sids_sorted):
+        out_t = boundaries[sids_sorted[i+1]] if i+1 < len(sids_sorted) else duration
+        timeline[sid] = {"in": round(boundaries[sid], 2), "out": round(out_t, 2)}
+    co["timeline"] = timeline
+    print(f"  ✓ Scene boundaries from transcript: {timeline}")
+
+    # Detect element_times: scan segments có keyword "Một/Hai/Ba" hoặc "1./2./3."
+    # Cho mỗi scene có cards (s3) hoặc items (s5)
+    def find_segment_start(keywords, after_t, before_t):
+        for seg in segments:
+            if seg["start"] < after_t or seg["start"] >= before_t: continue
+            text = seg["text"].lower().strip()
+            for kw in keywords:
+                if text.startswith(kw):
+                    return seg["start"]
+        return None
+
+    kw_groups = [
+        (["một ", "một,", "1.", "1)", "1 ", "1,"], "c1", "i1"),
+        (["hai ", "hai,", "2.", "2)", "2 ", "2,"], "c2", "i2"),
+        (["ba ",  "ba,",  "3.", "3)", "3 ", "3,"], "c3", "i3"),
+    ]
+    for sid in ("s3", "s5"):
+        scene = co["scenes"].get(sid)
+        tl = co["timeline"].get(sid)
+        if not scene or not tl: continue
+        has_cards = "cards" in scene
+        has_items = "items" in scene
+        if not (has_cards or has_items): continue
+        et = {}
+        for kws, c_key, i_key in kw_groups:
+            t = find_segment_start(kws, tl["in"], tl["out"])
+            if t is None: continue
+            et[c_key if has_cards else i_key] = round(t, 2)
+        if et:
+            scene["element_times"] = et
+            print(f"  ✓ {sid}.element_times detected: {et}")
+
+    if "voice" not in co: co["voice"] = {}
+    co["voice"]["file"] = wav_filename
+    co["voice"]["duration"] = duration
+    co_file.write_text(json.dumps(co, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"  ✓ Timeline + element_times saved")
+
+
+def ensure_vbs(out_dir: pathlib.Path, template: str):
+    """Tạo (hoặc overwrite) MO_EDITOR.vbs trong workspace. Idempotent — gọi bao nhiêu lần cũng OK."""
+    vbs_path = out_dir / "MO_EDITOR.vbs"
+    editor_py = str((TEMPLATES / template / "editor_server.py").resolve())
+    vbs_content = (
+        "' Mở Editor cho workspace này\r\n"
+        "Set objFSO = CreateObject(\"Scripting.FileSystemObject\")\r\n"
+        "strDir = objFSO.GetParentFolderName(WScript.ScriptFullName)\r\n"
+        "Set objShell = CreateObject(\"WScript.Shell\")\r\n"
+        "objShell.CurrentDirectory = strDir\r\n"
+        f"objShell.Run \"\"\"{PY}\"\" \"\"{editor_py}\"\" --workspace \"\"\" & strDir & \"\"\"\", 0, False\r\n"
+        "WScript.Sleep 1800\r\n"
+        "objShell.Run \"http://localhost:5050/\", 1, False\r\n"
+    )
+    vbs_path.write_text(vbs_content, encoding="utf-8")
+    return vbs_path
+
+
+def transcribe(wav_file: pathlib.Path, out_file: pathlib.Path):
+    """Run faster-whisper transcribe → save transcript.json."""
+    code = f"""
+import sys, json, pathlib
+sys.stdout.reconfigure(encoding='utf-8')
+from faster_whisper import WhisperModel
+try:
+    model = WhisperModel("base", device="cuda", compute_type="float16")
+    print("✓ Sử dụng GPU (cuda) để transcribe")
+except Exception as e:
+    print(f"⚠ Khởi tạo GPU lỗi: {{e}}. Fallback về CPU.")
+    model = WhisperModel("base", device="cpu", compute_type="int8")
+segments, info = model.transcribe(r"{wav_file}", language="vi", beam_size=5, word_timestamps=False)
+out = []
+for seg in segments:
+    out.append({{"start": round(seg.start, 3), "end": round(seg.end, 3), "text": seg.text.strip()}})
+result = {{"duration": round(info.duration, 3), "segments": out}}
+pathlib.Path(r"{out_file}").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')
+print(f"Transcribed: {{len(out)}} segments, {{info.duration:.2f}}s")
+"""
+    return run([PY, "-c", code], capture_output=True, text=True, encoding="utf-8")
+
+
+def slugify_vietnamese(text: str, max_len: int = 60) -> str:
+    import re
+    patterns = {
+        '[àáảãạăằắẳẵặâầấẩẫậ]': 'a',
+        '[ÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬ]': 'A',
+        '[èéẻẽẹêềếểễệ]': 'e',
+        '[ÈÉẺẼẸÊỀẾỂỄỆ]': 'E',
+        '[ìíỉĩị]': 'i',
+        '[ÌÍỈĨỊ]': 'I',
+        '[òóỏõọôồốổỗộơờớởỡợ]': 'o',
+        '[ÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢ]': 'O',
+        '[ùúủũụưừứửữự]': 'u',
+        '[ÙÚỦŨỤƯỪỨỬỮỰ]': 'U',
+        '[ỳýỷỹỵ]': 'y',
+        '[ỲÝỶỸỴ]': 'Y',
+        '[đ]': 'd',
+        '[Đ]': 'D'
+    }
+    s = text
+    for pattern, repl in patterns.items():
+        s = re.sub(pattern, repl, s)
+    s = s.lower().strip()
+    s = re.sub(r'[^a-z0-9\s_]', '', s)
+    s = re.sub(r'\s+', '_', s)
+    s = re.sub(r'_+', '_', s)
+    
+    # Giới hạn tự động cho tên file (slug chiếm max 60 ký tự để an toàn đường dẫn tuyệt đối MAX_PATH)
+    # Cắt thông minh theo dấu gạch dưới để đảm bảo đủ câu có nghĩa
+    if len(s) > max_len:
+        truncated = s[:max_len]
+        last_underscore = truncated.rfind('_')
+        if last_underscore > 0:
+            s = truncated[:last_underscore]
+        else:
+            s = truncated
+    return s
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--topic", required=True)
+    ap.add_argument("--script-file", required=True)
+    ap.add_argument("--voice", help="Tên giọng đọc (mặc định lấy theo Profile Page)")
+    ap.add_argument("--output-dir", help="Đường dẫn tuyệt đối đầu ra (nếu không dùng --page)")
+    ap.add_argument("--page", help="Tên kênh cấu hình sẵn (vicon, gocnho, bsimple)")
+    ap.add_argument("--template", help="Override template choice")
+    ap.add_argument("--skip-voice", action="store_true")
+    ap.add_argument("--skip-llm", action="store_true")
+    ap.add_argument("--skip-render", action="store_true")
+    args = ap.parse_args()
+
+    if not args.output_dir and not args.page:
+        ap.error("Phải truyền ít nhất --page hoặc --output-dir")
+
+    ts = time.strftime("T%m.%d_%Hh%M")
+    
+    profile = None
+    if args.page:
+        page_key = args.page.lower().strip()
+        if page_key not in PAGE_PROFILES:
+            ap.error(f"Page '{args.page}' chưa được cấu hình. Các page hiện tại: {list(PAGE_PROFILES.keys())}")
+        profile = PAGE_PROFILES[page_key]
+        
+        # Áp dụng defaults từ profile
+        if not args.voice and "default_voice" in profile:
+            args.voice = profile["default_voice"]
+        if not args.template and "default_template" in profile:
+            args.template = profile["default_template"]
+            
+        slug_topic = slugify_vietnamese(args.topic, max_len=60)
+        sub_dir_name = f"video_{slug_topic}"
+        raw_out_dir = pathlib.Path(profile["output_dir"]) / sub_dir_name
+    else:
+        raw_out_dir = pathlib.Path(args.output_dir).resolve()
+
+    # Áp dụng mặc định hệ thống cho giọng đọc nếu không chỉ định
+    if not args.voice:
+        args.voice = "TT_06"
+        
+    # Tự động chèn TIME lên đầu tên thư mục dự án nếu chưa có
+    import re
+    if not re.match(r"^T\d{2}\.\d{2}_\d{2}h\d{2}_", raw_out_dir.name):
+        out_dir = raw_out_dir.parent / f"{ts}_{raw_out_dir.name}"
+    else:
+        out_dir = raw_out_dir
+        
+    out_dir.mkdir(parents=True, exist_ok=True)
+    script_file = pathlib.Path(args.script_file).resolve()
+
+    # Copy script file vào thư mục dự án mới để lưu trữ trọn vẹn
+    target_script = out_dir / "script.txt"
+    if script_file.exists() and script_file != target_script:
+        import shutil
+        shutil.copy(script_file, target_script)
+        # Cập nhật script_file trỏ tới file mới copy
+        script_file = target_script
+
+    # ============ STEP 1: Match template ============
+    if args.template:
+        template = args.template
+        step(1, f"Use template (manual): {template}")
+    else:
+        step(1, "Match template")
+        result = run([PY, str(SCRIPT_DIR / "match_template.py"),
+                      "--topic", args.topic, "--script-file", str(script_file)],
+                     capture_output=True, text=True, encoding="utf-8")
+        print(result.stdout)
+        template = result.stdout.strip().split("\n")[-1].strip()
+
+    tpl_dir = TEMPLATES / template
+    assert tpl_dir.exists(), f"Template missing: {tpl_dir}"
+
+    # ============ STEP 2: Fill content.json (LLM) ============
+    if args.skip_llm:
+        step(2, "SKIP LLM (use existing content.json)")
+        target_content = out_dir / "content.json"
+        source_content = raw_out_dir / "content.json"
+        if not target_content.exists() and source_content.exists():
+            import shutil
+            shutil.copy(source_content, target_content)
+            print(f"  ✓ Tự động copy content.json từ thư mục cũ sang: {target_content}")
+    else:
+        step(2, "Fill content.json via LLM")
+        result = run([PY, str(SCRIPT_DIR / "fill_content.py"),
+                      "--template", template, "--script-file", str(script_file),
+                      "--output-dir", str(out_dir)])
+        if result.returncode != 0:
+            print("⚠ LLM fill failed. Boss fill manual rồi chạy lại với --skip-llm")
+            return
+
+    # Cập nhật brand_watermark & hashtag từ Profile Page nếu có
+    if profile:
+        co_file = out_dir / "content.json"
+        if co_file.exists():
+            try:
+                co_data = json.loads(co_file.read_text(encoding="utf-8"))
+                
+                # Ghi đè brand_watermark vào root
+                if "brand_watermark" in profile:
+                    co_data["brand_watermark"] = profile["brand_watermark"]
+                    print(f"  ✓ Tự động gán brand_watermark: {profile['brand_watermark']}")
+                
+                # Ghi đè hashtag vào s6
+                if "default_hashtag" in profile:
+                    if "scenes" in co_data and "s6" in co_data["scenes"]:
+                        co_data["scenes"]["s6"]["hashtag"] = profile["default_hashtag"]
+                        print(f"  ✓ Tự động gán hashtag: {profile['default_hashtag']}")
+                
+                co_file.write_text(json.dumps(co_data, ensure_ascii=False, indent=2), encoding="utf-8")
+            except Exception as e:
+                print(f"  ⚠ Lỗi cập nhật profile cho content.json: {e}")
+
+    # ============ STEP 3: Gen voice ============
+    wav_filename = f"TT_{ts}.wav"
+    wav = out_dir / wav_filename
+    if args.skip_voice and wav.exists():
+        step(3, f"SKIP voice gen (use existing {wav.name})")
+    else:
+        step(3, f"Gen voice (OMNI, voice={args.voice})")
+        result = run([PY, str(SCRIPT_DIR / "gen_voice.py"),
+                      "--script-file", str(script_file),
+                      "--voice", args.voice,
+                      "--output", str(wav)])
+        if result.returncode != 0 or not wav.exists():
+            print("⚠ Voice gen failed.")
+            return
+
+    # ============ STEP 4: Transcribe ============
+    step(4, "Transcribe voice (faster-whisper base)")
+    tr_result = transcribe(wav, out_dir / "transcript.json")
+    print(tr_result.stdout[-500:] if tr_result.stdout else "")
+    if tr_result.returncode != 0:
+        print(f"⚠ Transcribe failed:\n{tr_result.stderr[-500:]}")
+
+    # ============ STEP 5: Update timeline ============
+    step(5, "Update timeline từ transcript")
+    update_timeline_from_transcript(out_dir, wav_filename)
+
+    # ============ STEP 6: Compose ============
+    step(6, f"Compose: {template}/skeleton + tokens + content → index.html")
+    # Compose script đặt content_dir RELATIVE to template dir → ta dùng absolute path workaround
+    # Copy content.json + narration.wav vào subdir under template/
+    workdir_in_tpl = tpl_dir / f"_pipeline_{out_dir.name}"
+    workdir_in_tpl.mkdir(exist_ok=True)
+    (workdir_in_tpl / "content.json").write_text(
+        (out_dir / "content.json").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    import shutil
+    if wav.exists():
+        shutil.copy(wav, workdir_in_tpl / wav.name)
+    result = run([PY, str(tpl_dir / "compose.py"), workdir_in_tpl.name],
+                 capture_output=True, text=True, encoding="utf-8", cwd=str(tpl_dir))
+    print(result.stdout)
+    composed_html = workdir_in_tpl / "index.html"
+    if composed_html.exists():
+        # Đọc index.html và replace src="narration.wav" thành src="TT_<time>.wav"
+        html_content = composed_html.read_text(encoding="utf-8")
+        html_content = re.sub(r'src="narration\.wav"', f'src="{wav_filename}"', html_content)
+        composed_html.write_text(html_content, encoding="utf-8")
+        
+        shutil.copy(composed_html, out_dir / "index.html")
+    else:
+        print("⚠ Compose failed.")
+        return
+
+    # ============ STEP 6.5: Ensure MO_EDITOR.vbs ============
+    # Tạo NGAY sau compose để Boss luôn có editor preview, ngay cả khi render fail / skip
+    vbs_path = ensure_vbs(out_dir, template)
+    print(f"  ✓ MO_EDITOR.vbs: {vbs_path}")
+
+    # ============ STEP 7: Render mp4 ============
+    if args.skip_render:
+        step(7, "SKIP render (--skip-render)")
+        print(f"\n✓ Done (no render). index.html: {out_dir / 'index.html'}")
+        print(f"   Editor: double-click {vbs_path.name}")
+        return
+
+    step(7, "Render mp4 (hyperframes draft)")
+    out_mp4 = out_dir / f"{slugify_vietnamese(args.topic)}_{ts}.mp4"
+    # Copy file wav vào cùng folder index.html
+    if wav.exists() and not (out_dir / wav.name).exists():
+        shutil.copy(wav, out_dir / wav.name)
+    result = run(
+        f'npx -y -p hyperframes hyperframes render . --output {out_mp4.name} --fps 30 --quality draft',
+        shell=True, cwd=str(out_dir), capture_output=True, text=True, encoding="utf-8",
+    )
+    print(result.stdout[-1000:] if result.stdout else "")
+    # VBS đã tạo ở step 6.5 → đảm bảo còn (idempotent)
+    ensure_vbs(out_dir, template)
+    if out_mp4.exists():
+        step(8, "✓ DONE")
+        print(f"\n🎬 VIDEO: {out_mp4}")
+        print(f"   Size: {out_mp4.stat().st_size / 1024 / 1024:.2f} MB")
+        print(f"   Editor: double-click MO_EDITOR.vbs để mở editor cho workspace này")
+    else:
+        print("⚠ Render failed. Check:")
+        print(f"   index.html: {out_dir/'index.html'}")
+        print(f"   stderr: {result.stderr[-500:]}")
+        print(f"   Editor vẫn dùng được: double-click MO_EDITOR.vbs")
+
+
+if __name__ == "__main__":
+    main()
