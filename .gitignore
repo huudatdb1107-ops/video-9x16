@@ -17,3 +17,7 @@ __pycache__/
 # OS trash
 .DS_Store
 Thumbs.db
+
+# Templates (Sếp có thể comment lại nếu muốn track git)
+_templates/
+

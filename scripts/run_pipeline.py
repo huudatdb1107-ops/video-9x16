@@ -28,18 +28,30 @@ sys.stdout.reconfigure(encoding="utf-8")
 
 SCRIPT_DIR = pathlib.Path(__file__).parent
 ROOT       = pathlib.Path(r"E:\HuuDat\BrianD\TOOL_BrianD")
-TEMPLATES  = ROOT / "TEST" / "_templates"
+TEMPLATES  = ROOT / ".agent" / "skills" / "video-9x16" / "_templates"
 PY = r"C:\Users\Admin\AppData\Local\Programs\Python\Python311\python.exe"
 
-PAGE_PROFILES = {
-    "vicon": {
-        "output_dir": r"F:\VIDEO\09_POST\FACEBOOK\01__Vi_Con",
-        "default_voice": "TT_06",
-        "default_template": "01_Text",
-        "brand_watermark": "PK NHI BOOM BOOM",
-        "default_hashtag": "#NuoiDayCon"
+PAGE_PROFILES = {}
+try:
+    _profile_path = SCRIPT_DIR.parent / "video_brand_profiles.json"
+    if _profile_path.exists():
+        PAGE_PROFILES = json.loads(_profile_path.read_text(encoding="utf-8"))
+except Exception as _e:
+    print(f"  ⚠ Lỗi load video_brand_profiles.json: {_e}")
+
+# Fallback
+if not PAGE_PROFILES:
+    PAGE_PROFILES = {
+        "vicon": {
+            "name": "👶 Vì Con không thể đợi",
+            "output_dir": r"E:\HuuDat\VIDEO\FACEBOOK\01__Vi_Con",
+            "default_voice": "TT_06",
+            "default_template": "01_Text_ViCon",
+            "brand_watermark": "PK NHI BOOM BOOM",
+            "default_hashtag": "#NuoiDayCon"
+        }
     }
-}
+
 
 def step(num, name):
     print(f"\n{'='*60}\n[{num}/8] {name}\n{'='*60}")
@@ -73,18 +85,30 @@ def update_timeline_from_transcript(out_dir: pathlib.Path, wav_filename: str = "
         "s5": ["hãy đưa con", "chuyên gia", "cha mẹ cần", "cha mẹ nên"],
         "s6": ["phát hiện sớm", "món quà", "đừng bỏ lỡ"],
     }
-    def find_first_anchor(keywords):
-        for seg in segments:
-            t = seg["text"].lower()
-            for kw in keywords:
-                if kw in t:
-                    return round(seg["start"], 2)
-        return None
-
     sids_sorted = sorted(co["scenes"].keys())
     raw = {sids_sorted[0]: 0.0}
+    current_min_time = 0.0
     for sid in sids_sorted[1:]:
-        raw[sid] = find_first_anchor(SCENE_ANCHORS.get(sid, []))
+        keywords = SCENE_ANCHORS.get(sid, [])
+        anchor_time = None
+        # Ràng buộc đặc biệt cho s6: Phải nằm ở nửa sau video
+        local_min_time = current_min_time
+        if sid == "s6":
+            local_min_time = max(current_min_time, duration * 0.5)
+        for seg in segments:
+            t = seg["text"].lower()
+            seg_start = round(seg["start"], 2)
+            if seg_start < local_min_time:
+                continue
+            for kw in keywords:
+                if kw in t:
+                    anchor_time = seg_start
+                    break
+            if anchor_time is not None:
+                break
+        raw[sid] = anchor_time
+        if anchor_time is not None:
+            current_min_time = anchor_time
 
     # Fallback: chia đều giữa 2 anchor biết trước (linear interpolate)
     boundaries = dict(raw)
@@ -174,11 +198,14 @@ sys.stdout.reconfigure(encoding='utf-8')
 from faster_whisper import WhisperModel
 try:
     model = WhisperModel("base", device="cuda", compute_type="float16")
+    segments, info = model.transcribe(r"{wav_file}", language="vi", beam_size=5, word_timestamps=False)
+    segments = list(segments)
     print("✓ Sử dụng GPU (cuda) để transcribe")
 except Exception as e:
-    print(f"⚠ Khởi tạo GPU lỗi: {{e}}. Fallback về CPU.")
+    print(f"⚠ Lỗi GPU (cuda) hoặc OOM: {{e}}. Fallback về CPU.")
     model = WhisperModel("base", device="cpu", compute_type="int8")
-segments, info = model.transcribe(r"{wav_file}", language="vi", beam_size=5, word_timestamps=False)
+    segments, info = model.transcribe(r"{wav_file}", language="vi", beam_size=5, word_timestamps=False)
+    segments = list(segments)
 out = []
 for seg in segments:
     out.append({{"start": round(seg.start, 3), "end": round(seg.end, 3), "text": seg.text.strip()}})
@@ -259,7 +286,7 @@ def main():
             args.template = profile["default_template"]
             
         slug_topic = slugify_vietnamese(args.topic, max_len=60)
-        sub_dir_name = f"video_{slug_topic}"
+        sub_dir_name = slug_topic
         raw_out_dir = pathlib.Path(profile["output_dir"]) / sub_dir_name
     else:
         raw_out_dir = pathlib.Path(args.output_dir).resolve()
@@ -271,9 +298,23 @@ def main():
     # Tự động chèn TIME lên đầu tên thư mục dự án nếu chưa có
     import re
     if not re.match(r"^T\d{2}\.\d{2}_\d{2}h\d{2}_", raw_out_dir.name):
-        out_dir = raw_out_dir.parent / f"{ts}_{raw_out_dir.name}"
+        # Kiểm tra xem trong thư mục cha đã có thư mục nào chứa/kết thúc bằng slug chủ đề chưa để tránh trùng lặp rác
+        parent_dir = raw_out_dir.parent
+        slug_name = raw_out_dir.name
+        matched_dir = None
+        if parent_dir.exists():
+            for p in parent_dir.iterdir():
+                if p.is_dir() and (p.name == slug_name or p.name.endswith(f"_{slug_name}")):
+                    matched_dir = p
+                    break
+        if matched_dir:
+            out_dir = matched_dir
+            print(f"[SYSTEM] Phát hiện thư mục trùng chủ đề đã tồn tại: '{out_dir.name}'. Tái sử dụng để cập nhật trực tiếp, tránh sinh rác.")
+        else:
+            out_dir = raw_out_dir.parent / f"{ts}_{raw_out_dir.name}"
     else:
         out_dir = raw_out_dir
+
         
     out_dir.mkdir(parents=True, exist_ok=True)
     script_file = pathlib.Path(args.script_file).resolve()
@@ -302,9 +343,13 @@ def main():
     assert tpl_dir.exists(), f"Template missing: {tpl_dir}"
 
     # ============ STEP 2: Fill content.json (LLM) ============
+    target_content = out_dir / "content.json"
+    if target_content.exists():
+        print(f"  [SYSTEM] Phát hiện content.json đã tồn tại ở: {target_content}. Tự động tái sử dụng và skip LLM.")
+        args.skip_llm = True
+
     if args.skip_llm:
         step(2, "SKIP LLM (use existing content.json)")
-        target_content = out_dir / "content.json"
         source_content = raw_out_dir / "content.json"
         if not target_content.exists() and source_content.exists():
             import shutil
@@ -342,8 +387,16 @@ def main():
                 print(f"  ⚠ Lỗi cập nhật profile cho content.json: {e}")
 
     # ============ STEP 3: Gen voice ============
-    wav_filename = f"TT_{ts}.wav"
-    wav = out_dir / wav_filename
+    existing_wavs = list(out_dir.glob("TT_*.wav"))
+    if existing_wavs:
+        wav = existing_wavs[0]
+        wav_filename = wav.name
+        args.skip_voice = True
+        print(f"  [SYSTEM] Phát hiện file voice đã có sẵn trong thư mục dự án: '{wav_filename}'. Tự động tái sử dụng.")
+    else:
+        wav_filename = f"TT_{ts}.wav"
+        wav = out_dir / wav_filename
+
     if args.skip_voice and wav.exists():
         step(3, f"SKIP voice gen (use existing {wav.name})")
     else:
@@ -358,10 +411,23 @@ def main():
 
     # ============ STEP 4: Transcribe ============
     step(4, "Transcribe voice (faster-whisper base)")
-    tr_result = transcribe(wav, out_dir / "transcript.json")
+    tr_file = out_dir / "transcript.json"
+    if tr_file.exists():
+        print(f"  [SYSTEM] Phát hiện transcript.json đã tồn tại: {tr_file.name}. Tự động tái sử dụng.")
+        class MockResult:
+            returncode = 0
+            stdout = "Tái sử dụng transcript.json có sẵn"
+            stderr = ""
+        tr_result = MockResult()
+    else:
+        tr_result = transcribe(wav, tr_file)
     print(tr_result.stdout[-500:] if tr_result.stdout else "")
     if tr_result.returncode != 0:
-        print(f"⚠ Transcribe failed:\n{tr_result.stderr[-500:]}")
+        if (out_dir / "transcript.json").exists():
+            print(f"  [SYSTEM] Cảnh báo: Tiến trình transcribe thoát với code {tr_result.returncode} nhưng đã tìm thấy transcript.json. Tiếp tục pipeline...")
+        else:
+            print(f"⚠ Transcribe failed (không tìm thấy transcript.json):\n{tr_result.stderr[-500:]}")
+            return
 
     # ============ STEP 5: Update timeline ============
     step(5, "Update timeline từ transcript")
@@ -419,6 +485,72 @@ def main():
     # VBS đã tạo ở step 6.5 → đảm bảo còn (idempotent)
     ensure_vbs(out_dir, template)
     if out_mp4.exists():
+        # ===== STEP 7.5: Explicit duration lock (ported from html-video PR #25) =====
+        # Đọc voice duration từ content.json, ép MP4 khớp đúng bằng ffmpeg tpad + -t.
+        # tpad=stop_mode=clone clone last frame nếu MP4 ngắn hơn voice; -t cắt nếu dài hơn.
+        try:
+            co_data = json.loads(co_file.read_text(encoding="utf-8"))
+            voice_dur = float(co_data.get("voice", {}).get("duration", 0))
+            if voice_dur > 0.5:
+                probe = run(
+                    f'ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "{out_mp4.name}"',
+                    shell=True, cwd=str(out_dir), capture_output=True, text=True, encoding="utf-8",
+                )
+                actual = float((probe.stdout or "0").strip() or 0)
+                drift = abs(actual - voice_dur)
+                if drift > 0.05:
+                    locked = out_dir / f"{out_mp4.stem}_locked.mp4"
+                    # tpad clone last frame to voice_dur, then -t cap exact
+                    lock_cmd = (
+                        f'ffmpeg -y -i "{out_mp4.name}" -vf "tpad=stop_mode=clone:stop_duration={voice_dur}" '
+                        f'-t {voice_dur} -c:v libx264 -preset ultrafast -crf 23 -c:a copy "{locked.name}"'
+                    )
+                    lock_result = run(lock_cmd, shell=True, cwd=str(out_dir), capture_output=True, text=True, encoding="utf-8")
+                    if locked.exists() and locked.stat().st_size > 1024:
+                        out_mp4.unlink()
+                        locked.rename(out_mp4)
+                        print(f"  ✓ Duration locked: {actual:.2f}s → {voice_dur:.2f}s (drift {drift:.2f}s)")
+                    else:
+                        print(f"  ⚠ Duration lock failed, keeping original ({actual:.2f}s vs voice {voice_dur:.2f}s)")
+                        print(f"     stderr: {(lock_result.stderr or '')[-300:]}")
+                else:
+                    print(f"  ✓ Duration already aligned ({actual:.2f}s ≈ {voice_dur:.2f}s)")
+        except Exception as e:
+            print(f"  ⚠ Duration lock skipped: {e}")
+
+        # ===== STEP 7.6: Lead-in trim backoff 120ms (P3.13, ported từ html-video render.ts L341) =====
+        # Nếu voice yên lặng đầu > 0.2s, trim back 0.12s tránh clip frame đầu thật (recorder jitter)
+        try:
+            tr_file = out_dir / "transcript.json"
+            if tr_file.exists():
+                tr = json.loads(tr_file.read_text(encoding="utf-8"))
+                segs = tr.get("segments", [])
+                if segs:
+                    first_start = float(segs[0].get("start", 0))
+                    if first_start > 0.2:
+                        seek_sec = round((first_start * 1000 - 120) / 1000, 3)
+                        if seek_sec > 0.02:
+                            trimmed = out_dir / f"{out_mp4.stem}_trim.mp4"
+                            trim_cmd = (
+                                f'ffmpeg -y -ss {seek_sec} -i "{out_mp4.name}" '
+                                f'-c:v libx264 -preset ultrafast -crf 23 -c:a aac "{trimmed.name}"'
+                            )
+                            trim_result = run(trim_cmd, shell=True, cwd=str(out_dir), capture_output=True, text=True, encoding="utf-8")
+                            if trimmed.exists() and trimmed.stat().st_size > 1024:
+                                out_mp4.unlink()
+                                trimmed.rename(out_mp4)
+                                print(f"  ✓ Lead-in trimmed seek={seek_sec}s (first speech {first_start:.2f}s − 120ms backoff)")
+                            else:
+                                print(f"  ⚠ Trim failed: {(trim_result.stderr or '')[-200:]}")
+        except Exception as e:
+            print(f"  ⚠ Lead-in trim skipped: {e}")
+
+        # ===== STEP 7.7: Animation probe — skip infinite repeats (P3.14) =====
+        # Note: pipeline KHÔNG self-probe (hyperframes CLI tự lo). Hint cho template author:
+        # phải dùng `animation-iteration-count: 1` thay vì `infinite` cho mọi keyframes
+        # đóng vai trò "intro motion". `infinite` chỉ dành cho ambient (particles, blob drift).
+        # Compose.py không strip infinite vì hyperframes detect được; doc này chỉ là pointer.
+
         step(8, "✓ DONE")
         print(f"\n🎬 VIDEO: {out_mp4}")
         print(f"   Size: {out_mp4.stat().st_size / 1024 / 1024:.2f} MB")

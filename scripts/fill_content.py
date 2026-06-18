@@ -16,7 +16,7 @@ import sys, json, argparse, pathlib, subprocess, re
 sys.stdout.reconfigure(encoding="utf-8")
 
 ROOT = pathlib.Path(r"E:\HuuDat\BrianD\TOOL_BrianD")
-TEMPLATES_DIR = ROOT / "TEST" / "_templates"
+TEMPLATES_DIR = ROOT / ".agent" / "skills" / "video-9x16" / "_templates"
 AGY_WRAPPER = ROOT / "agy_wrapper.py"
 PY = r"C:\Users\Admin\AppData\Local\Programs\Python\Python311\python.exe"
 
@@ -27,10 +27,25 @@ Nhiệm vụ: phân tích SCRIPT narration dưới đây + chia thành các scen
 QUY TẮC bắt buộc:
 - KHÔNG dùng số Ả-Rập ≥ 2 chữ số (vd "36" → "ba mươi sáu", "1/36" → "một trên ba mươi sáu")
 - KHÔNG dùng acronym ALL-CAPS Latin trong title/text (vd "ADHD" → "rối loạn tăng động giảm chú ý")
-- Tô màu keyword: dùng <em class="hl-orange">, <em class="hl-teal">, hoặc <em class="hl-cyan"> cho từ quan trọng
-- Tiếng Việt rõ ràng, ngắn gọn, không sáo rỗng
-- Câu > 20 từ phải có dấu phẩy ngắt
-- Nếu kịch bản/chủ đề có nhiều ý (ví dụ: 5, 10 phương pháp), hãy tự động gom nhóm khoa học thành đúng cấu trúc 3 cards ở s3 và 3 items ở s5 để đảm bảo tính thẩm mỹ layout của template.
+- Highlight & Ngắt dòng cho Tiêu đề S1 (title) và S6 (title): KHÔNG được lấy nguyên văn câu thoại dài của script làm tiêu đề. Tiêu đề trên màn hình bắt buộc phải cực kỳ ngắn gọn và giật tít (S1 chỉ từ 5-7 từ, S6 chỉ từ 4-6 từ). Bắt buộc phải sử dụng thẻ <br> để chia tiêu đề thành 2 dòng cân đối để tránh chữ bị to quá tràn ra ngoài khung hình (font size 130px cực kỳ lớn).
+- QUY TẮC HIGHLIGHT: Luôn sử dụng thẻ <em>...</em> trơn (KHÔNG có class, KHÔNG có thuộc tính khác) để bọc từ khóa trong TẤT CẢ các scene (S1, S3, S4, S5, S6) để tạo điểm nhấn. Hệ thống sẽ tự động chuyển màu thích hợp.
+- BẮT BUỘC HIGHLIGHT S1, S4, S6:
+  - S1 title và S6 title BẮT BUỘC PHẢI CHỨA CHÍNH XÁC 2 THẺ <em>...</em>. S4 quote BẮT BUỘC PHẢI CHỨA TỪ 2 ĐẾN 3 THẺ <em>...</em> (Không được thiếu, không được quên!).
+  - Ở S1 title: Bọc 1 cụm ở dòng 1 và 1 cụm ở dòng 2. Ví dụ: "Con chỉ<br><em>hiếu động</em> hay <em>tăng động</em>?"
+  - Ở S6 title: Bọc 2 cụm từ quan trọng. Ví dụ: "Đồng hành cùng con,<br><em>yêu thương</em> và <em>kiên nhẫn</em>"
+  - Trong mỗi Card ở S3 và mỗi Item ở S5: BẮT BUỘC PHẢI CHỨA CHÍNH XÁC 2 THẺ <em>...</em> để tạo 2 màu sắc (cam và xanh ngọc) xen kẽ, giúp giao diện sinh động.
+- QUY TẮC NGỮ NGHĨA highlight: Chỉ bọc thẻ <em> cho các từ/cụm từ mang ý nghĩa TÍCH CỰC, THẤU CẢM, GIẢI PHÁP (vd: "thấu hiểu", "yêu thương", "kiên nhẫn", "kết nối", "tự lập"). Tuyệt đối KHÔNG highlight các từ mang nghĩa tiêu cực, phủ định hoặc các lỗi hành vi (vd: "đứa trẻ hư", "chống đối", "nghịch ngợm", "mất kiểm soát", "ăn vạ").
+- Quy tắc ngắt dòng Heading (S3/S5) và Quote S4 (quote_html):
+  - Heading S3/S5: Phải chèn 1 thẻ <br> chia làm 2 dòng rất ngắn gọn và cân đối.
+  - Quote S4 (quote_html): BẮT BUỘC chèn từ 2 đến 3 thẻ <br> để chia câu quote thành đúng 3 hoặc 4 dòng cực kỳ cân đối. Mỗi dòng CHỈ ĐƯỢC CHỨA TỐI ĐA 5 ĐẾN 6 TỪ (không dòng nào được vượt quá 6 từ để tránh bị trình duyệt tự ngắt làm gãy chữ). Bắt buộc ngắt dòng đúng sau các cụm từ có nghĩa trọn vẹn, tuyệt đối CẤM ngắt dòng ở giữa một từ ghép (ví dụ các từ "tinh tế", "cha mẹ", "chìa khóa", "hạnh phúc", "phát triển" phải nằm nguyên vẹn trên cùng một dòng). TUYỆT ĐỐI CẤM để dòng cuối cùng chỉ chứa 1 hoặc 2 từ lơ lửng đơn độc.
+- Quy tắc ngắt dòng trong Cards/Items (S3/S5): CẤM TUYỆT ĐỐI việc tự ý chèn bất kỳ thẻ <br> nào trong nội dung của cards (S3) và items (S5). Toàn bộ nội dung của mỗi card/item phải là một chuỗi văn bản liền mạch chạy dài (chỉ chứa thẻ <em>...</em> để highlight). Trình duyệt sẽ tự động xuống dòng tự nhiên theo box layout để tránh trống trải hoặc gãy vụn.
+- Tiếng Việt rõ ràng, ngắn gọn, không sáo rỗng.
+- Câu > 20 từ phải có dấu phẩy ngắt.
+- Tuyệt đối KHÔNG dùng chữ "Bom Bom" hay "BomBom" trong kịch bản và các phần text, bắt buộc phải thay thế hoàn toàn bằng chữ "BOOM BOOM" viết hoa (ví dụ: "nhấn theo dõi BOOM BOOM để...", "PK NHI BOOM BOOM").
+- Nếu kịch bản/chủ đề có nhiều ý, hãy tự động gom nhóm khoa học thành đúng cấu trúc 3 cards ở s3 và 3 items ở s5 để đảm bảo tính thẩm mỹ layout của template.
+- Với scene 2 (s2), phần "big_text" (ví dụ: từ khóa chủ đề ngắn) bắt buộc phải là một từ viết tắt/từ khóa vô cùng ấn tượng ngắn gọn hoặc con số viết chữ hoa (ví dụ: "KHÁC BIỆT", "SỰ THẬT", "10 PHẦN TRĂM"). Tuyệt đối KHÔNG trích xuất các từ chung chung vô nghĩa như "ba", "hai", "một", "bốn".
+- QUY TẮC PHÒNG TRÁNH LỖI JSON: Tuyệt đối KHÔNG sử dụng dấu ngoặc kép thẳng (") bên trong nội dung các chuỗi text tiếng Việt. Hãy sử dụng dấu ngoặc đơn (') hoặc dấu ngoặc kép kiểu Pháp (« và ») để nhấn mạnh từ nhằm tránh gây lỗi cú pháp JSON.
+- Khi viết mã HTML bên trong chuỗi JSON (như thẻ em, span), bắt buộc phải escape toàn bộ dấu ngoặc kép của thuộc tính thành \". Ví dụ: <em class=\"hl-orange\"> hoặc <span style=\"color:#15C8C1\">. Không được viết class="hl-orange" vì sẽ gây lỗi cú pháp JSON.
 
 SCHEMA template "{template_name}":
 {schema_json}
@@ -62,6 +77,8 @@ def extract_json(text: str) -> dict | None:
     # Strip markdown fences
     text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.MULTILINE)
     text = re.sub(r"\s*```\s*$", "", text, flags=re.MULTILINE)
+    # Auto-escape unescaped double quotes in class/style/id HTML attributes
+    text = re.sub(r'(\bclass|\bstyle)="([^"]*?)"', r'\1=\\"\2\\"', text)
     # Find JSON object
     start = text.find("{")
     if start < 0: return None
@@ -72,6 +89,65 @@ def extract_json(text: str) -> dict | None:
         except json.JSONDecodeError:
             continue
     return None
+
+def process_highlights(data: dict) -> dict:
+    """Post-processes data to format em tags correctly for templates."""
+    import re
+    
+    # Process S3 cards
+    if "scenes" in data and "s3" in data["scenes"]:
+        s3 = data["scenes"]["s3"]
+        fields = s3.get("fields", s3)
+        if isinstance(fields, dict) and "cards" in fields and isinstance(fields["cards"], list):
+            color_idx = 0
+            for card in fields["cards"]:
+                if isinstance(card, dict) and "text" in card and isinstance(card["text"], str):
+                    text = card["text"]
+                    parts = re.split(r'<(?:em|em[^>]*)>(.*?)</em[^>]*>', text, flags=re.IGNORECASE)
+                    new_text = []
+                    for i, part in enumerate(parts):
+                        if i % 2 == 0:
+                            new_text.append(part)
+                        else:
+                            cls = "teal" if color_idx % 2 == 0 else "orange"
+                            new_text.append(f'<em class="hl-{cls}">{part}</em>')
+                            color_idx += 1
+                    card["text"] = "".join(new_text)
+
+    # Process S5 items
+    if "scenes" in data and "s5" in data["scenes"]:
+        s5 = data["scenes"]["s5"]
+        fields = s5.get("fields", s5)
+        if isinstance(fields, dict) and "items" in fields and isinstance(fields["items"], list):
+            color_idx = 0
+            for item in fields["items"]:
+                if isinstance(item, dict) and "text" in item and isinstance(item["text"], str):
+                    text = item["text"]
+                    parts = re.split(r'<(?:em|em[^>]*)>(.*?)</em[^>]*>', text, flags=re.IGNORECASE)
+                    new_text = []
+                    for i, part in enumerate(parts):
+                        if i % 2 == 0:
+                            new_text.append(part)
+                        else:
+                            cls = "teal" if color_idx % 2 == 0 else "orange"
+                            new_text.append(f'<em class="hl-{cls}">{part}</em>')
+                            color_idx += 1
+                    item["text"] = "".join(new_text)
+
+    # For S1, S4, S6, make sure we use plain <em> tags (no class)
+    for sid in ["s1", "s4", "s6"]:
+        if "scenes" in data and sid in data["scenes"]:
+            scene = data["scenes"][sid]
+            fields = scene.get("fields", scene)
+            if isinstance(fields, dict):
+                key = "title" if sid in ["s1", "s6"] else "quote_html"
+                if key in fields and isinstance(fields[key], str):
+                    val = fields[key]
+                    val = re.sub(r'<(?:em|em[^>]*)>', '<em>', val, flags=re.IGNORECASE)
+                    val = re.sub(r'</em[^>]*>', '</em>', val, flags=re.IGNORECASE)
+                    fields[key] = val
+
+    return data
 
 
 if __name__ == "__main__":
@@ -109,5 +185,6 @@ if __name__ == "__main__":
         (out_dir / "llm_raw_response.txt").write_text(response, encoding="utf-8")
         sys.exit(1)
 
+    data = process_highlights(data)
     out_file.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"✓ content.json saved: {out_file}")

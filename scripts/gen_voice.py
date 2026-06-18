@@ -30,7 +30,14 @@ def audit_text(text: str):
     return issues
 
 def gen(text: str, voice: str, output: pathlib.Path, params: dict = None):
+    # Tìm kiếm file wav mẫu thông minh
     voice_wav = TOOL / "voice_mau" / "wavs" / f"{voice}.wav"
+    if not voice_wav.exists():
+        # Thử tìm trong thư mục con saved_voices_goc_VinaVoice
+        alt_wav = TOOL / "voice_mau" / "saved_voices_goc_VinaVoice" / f"{voice}.wav"
+        if alt_wav.exists():
+            voice_wav = alt_wav
+            
     assert voice_wav.exists(), f"Voice sample missing: {voice_wav}"
 
     issues = audit_text(text)
@@ -76,9 +83,25 @@ def gen(text: str, voice: str, output: pathlib.Path, params: dict = None):
         print(f"✓ Voice gen done: {output}")
         return output
     else:
-        print(f"✗ Voice gen failed (exit {proc.returncode})")
-        print(out_str[-1500:])
-        return None
+        print(f"✗ Voice gen failed (exit {proc.returncode}). Thử lại bằng cách ép chạy trên CPU (CUDA_VISIBLE_DEVICES=\"\")...")
+        env["CUDA_VISIBLE_DEVICES"] = ""
+        proc2 = subprocess.Popen(
+            [PY, str(TOOL / "bridge_omni.py")],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            env=env, cwd=str(TOOL),
+        )
+        out2, _ = proc2.communicate(input=json.dumps(args, ensure_ascii=False).encode("utf-8"))
+        out_str2 = out2.decode("utf-8", errors="replace")
+        m2 = re.search(r'"files":\s*\[\s*"([^"]+)"', out_str2)
+        actual_path2 = pathlib.Path(m2.group(1)) if m2 else None
+        if actual_path2 and actual_path2.exists():
+            actual_path2.rename(output)
+            print(f"✓ Voice gen done on CPU: {output}")
+            return output
+        else:
+            print(f"✗ Voice gen CPU also failed (exit {proc2.returncode})")
+            print(out_str2[-1500:])
+            return None
 
 
 if __name__ == "__main__":

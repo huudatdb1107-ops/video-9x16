@@ -12,7 +12,7 @@ Usage:
 import sys, re, argparse, pathlib, json
 sys.stdout.reconfigure(encoding="utf-8")
 
-TEMPLATES_DIR = pathlib.Path(r"E:\HuuDat\BrianD\TOOL_BrianD\TEST\_templates")
+TEMPLATES_DIR = pathlib.Path(r"E:\HuuDat\BrianD\TOOL_BrianD\.agent\skills\video-9x16\_templates")
 
 WARM_KEYWORDS = [
     "trẻ em", "con cái", "con bạn", "cha mẹ", "ba mẹ", "phụ huynh",
@@ -26,18 +26,29 @@ COLD_KEYWORDS = [
     "AI", "machine learning", "monorepo", "platform", "self-host",
     "GB", "TB", "MB", "%", "cloud", "server", "API", "framework"
 ]
+# P2.4 — Decision-tree pattern triggers: tình huống có phân nhánh lựa chọn
+DECISION_KEYWORDS = [
+    "tantrum", "ăn vạ", "khóc lóc",
+    "phải làm gì khi", "làm gì nếu", "nếu con", "khi con", "lúc con",
+    "lựa chọn", "phân nhánh", "phương án", "cách xử lý", "cách phản ứng",
+    "decision", "if then", "nên hay không"
+]
 
 def score(text: str, keywords: list) -> int:
     text_lower = text.lower()
     return sum(1 for kw in keywords if kw.lower() in text_lower)
 
 def match(topic: str, script: str = "") -> str:
-    """Return template name. Default 01_Text if tie."""
+    """Return template name. Default 01_Text_ViCon if tie."""
     combined = f"{topic} {script}"
     warm_score = score(combined, WARM_KEYWORDS)
     cold_score = score(combined, COLD_KEYWORDS)
-    print(f"  Warm score: {warm_score}, Cold score: {cold_score}")
-    return "02_TechCold" if cold_score > warm_score else "01_Text"
+    decision_score = score(combined, DECISION_KEYWORDS)
+    print(f"  Warm score: {warm_score}, Cold score: {cold_score}, Decision score: {decision_score}")
+    # Decision-tree thắng nếu có >=2 keyword phân nhánh
+    if decision_score >= 2 and decision_score >= warm_score:
+        return "03_DecisionTree"
+    return "02_TechCold" if cold_score > warm_score else "01_Text_ViCon"
 
 
 if __name__ == "__main__":
