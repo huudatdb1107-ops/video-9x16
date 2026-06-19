@@ -61,93 +61,159 @@ def run(cmd, **kwargs):
     return subprocess.run(cmd, **kwargs)
 
 def update_timeline_from_transcript(out_dir: pathlib.Path, wav_filename: str = "narration.wav"):
-    """Đọc transcript.json + content.json → chia scenes + detect element_times từ keyword segments."""
+    """Đọc transcript.json + content.json → chia scenes bằng SequenceMatcher (giống tool TIME) + detect element_times."""
     import re
+    from difflib import SequenceMatcher
+    
+    def clean_text(text):
+        if not text: return ""
+        return re.sub(r'[^\w\s]', '', str(text).lower()).strip()
+        
+    def clean_html(text):
+        if not text: return ""
+        text = re.sub(r'<[^>]+>', ' ', text)
+        text = re.sub(r'&nbsp;', ' ', text, flags=re.IGNORECASE)
+        text = re.sub(r'&amp;', '&', text, flags=re.IGNORECASE)
+        return ' '.join(text.split())
+
     tr_file = out_dir / "transcript.json"
     co_file = out_dir / "content.json"
+    sc_file = out_dir / "script.txt"
+    
     if not tr_file.exists() or not co_file.exists():
         print("  ⚠ transcript.json hoặc content.json missing, giữ timeline cũ.")
         return
+        
     tr = json.loads(tr_file.read_text(encoding="utf-8"))
     co = json.loads(co_file.read_text(encoding="utf-8"))
-    duration = tr.get("duration", 60)
+    duration = tr.get("duration", 60.0)
     segments = tr.get("segments", [])
-    n_scenes = len(co.get("scenes", {}))
+    sids_sorted = sorted(co.get("scenes", {}).keys())
+    n_scenes = len(sids_sorted)
     if n_scenes < 2: return
 
-    # Detect SCENE BOUNDARIES từ transcript (anchor keywords per scene).
-    # Template 01_Text: s1=hook, s2=stat, s3=3 cards, s4=quote, s5=cha mẹ items, s6=CTA
-    # Anchor = từ khoá nhận diện scene START trong voice transcript.
-    SCENE_ANCHORS = {
-        "s2": ["theo thống kê", "cứ 10", "cứ mười", "1/10"],
-        "s3": ["ba dấu hiệu", "3 dấu hiệu", "ba điều", "3 điều"],
-        "s4": ["khi cha mẹ", "khi nghi ngờ", "đừng chờ đợi", "điều quan trọng nhất"],
-        "s5": ["hãy đưa con", "chuyên gia", "cha mẹ cần", "cha mẹ nên"],
-        "s6": ["phát hiện sớm", "món quà", "đừng bỏ lỡ"],
-    }
-    sids_sorted = sorted(co["scenes"].keys())
-    raw = {sids_sorted[0]: 0.0}
-    current_min_time = 0.0
-    for sid in sids_sorted[1:]:
-        keywords = SCENE_ANCHORS.get(sid, [])
-        anchor_time = None
-        # Ràng buộc đặc biệt cho s6: Phải nằm ở nửa sau video
-        local_min_time = current_min_time
-        if sid == "s6":
-            local_min_time = max(current_min_time, duration * 0.5)
-        for seg in segments:
-            t = seg["text"].lower()
-            seg_start = round(seg["start"], 2)
-            if seg_start < local_min_time:
-                continue
-            for kw in keywords:
-                if kw in t:
-                    anchor_time = seg_start
-                    break
-            if anchor_time is not None:
-                break
-        raw[sid] = anchor_time
-        if anchor_time is not None:
-            current_min_time = anchor_time
+    # Đọc script.txt (mỗi dòng tương ứng 1 scene)
+    lines = []
+    if sc_file.exists():
+        lines = [l.strip() for l in sc_file.read_text(encoding="utf-8-sig").splitlines() if l.strip()]
+        
+    # Fallback nếu số dòng kịch bản khác số scene hoặc không có script.txt
+    if len(lines) != n_scenes:
+        print(f"  ⚠ Số dòng script.txt ({len(lines)}) khác số scene ({n_scenes}). Fallback lấy text trong content.json.")
+        lines = []
+        for sid in sids_sorted:
+            scene = co["scenes"][sid]
+            scene_text = ""
+            if sid == "s1":
+                scene_text = scene.get("title", "")
+            elif sid == "s2":
+                scene_text = scene.get("note", "") or scene.get("label", "")
+            elif sid == "s3":
+                scene_text = scene.get("heading", "") + " " + " ".join(c.get("text", "") for c in scene.get("cards", []))
+            elif sid == "s4":
+                scene_text = scene.get("quote_html", "")
+            elif sid == "s5":
+                scene_text = scene.get("heading", "") + " " + " ".join(i.get("text", "") for i in scene.get("items", []))
+            elif sid == "s6":
+                scene_text = scene.get("sub", "")
+            lines.append(clean_html(scene_text))
 
-    # Fallback: chia đều giữa 2 anchor biết trước (linear interpolate)
-    boundaries = dict(raw)
-    last_known_sid, last_known_t = sids_sorted[0], 0.0
-    for i, sid in enumerate(sids_sorted):
-        if boundaries[sid] is not None:
-            last_known_sid, last_known_t = sid, boundaries[sid]
+    # Xây dựng bản đồ ký tự từ transcript
+    char_map = []
+    full_transcript = ""
+    for seg in segments:
+        text = seg["text"].strip().lower()
+        if not text: continue
+        s_us = float(seg["start"])
+        e_us = float(seg["end"])
+        c_dur = (e_us - s_us) / len(text)
+        for i, char in enumerate(text):
+            char_map.append((char, s_us + i * c_dur, s_us + (i + 1) * c_dur))
+            full_transcript += char
+        char_map.append((' ', e_us, e_us))
+        full_transcript += ' '
+
+    # Khớp SequenceMatcher tìm anchors động
+    anchors = {}
+    ptr = 0
+    for idx, sid in enumerate(sids_sorted):
+        target = clean_text(lines[idx])
+        if not target:
+            anchors[sid] = None
             continue
-        # tìm next known anchor
-        next_idx, next_t = len(sids_sorted), duration
-        for j in range(i+1, len(sids_sorted)):
-            if boundaries[sids_sorted[j]] is not None:
-                next_idx, next_t = j, boundaries[sids_sorted[j]]; break
-        gap = next_t - last_known_t
-        steps = next_idx - sids_sorted.index(last_known_sid)
-        boundaries[sid] = round(last_known_t + gap * (i - sids_sorted.index(last_known_sid)) / steps, 2)
+            
+        window = full_transcript[ptr : ptr + 1000]
+        matcher = SequenceMatcher(None, window, target)
+        m = matcher.find_longest_match(0, len(window), 0, len(target))
+        
+        # Ngưỡng khớp: match size > 10 ký tự hoặc khớp > 25% độ dài câu kịch bản
+        if m.size > 10 or (len(target) > 0 and m.size / len(target) > 0.25):
+            gs = max(0, min(len(char_map)-1, (ptr + m.a) - m.b))
+            ge = min(len(char_map)-1, gs + len(target))
+            anchors[sid] = (char_map[gs][1], char_map[ge][2])
+            ptr = gs + m.size
+            print(f"  ✓ Dynamic anchor for {sid}: {anchors[sid][0]:.2f}s -> {anchors[sid][1]:.2f}s (match size: {m.size})")
+        else:
+            anchors[sid] = None
 
+    # Dàn trải các đoạn lủng (nội suy thông minh theo số ký tự kịch bản - orphan dispersal)
+    boundaries = {}
+    last_end = 0.0
+    for i, sid in enumerate(sids_sorted):
+        if anchors[sid] is not None:
+            s, e = anchors[sid]
+        else:
+            # Tìm anchor đã biết tiếp theo
+            next_anc_sid = next((sids_sorted[j] for j in range(i+1, len(sids_sorted)) if anchors[sids_sorted[j]] is not None), None)
+            g_start = last_end
+            g_end = anchors[next_anc_sid][0] if next_anc_sid else duration
+            
+            # Gom nhóm các scene mồ côi
+            next_idx = sids_sorted.index(next_anc_sid) if next_anc_sid else len(sids_sorted)
+            orphans = sids_sorted[i : next_idx]
+            total_chars = sum(len(clean_text(lines[sids_sorted.index(o)])) for o in orphans)
+            g_dur = max(0.0, g_end - g_start)
+            curr_s = g_start
+            for o_sid in orphans:
+                o_text = clean_text(lines[sids_sorted.index(o_sid)])
+                o_dur = g_dur * (len(o_text) / total_chars) if total_chars > 0 else (g_dur / len(orphans))
+                o_e = min(g_end, curr_s + o_dur)
+                if o_sid == sids_sorted[-1]:
+                    o_e = duration
+                anchors[o_sid] = (curr_s, o_e)
+                curr_s = o_e
+            s, e = anchors[sid]
+
+        # Snap to frame 30fps
+        def snap_t(t, fps=30):
+            f = 1.0 / fps
+            return round(round(t / f) * f, 2)
+            
+        boundaries[sid] = snap_t(last_end)
+        last_end = snap_t(e if i < len(sids_sorted) - 1 else duration)
+
+    # Cập nhật timeline mới vào content.json
     timeline = {}
     for i, sid in enumerate(sids_sorted):
         out_t = boundaries[sids_sorted[i+1]] if i+1 < len(sids_sorted) else duration
         timeline[sid] = {"in": round(boundaries[sid], 2), "out": round(out_t, 2)}
     co["timeline"] = timeline
-    print(f"  ✓ Scene boundaries from transcript: {timeline}")
+    print(f"  ✓ Scene boundaries: {timeline}")
 
-    # Detect element_times: scan segments có keyword "Một/Hai/Ba" hoặc "1./2./3."
-    # Cho mỗi scene có cards (s3) hoặc items (s5)
+    # Detect element_times: scan segments tìm mốc xuất hiện Card / Item
     def find_segment_start(keywords, after_t, before_t):
         for seg in segments:
             if seg["start"] < after_t or seg["start"] >= before_t: continue
-            text = seg["text"].lower().strip()
+            text = clean_text(seg["text"])
             for kw in keywords:
                 if text.startswith(kw):
                     return seg["start"]
         return None
 
     kw_groups = [
-        (["một ", "một,", "1.", "1)", "1 ", "1,"], "c1", "i1"),
-        (["hai ", "hai,", "2.", "2)", "2 ", "2,"], "c2", "i2"),
-        (["ba ",  "ba,",  "3.", "3)", "3 ", "3,"], "c3", "i3"),
+        (["mot", "một", "1"], "c1", "i1"),
+        (["hai", "2"], "c2", "i2"),
+        (["ba", "3"], "c3", "i3"),
     ]
     for sid in ("s3", "s5"):
         scene = co["scenes"].get(sid)
@@ -163,13 +229,13 @@ def update_timeline_from_transcript(out_dir: pathlib.Path, wav_filename: str = "
             et[c_key if has_cards else i_key] = round(t, 2)
         if et:
             scene["element_times"] = et
-            print(f"  ✓ {sid}.element_times detected: {et}")
+            print(f"  ✓ {sid}.element_times: {et}")
 
     if "voice" not in co: co["voice"] = {}
     co["voice"]["file"] = wav_filename
     co["voice"]["duration"] = duration
     co_file.write_text(json.dumps(co, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"  ✓ Timeline + element_times saved")
+    print(f"  ✓ Saved new timeline data to content.json")
 
 
 def ensure_vbs(out_dir: pathlib.Path, template: str):
@@ -181,10 +247,31 @@ def ensure_vbs(out_dir: pathlib.Path, template: str):
         "Set objFSO = CreateObject(\"Scripting.FileSystemObject\")\r\n"
         "strDir = objFSO.GetParentFolderName(WScript.ScriptFullName)\r\n"
         "Set objShell = CreateObject(\"WScript.Shell\")\r\n"
-        "objShell.CurrentDirectory = strDir\r\n"
-        f"objShell.Run \"\"\"{PY}\"\" \"\"{editor_py}\"\" --workspace \"\"\" & strDir & \"\"\"\", 0, False\r\n"
-        "WScript.Sleep 1800\r\n"
-        "objShell.Run \"http://localhost:5050/\", 1, False\r\n"
+        "objShell.CurrentDirectory = strDir\r\n\r\n"
+        "' Xóa file .editor_port cũ nếu có\r\n"
+        "portFile = strDir & \"\\.editor_port\"\r\n"
+        "If objFSO.FileExists(portFile) Then\r\n"
+        "    On Error Resume Next\r\n"
+        "    objFSO.DeleteFile portFile, True\r\n"
+        "    On Error GoTo 0\r\n"
+        "End If\r\n\r\n"
+        f"objShell.Run \"\"\"{PY}\"\" \"\"{editor_py}\"\" --workspace \"\"\" & strDir & \"\"\"\", 0, False\r\n\r\n"
+        "' Chờ và đọc cổng từ .editor_port (timeout 6 giây)\r\n"
+        "port = \"5050\"\r\n"
+        "For i = 1 to 30\r\n"
+        "    WScript.Sleep 200\r\n"
+        "    If objFSO.FileExists(portFile) Then\r\n"
+        "        On Error Resume Next\r\n"
+        "        Set objFile = objFSO.OpenTextFile(portFile, 1)\r\n"
+        "        port = objFile.ReadLine\r\n"
+        "        objFile.Close\r\n"
+        "        If Err.Number = 0 Then\r\n"
+        "            Exit For\r\n"
+        "        End If\r\n"
+        "        On Error GoTo 0\r\n"
+        "    End If\r\n"
+        "Next\r\n\r\n"
+        "objShell.Run \"http://localhost:\" & port & \"/\", 1, False\r\n"
     )
     vbs_path.write_text(vbs_content, encoding="utf-8")
     return vbs_path

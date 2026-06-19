@@ -193,11 +193,18 @@ body { margin: 0; background: #000; font-family: "Inter", sans-serif; }
 .particle { position: absolute; border-radius: 50%; opacity: 0.3; }
 
 /* Inline keyword highlight em accent (color reveal via GSAP) */
+em {
+  font-style: normal;
+  font-weight: 700;
+  display: inline;
+  color: #ffffff;  /* khởi điểm trắng — GSAP reveal sang accent */
+  text-shadow: 0 0 0 rgba(0,0,0,0);
+}
 em.hl-teal, em.hl-orange {
   font-style: normal;
   font-weight: 700;
-  display: inline-block;
-  color: #ffffff;  /* khởi điểm trắng — GSAP reveal sang accent */
+  display: inline;
+  color: #ffffff;
   text-shadow: 0 0 0 rgba(0,0,0,0);
 }
 
@@ -301,7 +308,7 @@ em.hl-teal, em.hl-orange {
   font-size: 130px;
   font-weight: 900;
   color: #ffffff;
-  line-height: 1.25;
+  line-height: 1.50;
   text-align: center;
   max-width: 960px;
   margin: 0;
@@ -311,6 +318,9 @@ em.hl-teal, em.hl-orange {
     0 0 70px rgba(255, 122, 42, 0.35),
     0 0 120px rgba(255, 255, 255, 0.22);
   text-transform: uppercase;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: keep-all;
 }
 .s1-title em {
   font-style: normal;
@@ -371,7 +381,7 @@ em.hl-teal, em.hl-orange {
   color: #ffffff;
   text-align: center;
   font-weight: 700;
-  line-height: 2;
+  line-height: 1.50;
   max-width: 880px;
   text-shadow: 0 0 30px rgba(255, 255, 255, 0.15);
 }
@@ -512,7 +522,7 @@ em.hl-teal, em.hl-orange {
   font-family: "Inter", sans-serif;
   font-size: 130px;
   font-weight: 900;
-  color: #4dcccc;
+  color: #ffffff;
   text-align: center;
   line-height: 1.25;
   max-width: 940px;
@@ -523,6 +533,9 @@ em.hl-teal, em.hl-orange {
     0 0 70px rgba(255, 122, 42, 0.35),
     0 0 110px rgba(255, 255, 255, 0.18);
   text-transform: uppercase;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: keep-all;
 }
 .s6-title em {
   font-style: normal;
@@ -730,9 +743,29 @@ if (s2) {
   tl.from("#s2-note",  { y: 20, opacity: 0, duration: 0.9 }, s2.in + 3.0);
 }
 // === Constants cho color reveal ===
-const __OR = "#ff7a2a", __TC = "#4dcccc";
-const __ORS = "0 0 20px rgba(255,122,42,0.6), 0 0 40px rgba(255,122,42,0.3)";
-const __TCS = "0 0 20px rgba(77,204,204,0.6), 0 0 40px rgba(77,204,204,0.3)";
+function getEMColorRGBA(className, alpha, fallback) {
+  const temp = document.createElement('em');
+  temp.className = className;
+  temp.style.display = 'none';
+  document.body.appendChild(temp);
+  const color = getComputedStyle(temp).color;
+  document.body.removeChild(temp);
+  if (!color) return fallback;
+  const m = color.match(/\d+/g);
+  if (m && m.length >= 3) {
+    return `rgba(${m[0]}, ${m[1]}, ${m[2]}, ${alpha})`;
+  }
+  return color;
+}
+const __OR_6 = getEMColorRGBA('hl-orange', 0.6, 'rgba(255,122,42,0.6)');
+const __OR_3 = getEMColorRGBA('hl-orange', 0.3, 'rgba(255,122,42,0.3)');
+const __TC_6 = getEMColorRGBA('hl-teal', 0.6, 'rgba(77,204,204,0.6)');
+const __TC_3 = getEMColorRGBA('hl-teal', 0.3, 'rgba(77,204,204,0.3)');
+
+const __OR = getEMColorRGBA('hl-orange', 1.0, '#ff7a2a');
+const __TC = getEMColorRGBA('hl-teal', 1.0, '#4dcccc');
+const __ORS = `0 0 20px ${__OR_6}, 0 0 40px ${__OR_3}`;
+const __TCS = `0 0 20px ${__TC_6}, 0 0 40px ${__TC_3}`;
 
 const s3 = __TL.s3;
 if (s3) {
@@ -778,11 +811,11 @@ if (s3) {
   tl.set(".s3-c3 .wipe-orange", { opacity: 0 }, c3t + 1.8);
   // Color reveal keyword cam + teal sau khi card slide vào
   tl.to(".s3-c1 em.hl-orange", { color: __OR, textShadow: __ORS, duration: 0.4 }, c1t + 0.5);
-  tl.to(".s3-c1 em.hl-teal",   { color: __TC, textShadow: __TCS, duration: 0.4 }, c1t + 0.8);
+  tl.to(".s3-c1 em.hl-teal, .s3-c1 em:not([class])", { color: __TC, textShadow: __TCS, duration: 0.4 }, c1t + 0.8);
   tl.to(".s3-c2 em.hl-orange", { color: __OR, textShadow: __ORS, duration: 0.4 }, c2t + 0.5);
-  tl.to(".s3-c2 em.hl-teal",   { color: __TC, textShadow: __TCS, duration: 0.4 }, c2t + 0.8);
+  tl.to(".s3-c2 em.hl-teal, .s3-c2 em:not([class])", { color: __TC, textShadow: __TCS, duration: 0.4 }, c2t + 0.8);
   tl.to(".s3-c3 em.hl-orange", { color: __OR, textShadow: __ORS, duration: 0.4 }, c3t + 0.5);
-  tl.to(".s3-c3 em.hl-teal",   { color: __TC, textShadow: __TCS, duration: 0.4 }, c3t + 0.8);
+  tl.to(".s3-c3 em.hl-teal, .s3-c3 em:not([class])", { color: __TC, textShadow: __TCS, duration: 0.4 }, c3t + 0.8);
 }
 const s4 = __TL.s4;
 if (s4) {
@@ -844,11 +877,11 @@ if (s5) {
   tl.set(".s5-i3 .wipe-orange", { opacity: 0 }, i3t + 1.8);
   // Color reveal cho items
   tl.to(".s5-i1 em.hl-orange", { color: __OR, textShadow: __ORS, duration: 0.4 }, i1t + 0.5);
-  tl.to(".s5-i1 em.hl-teal",   { color: __TC, textShadow: __TCS, duration: 0.4 }, i1t + 0.8);
+  tl.to(".s5-i1 em.hl-teal, .s5-i1 em:not([class])", { color: __TC, textShadow: __TCS, duration: 0.4 }, i1t + 0.8);
   tl.to(".s5-i2 em.hl-orange", { color: __OR, textShadow: __ORS, duration: 0.4 }, i2t + 0.5);
-  tl.to(".s5-i2 em.hl-teal",   { color: __TC, textShadow: __TCS, duration: 0.4 }, i2t + 0.8);
+  tl.to(".s5-i2 em.hl-teal, .s5-i2 em:not([class])", { color: __TC, textShadow: __TCS, duration: 0.4 }, i2t + 0.8);
   tl.to(".s5-i3 em.hl-orange", { color: __OR, textShadow: __ORS, duration: 0.4 }, i3t + 0.5);
-  tl.to(".s5-i3 em.hl-teal",   { color: __TC, textShadow: __TCS, duration: 0.4 }, i3t + 0.8);
+  tl.to(".s5-i3 em.hl-teal, .s5-i3 em:not([class])", { color: __TC, textShadow: __TCS, duration: 0.4 }, i3t + 0.8);
 }
 const s6 = __TL.s6;
 if (s6) {
