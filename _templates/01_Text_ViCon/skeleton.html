@@ -750,7 +750,7 @@ function getEMColorRGBA(className, alpha, fallback) {
   document.body.appendChild(temp);
   const color = getComputedStyle(temp).color;
   document.body.removeChild(temp);
-  if (!color) return fallback;
+  if (!color || color === 'rgb(255, 255, 255)' || color === '#ffffff') return fallback;
   const m = color.match(/\d+/g);
   if (m && m.length >= 3) {
     return `rgba(${m[0]}, ${m[1]}, ${m[2]}, ${alpha})`;
@@ -766,6 +766,19 @@ const __OR = getEMColorRGBA('hl-orange', 1.0, '#ff7a2a');
 const __TC = getEMColorRGBA('hl-teal', 1.0, '#4dcccc');
 const __ORS = `0 0 20px ${__OR_6}, 0 0 40px ${__OR_3}`;
 const __TCS = `0 0 20px ${__TC_6}, 0 0 40px ${__TC_3}`;
+
+// Thu thập màu đích cho toàn bộ thẻ em trong các scene để tránh đè màu đơn sắc và sửa lỗi mất highlight
+document.querySelectorAll('.scene em').forEach(el => {
+  let targetColor = el.style.color;
+  if (!targetColor) {
+    const isOrange = el.classList.contains('hl-orange');
+    targetColor = isOrange ? __OR : __TC;
+  }
+  const isOrange = el.classList.contains('hl-orange');
+  const targetShadow = isOrange ? __ORS : __TCS;
+  el.setAttribute('data-target-color', targetColor);
+  el.setAttribute('data-target-shadow', targetShadow);
+});
 
 const s3 = __TL.s3;
 if (s3) {
@@ -809,13 +822,19 @@ if (s3) {
   tl.set(".s3-c3 .wipe-orange", { x: -450, opacity: 1 }, c3t + 0.8);
   tl.to(".s3-c3 .wipe-orange",  { x: 1380, duration: 1.0, ease: "power2.out" }, c3t + 0.8);
   tl.set(".s3-c3 .wipe-orange", { opacity: 0 }, c3t + 1.8);
-  // Color reveal keyword cam + teal sau khi card slide vào
-  tl.to(".s3-c1 em.hl-orange", { color: __OR, textShadow: __ORS, duration: 0.4 }, c1t + 0.5);
-  tl.to(".s3-c1 em.hl-teal, .s3-c1 em:not([class])", { color: __TC, textShadow: __TCS, duration: 0.4 }, c1t + 0.8);
-  tl.to(".s3-c2 em.hl-orange", { color: __OR, textShadow: __ORS, duration: 0.4 }, c2t + 0.5);
-  tl.to(".s3-c2 em.hl-teal, .s3-c2 em:not([class])", { color: __TC, textShadow: __TCS, duration: 0.4 }, c2t + 0.8);
-  tl.to(".s3-c3 em.hl-orange", { color: __OR, textShadow: __ORS, duration: 0.4 }, c3t + 0.5);
-  tl.to(".s3-c3 em.hl-teal, .s3-c3 em:not([class])", { color: __TC, textShadow: __TCS, duration: 0.4 }, c3t + 0.8);
+  // Color reveal keyword sau khi card slide vào (animate riêng lẻ từng từ theo data-target-color)
+  document.querySelectorAll(".s3-c1 em").forEach(el => {
+    const isOrange = el.classList.contains("hl-orange");
+    tl.to(el, { color: el.getAttribute("data-target-color"), textShadow: el.getAttribute("data-target-shadow"), duration: 0.4 }, c1t + (isOrange ? 0.5 : 0.8));
+  });
+  document.querySelectorAll(".s3-c2 em").forEach(el => {
+    const isOrange = el.classList.contains("hl-orange");
+    tl.to(el, { color: el.getAttribute("data-target-color"), textShadow: el.getAttribute("data-target-shadow"), duration: 0.4 }, c2t + (isOrange ? 0.5 : 0.8));
+  });
+  document.querySelectorAll(".s3-c3 em").forEach(el => {
+    const isOrange = el.classList.contains("hl-orange");
+    tl.to(el, { color: el.getAttribute("data-target-color"), textShadow: el.getAttribute("data-target-shadow"), duration: 0.4 }, c3t + (isOrange ? 0.5 : 0.8));
+  });
 }
 const s4 = __TL.s4;
 if (s4) {
@@ -828,11 +847,13 @@ if (s4) {
   tl.set("#s4-quote .wipe-orange", { x: -450, opacity: 1 }, s4.in + 1.6);
   tl.to("#s4-quote .wipe-orange",  { x: 1380, duration: 1.0, ease: "power2.out" }, s4.in + 1.6);
   tl.set("#s4-quote .wipe-orange", { opacity: 0 }, s4.in + 2.6);
-  // Quote keyword color reveal (teal)
-  tl.fromTo(".s4-quote em",
-    { color: "#ffffff" },
-    { color: __TC, textShadow: "0 0 24px rgba(77,204,204,0.45)", duration: 0.5 },
-    s4.in + 1.5);
+  // Quote keyword color reveal (animate riêng lẻ từng từ theo màu của nó để giữ nguyên inline style)
+  document.querySelectorAll(".s4-quote em").forEach(el => {
+    tl.fromTo(el,
+      { color: "#ffffff" },
+      { color: el.getAttribute("data-target-color"), textShadow: el.getAttribute("data-target-shadow"), duration: 0.5 },
+      s4.in + 1.5);
+  });
 }
 const s5 = __TL.s5;
 if (s5) {
@@ -875,13 +896,19 @@ if (s5) {
   tl.set(".s5-i3 .wipe-orange", { x: -450, opacity: 1 }, i3t + 0.8);
   tl.to(".s5-i3 .wipe-orange",  { x: 1380, duration: 1.0, ease: "power2.out" }, i3t + 0.8);
   tl.set(".s5-i3 .wipe-orange", { opacity: 0 }, i3t + 1.8);
-  // Color reveal cho items
-  tl.to(".s5-i1 em.hl-orange", { color: __OR, textShadow: __ORS, duration: 0.4 }, i1t + 0.5);
-  tl.to(".s5-i1 em.hl-teal, .s5-i1 em:not([class])", { color: __TC, textShadow: __TCS, duration: 0.4 }, i1t + 0.8);
-  tl.to(".s5-i2 em.hl-orange", { color: __OR, textShadow: __ORS, duration: 0.4 }, i2t + 0.5);
-  tl.to(".s5-i2 em.hl-teal, .s5-i2 em:not([class])", { color: __TC, textShadow: __TCS, duration: 0.4 }, i2t + 0.8);
-  tl.to(".s5-i3 em.hl-orange", { color: __OR, textShadow: __ORS, duration: 0.4 }, i3t + 0.5);
-  tl.to(".s5-i3 em.hl-teal, .s5-i3 em:not([class])", { color: __TC, textShadow: __TCS, duration: 0.4 }, i3t + 0.8);
+  // Color reveal cho items (animate riêng lẻ từng từ theo data-target-color)
+  document.querySelectorAll(".s5-i1 em").forEach(el => {
+    const isOrange = el.classList.contains("hl-orange");
+    tl.to(el, { color: el.getAttribute("data-target-color"), textShadow: el.getAttribute("data-target-shadow"), duration: 0.4 }, i1t + (isOrange ? 0.5 : 0.8));
+  });
+  document.querySelectorAll(".s5-i2 em").forEach(el => {
+    const isOrange = el.classList.contains("hl-orange");
+    tl.to(el, { color: el.getAttribute("data-target-color"), textShadow: el.getAttribute("data-target-shadow"), duration: 0.4 }, i2t + (isOrange ? 0.5 : 0.8));
+  });
+  document.querySelectorAll(".s5-i3 em").forEach(el => {
+    const isOrange = el.classList.contains("hl-orange");
+    tl.to(el, { color: el.getAttribute("data-target-color"), textShadow: el.getAttribute("data-target-shadow"), duration: 0.4 }, i3t + (isOrange ? 0.5 : 0.8));
+  });
 }
 const s6 = __TL.s6;
 if (s6) {
