@@ -29,11 +29,11 @@ QUY TẮC bắt buộc:
 - KHÔNG dùng acronym ALL-CAPS Latin trong title/text (vd "ADHD" → "rối loạn tăng động giảm chú ý")
 - Highlight & Ngắt dòng cho Tiêu đề S1 (title) và S6 (title): KHÔNG được lấy nguyên văn câu thoại dài của script làm tiêu đề. Tiêu đề trên màn hình bắt buộc phải cực kỳ ngắn gọn và giật tít (S1 chỉ từ 5-7 từ, S6 chỉ từ 4-6 từ). Bắt buộc phải sử dụng thẻ <br> để chia tiêu đề thành 2 dòng cân đối để tránh chữ bị to quá tràn ra ngoài khung hình (font size 130px cực kỳ lớn).
 - QUY TẮC HIGHLIGHT: Luôn sử dụng thẻ <em>...</em> trơn (KHÔNG có class, KHÔNG có thuộc tính khác) để bọc từ khóa trong TẤT CẢ các scene (S1, S3, S4, S5, S6) để tạo điểm nhấn. Hệ thống sẽ tự động chuyển màu thích hợp.
-- BẮT BUỘC HIGHLIGHT S1, S4, S6:
-  - S1 title và S6 title BẮT BUỘC PHẢI CHỨA CHÍNH XÁC 2 THẺ <em>...</em>. S4 quote BẮT BUỘC PHẢI CHỨA TỪ 2 ĐẾN 3 THẺ <em>...</em> (Không được thiếu, không được quên!).
+- BẮT BUỘC HIGHLIGHT:
+  - S1 title và S6 title BẮT BUỘC PHẢI CHỨA CHÍNH XÁC 2 THẺ <em>...</em>. S4 quote BẮT BUỘC PHẢI CHỨA CHÍNH XÁC 2 THẺ <em>...</em> (Không được thiếu, không được quên!).
   - Ở S1 title: Bọc 1 cụm ở dòng 1 và 1 cụm ở dòng 2. Ví dụ: "Con chỉ<br><em>hiếu động</em> hay <em>tăng động</em>?"
   - Ở S6 title: Bọc 2 cụm từ quan trọng. Ví dụ: "Đồng hành cùng con,<br><em>yêu thương</em> và <em>kiên nhẫn</em>"
-  - Trong mỗi Card ở S3 và mỗi Item ở S5: BẮT BUỘC PHẢI CHỨA CHÍNH XÁC 2 THẺ <em>...</em> để tạo 2 màu sắc (cam và xanh ngọc) xen kẽ, giúp giao diện sinh động.
+  - Trong mỗi Card ở S3, mỗi câu Quote ở S4, và mỗi Item ở S5: BẮT BUỘC PHẢI CHỨA CHÍNH XÁC 2 THẺ <em>...</em> trơn để tạo 2 màu sắc (xanh ngọc và cam) xen kẽ độc lập trong từng block card/item/quote, giúp giao diện sinh động.
 - QUY TẮC NGỮ NGHĨA highlight: Chỉ bọc thẻ <em> cho các từ/cụm từ mang ý nghĩa TÍCH CỰC, THẤU CẢM, GIẢI PHÁP (vd: "thấu hiểu", "yêu thương", "kiên nhẫn", "kết nối", "tự lập"). Tuyệt đối KHÔNG highlight các từ mang nghĩa tiêu cực, phủ định hoặc các lỗi hành vi (vd: "đứa trẻ hư", "chống đối", "nghịch ngợm", "mất kiểm soát", "ăn vạ").
 - Quy tắc ngắt dòng Heading (S3/S5) và Quote S4 (quote_html):
   - Heading S3/S5: Phải chèn 1 thẻ <br> chia làm 2 dòng rất ngắn gọn và cân đối.
@@ -90,6 +90,82 @@ def extract_json(text: str) -> dict | None:
             continue
     return None
 
+HIGHLIGHT_KEYWORDS = [
+    'thấu hiểu', 'thấu cảm', 'yêu thương', 'kiên nhẫn', 'kết nối', 
+    'tự lập', 'đồng hành', 'trí tuệ', 'tự tin', 'an toàn', 
+    'phát triển', 'lắng nghe', 'chia sẻ', 'giúp đỡ', 'tôn trọng',
+    'học cách', 'chăm sóc', 'khích lệ', 'động viên', 'tin tưởng'
+]
+
+def auto_wrap_missing_ems(text: str) -> str:
+    """Tự động bọc thêm thẻ em nếu câu thiếu highlight (cần đúng 2 thẻ em)."""
+    import re
+    # Đếm số thẻ em hiện có
+    ems = re.findall(r'<(?:em|em[^>]*)>(.*?)</em[^>]*>', text, flags=re.IGNORECASE)
+    needed = 2 - len(ems)
+    if needed <= 0:
+        return text
+
+    # Tạm thời thay thế các thẻ em hiện có bằng placeholder để tránh bọc đè
+    placeholders = []
+    def repl(m):
+        placeholders.append(m.group(0))
+        return f"__EM_PLACEHOLDER_{len(placeholders)-1}__"
+    
+    temp_text = re.sub(r'<(?:em|em[^>]*)>.*?</em[^>]*>', repl, text, flags=re.IGNORECASE)
+    
+    # Thử tìm các từ khóa tích cực phổ biến trong phần text còn lại
+    for kw in HIGHLIGHT_KEYWORDS:
+        if needed <= 0:
+            break
+        # Tìm từ khóa đứng độc lập (không nằm trong placeholder)
+        pattern = rf'(?<!\w)({re.escape(kw)})(?!\w)'
+        matches = list(re.finditer(pattern, temp_text, flags=re.IGNORECASE))
+        if matches:
+            # Bọc match đầu tiên tìm được
+            m = matches[0]
+            temp_text = temp_text[:m.start()] + f"<em>{m.group(1)}</em>" + temp_text[m.end():]
+            needed -= 1
+
+    # Nếu vẫn thiếu, ta chọn một cụm từ dài 2-3 từ ở phần text dài nhất để bọc làm từ khóa thứ 2
+    if needed > 0:
+        # Split theo các placeholders và các thẻ em mới bọc
+        parts = re.split(r'(__EM_PLACEHOLDER_\d+__|<(?:em|em[^>]*)>.*?</em[^>]*>)', temp_text)
+        longest_part_idx = -1
+        longest_len = 0
+        for idx, part in enumerate(parts):
+            if not part.startswith('__EM_PLACEHOLDER_') and not part.startswith('<em'):
+                clean_part = re.sub(r'<[^>]+>', '', part).strip()
+                words = clean_part.split()
+                if len(words) >= 3 and len(clean_part) > longest_len:
+                    longest_len = len(clean_part)
+                    longest_part_idx = idx
+        
+        if longest_part_idx != -1:
+            part = parts[longest_part_idx]
+            # Split clean_part để tránh dính thẻ HTML trong kw_text
+            clean_part = re.sub(r'<[^>]+>', ' ', part).strip()
+            clean_words = clean_part.split()
+            if len(clean_words) >= 4:
+                start_w = len(clean_words) - 3
+                kw_text = " ".join(clean_words[start_w:start_w+2])
+            else:
+                kw_text = " ".join(clean_words[-2:]) if len(clean_words) >= 2 else clean_words[0]
+            
+            # Tạo pattern cho phép có thẻ HTML xen kẽ giữa các từ của kw_text
+            words_pattern = r'\s*(?:<[^>]+>\s*)*'.join(re.escape(w) for w in kw_text.split())
+            pattern = rf'(?<!\w)({words_pattern})(?!\w)'
+            part_replaced = re.sub(pattern, rf'<em>\1</em>', part, count=1, flags=re.IGNORECASE)
+            parts[longest_part_idx] = part_replaced
+            temp_text = "".join(parts)
+            needed -= 1
+
+    # Restore placeholders
+    for idx, placeholder_val in enumerate(placeholders):
+        temp_text = temp_text.replace(f"__EM_PLACEHOLDER_{idx}__", placeholder_val)
+        
+    return temp_text
+
 def process_highlights(data: dict) -> dict:
     """Post-processes data to format em tags correctly for templates."""
     import re
@@ -99,12 +175,15 @@ def process_highlights(data: dict) -> dict:
         s3 = data["scenes"]["s3"]
         fields = s3.get("fields", s3)
         if isinstance(fields, dict) and "cards" in fields and isinstance(fields["cards"], list):
-            color_idx = 0
             for card in fields["cards"]:
                 if isinstance(card, dict) and "text" in card and isinstance(card["text"], str):
+                    # Tự động bọc thêm nếu thiếu
+                    card["text"] = auto_wrap_missing_ems(card["text"])
+                    
                     text = card["text"]
                     parts = re.split(r'<(?:em|em[^>]*)>(.*?)</em[^>]*>', text, flags=re.IGNORECASE)
                     new_text = []
+                    color_idx = 0
                     for i, part in enumerate(parts):
                         if i % 2 == 0:
                             new_text.append(part)
@@ -114,17 +193,41 @@ def process_highlights(data: dict) -> dict:
                             color_idx += 1
                     card["text"] = "".join(new_text)
 
+    # Process S4 quote
+    if "scenes" in data and "s4" in data["scenes"]:
+        s4 = data["scenes"]["s4"]
+        fields = s4.get("fields", s4)
+        if isinstance(fields, dict) and "quote_html" in fields and isinstance(fields["quote_html"], str):
+            # Tự động bọc thêm nếu thiếu
+            fields["quote_html"] = auto_wrap_missing_ems(fields["quote_html"])
+            
+            text = fields["quote_html"]
+            parts = re.split(r'<(?:em|em[^>]*)>(.*?)</em[^>]*>', text, flags=re.IGNORECASE)
+            new_text = []
+            color_idx = 0
+            for i, part in enumerate(parts):
+                if i % 2 == 0:
+                    new_text.append(part)
+                else:
+                    cls = "teal" if color_idx % 2 == 0 else "orange"
+                    new_text.append(f'<em class="hl-{cls}">{part}</em>')
+                    color_idx += 1
+            fields["quote_html"] = "".join(new_text)
+
     # Process S5 items
     if "scenes" in data and "s5" in data["scenes"]:
         s5 = data["scenes"]["s5"]
         fields = s5.get("fields", s5)
         if isinstance(fields, dict) and "items" in fields and isinstance(fields["items"], list):
-            color_idx = 0
             for item in fields["items"]:
                 if isinstance(item, dict) and "text" in item and isinstance(item["text"], str):
+                    # Tự động bọc thêm nếu thiếu
+                    item["text"] = auto_wrap_missing_ems(item["text"])
+                    
                     text = item["text"]
                     parts = re.split(r'<(?:em|em[^>]*)>(.*?)</em[^>]*>', text, flags=re.IGNORECASE)
                     new_text = []
+                    color_idx = 0
                     for i, part in enumerate(parts):
                         if i % 2 == 0:
                             new_text.append(part)
@@ -134,8 +237,8 @@ def process_highlights(data: dict) -> dict:
                             color_idx += 1
                     item["text"] = "".join(new_text)
 
-    # For S1, S4, S6, make sure we use plain <em> tags (no class)
-    for sid in ["s1", "s4", "s6"]:
+    # For S1, S6, make sure we use plain <em> tags (no class)
+    for sid in ["s1", "s6"]:
         if "scenes" in data and sid in data["scenes"]:
             scene = data["scenes"][sid]
             fields = scene.get("fields", scene)

@@ -1,12 +1,13 @@
 {
   "vicon": {
-    "name": "👶 Vì Con không thể đợi",
+    "name": "👶 Vì Con không thể đợi (Brand KID)",
     "output_dir": "E:\\HuuDat\\VIDEO\\FACEBOOK\\01__Vi_Con",
     "default_voice": "TT_06",
     "default_template": "01_Text_ViCon",
     "brand_watermark": "PK NHI BOOM BOOM",
     "default_hashtag": "#NuoiDayCon",
-    "note": "Giọng Nữ TT_06 | Nuôi dạy con & Y khoa nhi"
+    "script_master_prompt": ".agent/skills/video-9x16/references/master_prompt_kid.md",
+    "note": "Giọng Nữ TT_06 | Nuôi dạy con & Y khoa nhi | Áp dụng Master Prompt Y khoa & Thấu cảm"
   },
   "gocnho": {
     "name": "📚 Góc nhỏ - Sách & Đời",

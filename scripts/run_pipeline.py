@@ -243,37 +243,14 @@ def ensure_vbs(out_dir: pathlib.Path, template: str):
     vbs_path = out_dir / "MO_EDITOR.vbs"
     editor_py = str((TEMPLATES / template / "editor_server.py").resolve())
     vbs_content = (
-        "' Mở Editor cho workspace này\r\n"
+        "' Mo Editor cho workspace nay\r\n"
         "Set objFSO = CreateObject(\"Scripting.FileSystemObject\")\r\n"
         "strDir = objFSO.GetParentFolderName(WScript.ScriptFullName)\r\n"
         "Set objShell = CreateObject(\"WScript.Shell\")\r\n"
         "objShell.CurrentDirectory = strDir\r\n\r\n"
-        "' Xóa file .editor_port cũ nếu có\r\n"
-        "portFile = strDir & \"\\.editor_port\"\r\n"
-        "If objFSO.FileExists(portFile) Then\r\n"
-        "    On Error Resume Next\r\n"
-        "    objFSO.DeleteFile portFile, True\r\n"
-        "    On Error GoTo 0\r\n"
-        "End If\r\n\r\n"
-        f"objShell.Run \"\"\"{PY}\"\" \"\"{editor_py}\"\" --workspace \"\"\" & strDir & \"\"\"\", 0, False\r\n\r\n"
-        "' Chờ và đọc cổng từ .editor_port (timeout 6 giây)\r\n"
-        "port = \"5050\"\r\n"
-        "For i = 1 to 30\r\n"
-        "    WScript.Sleep 200\r\n"
-        "    If objFSO.FileExists(portFile) Then\r\n"
-        "        On Error Resume Next\r\n"
-        "        Set objFile = objFSO.OpenTextFile(portFile, 1)\r\n"
-        "        port = objFile.ReadLine\r\n"
-        "        objFile.Close\r\n"
-        "        If Err.Number = 0 Then\r\n"
-        "            Exit For\r\n"
-        "        End If\r\n"
-        "        On Error GoTo 0\r\n"
-        "    End If\r\n"
-        "Next\r\n\r\n"
-        "objShell.Run \"http://localhost:\" & port & \"/\", 1, False\r\n"
+        f"objShell.Run \"\"\"{PY}\"\" \"\"{editor_py}\"\" --workspace \"\"\" & strDir & \"\"\"\", 0, False\r\n"
     )
-    vbs_path.write_text(vbs_content, encoding="utf-8")
+    vbs_path.write_text(vbs_content, encoding="utf-16")
     return vbs_path
 
 
@@ -429,6 +406,13 @@ def main():
     tpl_dir = TEMPLATES / template
     assert tpl_dir.exists(), f"Template missing: {tpl_dir}"
 
+    # ============ STEP 1.5: Ensure MO_EDITOR.vbs (Tạo sớm theo yêu cầu của Sếp) ============
+    try:
+        ensure_vbs(out_dir, template)
+        print(f"  ✓ Khởi tạo sớm MO_EDITOR.vbs tại: {out_dir}")
+    except Exception as e:
+        print(f"  ⚠ Lỗi khởi tạo sớm VBS: {e}")
+
     # ============ STEP 2: Fill content.json (LLM) ============
     target_content = out_dir / "content.json"
     if target_content.exists():
@@ -474,15 +458,27 @@ def main():
                 print(f"  ⚠ Lỗi cập nhật profile cho content.json: {e}")
 
     # ============ STEP 3: Gen voice ============
-    existing_wavs = list(out_dir.glob("TT_*.wav"))
+    existing_wavs = sorted(list(out_dir.glob("TT_*.wav")), key=lambda p: p.stat().st_mtime, reverse=True)
+    
+    script_changed = False
     if existing_wavs:
+        script_file_path = out_dir / "script.txt"
+        if script_file_path.exists():
+            # Nếu script.txt được sửa đổi sau khi file voice mới nhất được sinh ra
+            if script_file_path.stat().st_mtime > existing_wavs[0].stat().st_mtime:
+                script_changed = True
+                print("  [SYSTEM] Phát hiện script.txt mới được chỉnh sửa. Sẽ sinh file voice mới.")
+
+    if existing_wavs and not script_changed:
         wav = existing_wavs[0]
         wav_filename = wav.name
         args.skip_voice = True
-        print(f"  [SYSTEM] Phát hiện file voice đã có sẵn trong thư mục dự án: '{wav_filename}'. Tự động tái sử dụng.")
+        print(f"  [SYSTEM] Phát hiện file voice đã có sẵn trong thư mục dự án và kịch bản không đổi: '{wav_filename}'. Tự động tái sử dụng.")
     else:
+        # Sinh file voice mới với timestamp mới linh hoạt
         wav_filename = f"TT_{ts}.wav"
         wav = out_dir / wav_filename
+        args.skip_voice = False
 
     if args.skip_voice and wav.exists():
         step(3, f"SKIP voice gen (use existing {wav.name})")
@@ -499,14 +495,24 @@ def main():
     # ============ STEP 4: Transcribe ============
     step(4, "Transcribe voice (faster-whisper base)")
     tr_file = out_dir / "transcript.json"
-    if tr_file.exists():
-        print(f"  [SYSTEM] Phát hiện transcript.json đã tồn tại: {tr_file.name}. Tự động tái sử dụng.")
+    
+    # Chỉ tái sử dụng transcript.json cũ nếu nó tồn tại VÀ mới hơn file voice wav
+    skip_transcribe = False
+    if tr_file.exists() and wav.exists():
+        if tr_file.stat().st_mtime > wav.stat().st_mtime:
+            skip_transcribe = True
+            
+    if skip_transcribe:
+        print(f"  [SYSTEM] Phát hiện transcript.json đã tồn tại và mới hơn file voice: {tr_file.name}. Tự động tái sử dụng.")
         class MockResult:
             returncode = 0
             stdout = "Tái sử dụng transcript.json có sẵn"
             stderr = ""
         tr_result = MockResult()
     else:
+        # Nếu có transcript.json cũ nhưng file voice mới hơn, xóa transcript cũ đi để bắt buộc chạy lại Whisper
+        if tr_file.exists():
+            tr_file.unlink()
         tr_result = transcribe(wav, tr_file)
     print(tr_result.stdout[-500:] if tr_result.stdout else "")
     if tr_result.returncode != 0:

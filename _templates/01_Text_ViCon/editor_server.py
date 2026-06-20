@@ -17,16 +17,7 @@ if sys.stdout is not None:
     except Exception:
         pass
 
-# Logging to file để debug crash
-import logging
-_log_path = Path(__file__).parent / "_editor_debug.log"
-logging.basicConfig(
-    filename=str(_log_path), filemode="a",
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    level=logging.INFO, encoding="utf-8"
-)
-logging.info("=" * 60)
-logging.info(f"Editor server starting, PID={os.getpid()}")
+# Logging to file se duoc cau hinh sau khi xac dinhh WORK
 
 # Catch unhandled exceptions
 def _excepthook(exc_type, exc_value, exc_tb):
@@ -75,7 +66,7 @@ def clean_boom_boom(text: str) -> str:
     if not text: return text
     return re.sub(r'\bbom[- ]?bom\b', 'BOOM BOOM', text, flags=re.IGNORECASE)
 
-def safe_write_file(file_path: Path, content, is_binary: bool = False):
+def safe_write_file(file_path: Path, content, is_binary: bool = False, encoding: str = "utf-8"):
     """Ghi đè an toàn xuống đĩa bằng file tạm và os.fsync."""
     tmp_path = file_path.with_suffix(file_path.suffix + ".tmp")
     try:
@@ -85,7 +76,7 @@ def safe_write_file(file_path: Path, content, is_binary: bool = False):
                 f.flush()
                 os.fsync(f.fileno())
         else:
-            with open(tmp_path, "w", encoding="utf-8") as f:
+            with open(tmp_path, "w", encoding=encoding) as f:
                 f.write(content)
                 f.flush()
                 os.fsync(f.fileno())
@@ -120,11 +111,23 @@ def watchdog():
 import argparse as _ap_mod
 _ap = _ap_mod.ArgumentParser()
 _ap.add_argument("--workspace", default=None, help="Folder chứa index.html + narration.wav")
+_ap.add_argument("--open-browser", action="store_true", help="Tự động mở trình duyệt sau khi start")
 _args, _ = _ap.parse_known_args()
 WORK = Path(_args.workspace).resolve() if _args.workspace else Path.cwd()
 INDEX = WORK / "index.html"
 PORT = 5050
 print(f"[editor_server] WORK = {WORK}")
+
+# Logging to file để debug crash (ghi vào workspace dự án để tránh tranh chấp file lock)
+import logging
+_log_path = WORK / "_editor_debug.log"
+logging.basicConfig(
+    filename=str(_log_path), filemode="a",
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    level=logging.INFO, encoding="utf-8"
+)
+logging.info("=" * 60)
+logging.info(f"Editor server starting, PID={os.getpid()}")
 
 # Fields có id="..." trong index.html — Boss edit innerHTML, có thể chứa <em>, <br>
 FIELDS = [
@@ -158,7 +161,14 @@ def get_inner(html, elem_id):
     return m.group("inner").strip() if m else ""
 
 def _find_voice_wav(work_dir: Path):
-    """Tìm file voice .wav trong workspace. Ưu tiên content.json voice.file → fallback latest .wav theo mtime."""
+    """Tìm file voice .wav trong workspace. Ưu tiên latest .wav theo mtime trên đĩa (bỏ qua narration.wav),
+    nếu không có thì fallback theo content.json hoặc file bất kỳ."""
+    wavs = [p for p in work_dir.glob("*.wav") if p.name != "narration.wav" and not p.name.endswith(".tmp")]
+    if wavs:
+        # Sắp xếp mtime giảm dần (mới nhất lên đầu)
+        wavs = sorted(wavs, key=lambda p: p.stat().st_mtime, reverse=True)
+        return wavs[0]
+        
     co_file = work_dir / "content.json"
     if co_file.exists():
         try:
@@ -168,8 +178,83 @@ def _find_voice_wav(work_dir: Path):
                 p = work_dir / fn
                 if p.exists(): return p
         except Exception: pass
-    wavs = sorted(work_dir.glob("*.wav"), key=lambda p: p.stat().st_mtime, reverse=True)
-    return wavs[0] if wavs else None
+    all_wavs = sorted(work_dir.glob("*.wav"), key=lambda p: p.stat().st_mtime, reverse=True)
+    return all_wavs[0] if all_wavs else None
+
+
+def _get_absolute_latest_wav(work_dir: Path):
+    """Tìm file .wav có mtime mới nhất trên đĩa (bỏ qua narration.wav và các file tmp)."""
+    wavs = [p for p in work_dir.glob("*.wav") if p.name != "narration.wav" and not p.name.endswith(".tmp")]
+    if not wavs:
+        return None
+    wavs = sorted(wavs, key=lambda p: p.stat().st_mtime, reverse=True)
+    return wavs[0]
+
+
+def sync_latest_voice(work_dir: Path):
+    """Tự động đồng bộ file voice mới nhất trên đĩa vào content.json và index.html."""
+    try:
+        latest_wav = _get_absolute_latest_wav(work_dir)
+        if not latest_wav:
+            return
+        
+        vname = latest_wav.name
+        
+        # 1. Cập nhật content.json
+        co_file = work_dir / "content.json"
+        if co_file.exists():
+            try:
+                co = json.loads(co_file.read_text(encoding="utf-8"))
+                if "voice" not in co:
+                    co["voice"] = {}
+                
+                old_file = co["voice"].get("file")
+                if old_file != vname:
+                    co["voice"]["file"] = vname
+                    # Probe duration bằng ffprobe
+                    try:
+                        out = subprocess.run(
+                            ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(latest_wav)],
+                            capture_output=True, text=True, timeout=5
+                        ).stdout.strip()
+                        if out:
+                            co["voice"]["duration"] = round(float(out), 3)
+                    except Exception as ex:
+                        print(f"[SYSTEM] [sync] ffprobe duration fail: {ex}")
+                    
+                    safe_write_file(co_file, json.dumps(co, indent=2, ensure_ascii=False))
+                    print(f"[SYSTEM] [sync] Tự động cập nhật content.json voice -> {vname}")
+            except Exception as ex_json:
+                print(f"[SYSTEM] [sync] Đọc/ghi content.json fail: {ex_json}")
+        
+        # 2. Cập nhật index.html tag <audio> src
+        index_file = work_dir / "index.html"
+        if index_file.exists():
+            html = index_file.read_text(encoding="utf-8")
+            match_aud = re.search(r'(<audio[^>]*\bid="narration"[^>]*\bsrc=")([^"]+)(")', html)
+            if match_aud:
+                old_src = match_aud.group(2)
+                if old_src != vname:
+                    html = re.sub(
+                        r'(<audio[^>]*\bid="narration"[^>]*\bsrc=")([^"]+)(")',
+                        rf'\g<1>{vname}\g<3>',
+                        html
+                    )
+                    safe_write_file(index_file, html)
+                    print(f"[SYSTEM] [sync] Tự động cập nhật index.html audio src -> {vname}")
+            else:
+                match_any_aud = re.search(r'(<audio[^>]*\bsrc=")([^"]+)(")', html)
+                if match_any_aud and match_any_aud.group(2) != vname:
+                    html = re.sub(
+                        r'(<audio[^>]*\bsrc=")([^"]+)(")',
+                        rf'\g<1>{vname}\g<3>',
+                        html,
+                        count=1
+                    )
+                    safe_write_file(index_file, html)
+                    print(f"[SYSTEM] [sync] Tự động cập nhật index.html (any) audio src -> {vname}")
+    except Exception as e:
+        print(f"[SYSTEM] [sync] sync_latest_voice error: {e}")
 
 
 def set_inner(html, elem_id, new_inner):
@@ -316,8 +401,8 @@ button.btn-template:hover, html body #app #topbar button.btn-template:hover { ba
 #status.err { color: #ff0000; }
 #status.busy { color: #ffcc00; }
 
-.gallery { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; align-items: start; }
-.thumb { box-sizing: content-box; aspect-ratio: 9 / 16; position: relative; overflow: hidden; border-radius: 10px; border: 2px solid #2a2a30; background: #0a1820; transition: border-color 0.2s; }
+.gallery { display: grid; grid-template-columns: repeat(5, 1fr) !important; gap: 12px; align-items: start; }
+.thumb { box-sizing: content-box; aspect-ratio: 9 / 16; position: relative; overflow: hidden; border-radius: 10px; border: 2px solid #2a2a30; background: #0a1820; transition: border-color 0.2s; min-width: 0; }
 .thumb iframe { position: absolute; top: 0; left: 0; width: 1080px; height: 1920px; transform-origin: top left; border: none; pointer-events: auto; }
 .thumb.active { border-color: #ff7a2a; }
 .thumb-label { position: absolute; top: 6px; left: 6px; z-index: 100; background: rgba(255,122,42,0.95); color: #000; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 3px; letter-spacing: 0.5px; }
@@ -1083,6 +1168,10 @@ function applyStylesToThumb(rootEl) {
       for (const p in props) {
         const v = props[p];
         if (v && String(v).trim()) {
+          // Bỏ qua ghi đè màu trắng mặc định lên thẻ em highlight để tránh mất màu Teal/Orange trên Editor
+          if (sel.includes('em') && p === 'color' && (v === '#ffffff' || v === 'rgb(255, 255, 255)')) {
+            continue;
+          }
           if (el.style.getPropertyValue(p)) {
             continue;
           }
@@ -1165,14 +1254,20 @@ function _renderForm_old() {
 
 async function reload() {
   setStatus('Loading…');
-  const r = await fetch('/load');
-  const j = await r.json();
-  STATE = j;
-  // Convert <br> → \n cho textarea hiển thị xuống dòng đẹp
-  for (const k in STATE.data) STATE.data[k] = brToNewline(STATE.data[k]);
-  renderForm();
-  renderGallery();
-  setStatus('Ready', 'ok');
+  try {
+    const r = await fetch('/load');
+    const j = await r.json();
+    STATE = j;
+    // Convert <br> → \n cho textarea hiển thị xuống dòng đẹp
+    for (const k in STATE.data) STATE.data[k] = brToNewline(STATE.data[k]);
+    renderForm();
+    renderGallery();
+    await refreshVoiceInfo();
+    setStatus('Ready', 'ok');
+  } catch (e) {
+    console.error('[reload] fail:', e);
+    setStatus('Load failed', 'err');
+  }
 }
 
 function savePayload() {
@@ -1233,7 +1328,6 @@ async function render() {
 
 wireStyleBar();
 reload();
-refreshVoiceInfo();
 
 async function openFolder() {
   try {
@@ -1250,7 +1344,9 @@ async function refreshVoiceInfo() {
     } else {
       btn.textContent = '🎤 Chưa có voice — click để chọn';
     }
-  } catch(e) {}
+  } catch(e) {
+    console.error('[refreshVoiceInfo] fail:', e);
+  }
 }
 
 function pickVoice() {
@@ -1371,7 +1467,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
         self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(body)
@@ -1379,6 +1477,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = urllib.parse.urlparse(self.path).path
         if path == "/":
+            sync_latest_voice(WORK)
             # Inject CSS từ workspace index.html → editor preview render = MP4 render
             html_serve = EDITOR_HTML
             try:
@@ -1438,6 +1537,7 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 self._send(404, "text/plain", "Font not found")
         elif path == "/load":
+            sync_latest_voice(WORK)
             html = INDEX.read_text(encoding="utf-8")
             data = {f["id"]: clean_boom_boom(get_inner(html, f["id"])) for f in FIELDS}
             styles = {sf["sel"]: {p: get_css(html, sf["sel"], p) for p in sf["props"]} for sf in STYLE_FIELDS}
@@ -1459,6 +1559,7 @@ class Handler(BaseHTTPRequestHandler):
             LAST_HEARTBEAT = time.time()
             self._send(200, "application/json", '{"ok":true}')
         elif path.startswith("/preview/"):
+            sync_latest_voice(WORK)
             # Serve index.html nhưng inject CSS+JS để chỉ show 1 scene + contenteditable + postMessage sync
             try:
                 n = int(path.rsplit("/", 1)[-1].split("?")[0])
@@ -1529,6 +1630,7 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 self._send(404, "text/plain", "no audio")
         elif path == "/voice-info":
+            sync_latest_voice(WORK)
             wav = _find_voice_wav(WORK)
             info = {"exists": False, "filename": "", "size": 0, "duration": 0}
             if wav and wav.exists():
@@ -1735,6 +1837,38 @@ class Handler(BaseHTTPRequestHandler):
             if Handler.render_status["running"]:
                 self._send(409, "application/json", '{"ok":false,"msg":"already running"}')
                 return
+            
+            # Tự động dò tìm file voice gốc và đồng bộ cấu hình trong index.html + content.json (giữ nguyên tên file của Sếp)
+            try:
+                wav_file = _find_voice_wav(WORK)
+                if wav_file and wav_file.exists():
+                    vname = wav_file.name
+                    # 1. Đồng bộ content.json
+                    co_file = WORK / "content.json"
+                    if co_file.exists():
+                        co = json.loads(co_file.read_text(encoding="utf-8"))
+                        if co.get("voice", {}).get("file") != vname:
+                            if "voice" not in co: co["voice"] = {}
+                            co["voice"]["file"] = vname
+                            safe_write_file(co_file, json.dumps(co, ensure_ascii=False, indent=2))
+                            print(f"[SYSTEM] [render] Auto sync content.json voice.file = {vname}")
+                    
+                    # 2. Đồng bộ index.html tag <audio> src
+                    if INDEX.exists():
+                        html = INDEX.read_text(encoding="utf-8")
+                        # Tìm src hiện tại của audio tag narration
+                        match_aud = re.search(r'(<audio[^>]*\bid="narration"[^>]*\bsrc=")([^"]+)(")', html)
+                        if match_aud and match_aud.group(2) != vname:
+                            html = re.sub(
+                                r'(<audio[^>]*\bid="narration"[^>]*\bsrc=")([^"]+)(")',
+                                rf'\g<1>{vname}\g<3>',
+                                html
+                            )
+                            safe_write_file(INDEX, html)
+                            print(f"[SYSTEM] [render] Auto sync index.html audio src = {vname}")
+            except Exception as e:
+                print(f"[SYSTEM] [render] Auto sync voice file failed: {e}")
+
             Handler.render_status["running"] = True
             globals()["RENDER_IS_RUNNING"] = lambda: Handler.render_status["running"]
             Handler.render_status["last_out"] = "Starting render…"
@@ -1775,6 +1909,9 @@ class Handler(BaseHTTPRequestHandler):
             threading.Thread(target=do_render, daemon=True).start()
             self._send(202, "application/json", '{"ok":true,"msg":"render started"}')
         elif path == "/shutdown":
+            if Handler.render_status["running"]:
+                self._send(409, "application/json", '{"ok":false,"msg":"rendering"}')
+                return
             self._send(200, "application/json", '{"ok":true}')
             threading.Thread(target=lambda: (time.sleep(0.2), os._exit(0)), daemon=True).start()
         elif path == "/open-folder":
@@ -1846,28 +1983,98 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    # Thử tắt server cũ đang chạy ngầm trên cổng 5050
+    # Tự động kill tiến trình cha wscript.exe (nếu khởi chạy từ VBScript) để tránh VBScript mở tab trùng lặp
     try:
-        import urllib.request
-        req = urllib.request.Request(f"http://127.0.0.1:{PORT}/shutdown", method="POST")
-        with urllib.request.urlopen(req, timeout=1.0) as response:
-            print(f"[SYSTEM] Đã gửi lệnh shutdown tới server cũ ở cổng {PORT}")
-            time.sleep(0.6)  # Đợi 0.6s để socket được giải phóng hoàn toàn
-    except Exception as e:
-        # Không có server cũ đang chạy, bỏ qua
-        pass
+        import psutil
+        import os
+        parent = psutil.Process(os.getpid()).parent()
+        if parent and "wscript" in parent.name().lower():
+            print(f"[SYSTEM] Phát hiện tiến trình cha là VBScript ({parent.name()}), thực hiện kill để tránh mở 2 tab.")
+            parent.kill()
+    except Exception as e_kill:
+        print(f"[SYSTEM] Lỗi kill tiến trình cha: {e_kill}")
+
+    import socket
+    import urllib.request
+    import json
+    import webbrowser
+    
+    def is_port_in_use(p):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            return s.connect_ex(('127.0.0.1', p)) == 0
+
+    def update_vbs_file(vbs_path: Path, p_num: int):
+        if not vbs_path.exists():
+            return
+        try:
+            content = vbs_path.read_text(encoding="utf-8-sig")
+            run_line_match = re.search(r'(objShell\.Run\s+""?.*editor_server\.py.*workspace.*)', content, re.IGNORECASE)
+            if not run_line_match:
+                return
+            run_line = run_line_match.group(1).strip()
+            # Loại bỏ hoàn toàn flag --open-browser
+            run_line = run_line.replace(" --open-browser", "")
+            # Đổi comment sang không dấu để tránh lỗi encoding trên Windows Script Host
+            new_vbs = f"""' Mo Editor cho workspace nay
+Set objFSO = CreateObject("Scripting.FileSystemObject")
+strDir = objFSO.GetParentFolderName(WScript.ScriptFullName)
+Set objShell = CreateObject("WScript.Shell")
+objShell.CurrentDirectory = strDir
+{run_line}
+"""
+            safe_write_file(vbs_path, new_vbs, encoding="utf-16")
+            print(f"[SYSTEM] Đã nâng cấp MO_EDITOR.vbs thành phiên bản tinh gọn không mở trình duyệt")
+        except Exception as e_vbs:
+            print(f"[SYSTEM] Lỗi nâng cấp MO_EDITOR.vbs: {e_vbs}")
+
+    # Đọc cổng đã lưu trước đó của dự án
+    port_file = WORK / ".editor_port"
+    target_port = 5050
+    if port_file.exists():
+        try:
+            target_port = int(port_file.read_text(encoding="utf-8").strip())
+        except Exception:
+            target_port = 5050
+
+    # Nếu cổng này đang bị chiếm dụng
+    if is_port_in_use(target_port):
+        try:
+            # Kiểm tra xem có phải đúng là server của dự án này đang chạy hay không
+            with urllib.request.urlopen(f"http://127.0.0.1:{target_port}/workspace-info", timeout=1.0) as response:
+                info = json.loads(response.read().decode("utf-8"))
+                if Path(info.get("workspace")).resolve() == WORK.resolve():
+                    print(f"[SYSTEM] Dự án này đã có server chạy ở cổng {target_port}. Tái sử dụng server cũ.")
+                    webbrowser.open(f"http://localhost:{target_port}/")
+                    sys.exit(0)
+        except Exception:
+            pass
+        
+        # Nếu là dự án khác đang chạy chiếm cổng đó, ta tự tìm cổng rỗi tiếp theo starting from 5050
+        target_port = 5050
+        while is_port_in_use(target_port):
+            target_port += 1
+
+    PORT = target_port
+    
+    # Ghi cổng vào file vĩnh viễn
+    try:
+        safe_write_file(port_file, str(PORT))
+        print(f"[SYSTEM] Đã ghi cổng {PORT} vào file .editor_port")
+    except Exception as e_port:
+        print(f"[SYSTEM] Lỗi ghi file .editor_port: {e_port}")
+
+    # Nâng cấp file VBScript trong thư mục làm việc của dự án
+    update_vbs_file(WORK / "MO_EDITOR.vbs", PORT)
 
     print(f"\nEditor: http://localhost:{PORT}/\nWorkspace: {WORK}\nPress Ctrl+C to stop.\n")
     threading.Thread(target=watchdog, daemon=True).start()
     try:
         ThreadingHTTPServer.allow_reuse_address = True
         server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
-        # Ghi cổng vào file khi socket lắng nghe thành công
-        try:
-            (WORK / ".editor_port").write_text(str(PORT), encoding="utf-8")
-            print(f"[SYSTEM] Đã ghi cổng {PORT} vào file .editor_port")
-        except Exception as e:
-            print(f"[SYSTEM] Lỗi ghi file .editor_port: {e}")
+        
+        # Tự động mở trình duyệt khi khởi chạy chủ động
+        webbrowser.open(f"http://localhost:{PORT}/")
+                
         server.serve_forever()
     except KeyboardInterrupt:
         print("\nStopped.")
