@@ -8,9 +8,18 @@ Workflow:
   4. Save → ghi index.html
   5. Gen Video → render mp4 → ra `out_latest.mp4`
 """
-import json, re, subprocess, threading, sys, urllib.parse, time, os
+import json, re, subprocess, threading, sys, urllib.parse, time, os, shutil
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+
+def get_path_from_query(url_str):
+    query = urllib.parse.urlparse(url_str).query
+    params = urllib.parse.parse_qs(query)
+    path_str = params.get("path", [None])[0]
+    if path_str:
+        return Path(path_str).resolve()
+    return WORK
+
 if sys.stdout is not None:
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -333,7 +342,6 @@ def set_css(html, sel, prop, value):
             new_body = body.rstrip() + f"\n  {prop}: {value};\n"
         return html[:start] + html[start:end].replace(body, new_body, 1) + html[end:]
     else:
-        # Nếu không tìm thấy rule riêng biệt cho selector này, ta append thêm rule mới vào style block đầu tiên của index.html
         style_match = re.search(r'<style[^>]*>(.*?)</style>', html, re.DOTALL)
         if style_match:
             style_content = style_match.group(1)
@@ -346,17 +354,18 @@ def set_css(html, sel, prop, value):
 
 
 EDITOR_HTML = r"""<!DOCTYPE html>
-<html lang="vi"><head><meta charset="UTF-8"><title>Editor — tre_em_hieu_dong_vs_tang_dong</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<html lang="vi"><head><meta charset="UTF-8"><title>B.SIMPLE Workspace Editor — Multi-Project Trạm Biên Tập</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; }
-body { margin: 0; background: #0d0d0d; color: #eee; font-family: "Inter", sans-serif; height: 100vh; overflow: hidden; }
-#app { display: grid; grid-template-rows: 56px auto 1fr; height: 100vh; }
-#topbar { display: flex; align-items: center; padding: 0 20px; background: #0d0d0d; border-bottom: 1px solid #443311; gap: 12px; }
-#topbar h2 { margin: 0; font-size: 16px; color: #D4AF37; min-width: 0; font-weight: 800; letter-spacing: 1px; display: flex; align-items: flex-start; gap: 6px; }
-#topbar button, #topbar #status { flex-shrink: 0; }
-#main { padding: 18px; overflow-y: auto; background: #0d0d0d; }
-#stylebar { background: #050505; border-bottom: 1px solid #443311; padding: 12px 20px; display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; }
+body { margin: 0; background: #0d0d0d; color: #eee; font-family: "Outfit", sans-serif; height: 100vh; overflow: hidden; }
+#app { display: grid; grid-template-rows: 64px auto 1fr; height: 100vh; }
+#topbar { display: flex; align-items: center; padding: 0 20px; background: #0d0d0d; border-bottom: 1px solid #443311; gap: 16px; }
+#topbar h2 { margin: 0; font-size: 16px; color: #D4AF37; min-width: 0; font-weight: 800; letter-spacing: 1.5px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; }
+#topbar button { flex-shrink: 0; }
+#main { padding: 20px; overflow-y: auto; background: #0d0d0d; }
+#stylebar { background: #050505; border-bottom: 1px solid #443311; padding: 12px 20px; display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; display: none; }
+#stylebar.show { display: flex; }
 #stylebar .target { font-size: 12px; color: #D4AF37; font-weight: 700; min-width: 90px; }
 #stylebar .grp { display: flex; gap: 4px; align-items: center; background: #050505; padding: 3px 8px; border-radius: 4px; border: 1px solid #443311; }
 #stylebar .grp label { font-size: 9px; color: #D4AF37; text-transform: uppercase; }
@@ -364,110 +373,107 @@ body { margin: 0; background: #0d0d0d; color: #eee; font-family: "Inter", sans-s
 #stylebar input[type="text"] { min-width: 45px; }
 #stylebar .bump { cursor: pointer; user-select: none; touch-action: manipulation; }
 #stylebar .bump:active { transform: scale(0.95); }
-/* Width sẽ được JS autosizeInput set theo content thật — không hardcode */
 #stylebar input::-webkit-outer-spin-button, #stylebar input::-webkit-inner-spin-button { display: none; }
 #stylebar input:focus { outline: none; }
 .swatch { width: 18px; height: 18px; border-radius: 3px; border: 1.5px solid #443311; cursor: pointer; padding: 0; transition: transform 0.1s, border-color 0.1s; }
 .swatch:hover { transform: scale(1.2); border-color: #D4AF37; }
 .bump { width: 20px; height: 20px; background: transparent; color: #D4AF37; border: 1px solid #443311; border-radius: 3px; cursor: pointer; font-size: 13px; font-weight: 700; line-height: 1; padding: 0; margin-left: 4px; }
 .bump:hover { background-color: rgba(212, 175, 55, 0.5); color: #000; border-color: #FFD700; }
-.toolbar { display: flex; gap: 10px; margin-bottom: 14px; align-items: center; }
-.toolbar h2 { margin: 0; font-size: 15px; color: #D4AF37; flex: 1; }
-[contenteditable="true"] { cursor: text; transition: outline 0.1s; }
-[contenteditable="true"]:hover { outline: 2px dashed rgba(212, 175, 55, 0.6); outline-offset: 4px; }
-[contenteditable="true"]:focus { outline: 2px solid #D4AF37; outline-offset: 4px; }
 
 /* Golden Obsidian Buttons */
-button { background: transparent; color: #D4AF37; border: 1px solid #D4AF37; padding: 9px 10px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 13px; letter-spacing: 0.5px; transition: all 0.2s ease-in-out; }
+button { background: transparent; color: #D4AF37; border: 1px solid #D4AF37; padding: 8px 16px; border-radius: 4px; font-weight: 700; cursor: pointer; font-size: 12px; letter-spacing: 0.5px; transition: all 0.2s ease-in-out; text-transform: uppercase; }
 button:hover { background-color: rgba(212, 175, 55, 0.5); color: #000; border: 1px solid #FFD700; }
-button.secondary { background: transparent; color: #D4AF37; border: 1px solid #443311; }
-button.secondary:hover { background-color: rgba(212, 175, 55, 0.2); color: #fff; border-color: #D4AF37; }
-button.secondary.active {
-  background-color: rgba(212, 175, 55, 0.8) !important;
-  color: #000 !important;
-  border-color: #FFD700 !important;
-}
+button.secondary { background: transparent; color: #888; border: 1px solid #443311; text-transform: none; }
+button.secondary:hover { background-color: rgba(255, 255, 255, 0.05); color: #fff; border-color: #888; }
+button.secondary.active { background-color: rgba(212, 175, 55, 0.8) !important; color: #000 !important; border-color: #FFD700 !important; }
 button:disabled { opacity: 0.5; cursor: wait; }
-button.btn-gen, html body #app #topbar button.btn-gen { background: #3399ff !important; color: #000000 !important; border: 1px solid #3399ff !important; }
-button.btn-gen:hover, html body #app #topbar button.btn-gen:hover { background: #0080ff !important; border-color: #0080ff !important; color: #000000 !important; box-shadow: 0 0 15px rgba(0, 128, 255, 0.4) !important; }
-button.btn-save, html body #app #topbar button.btn-save { background: #c8b3f7 !important; color: #000000 !important; border: 1px solid #9d85d9 !important; }
-button.btn-save:hover, html body #app #topbar button.btn-save:hover { background: #9d85d9 !important; color: #000000 !important; border-color: #c8b3f7 !important; box-shadow: 0 0 15px rgba(157, 133, 217, 0.4) !important; }
-button.btn-template, html body #app #topbar button.btn-template { background: #b37d4e !important; color: #000000 !important; border: 1px solid #b37d4e !important; }
-button.btn-template:hover, html body #app #topbar button.btn-template:hover { background: #966436 !important; color: #000000 !important; border-color: #dcb38a !important; box-shadow: 0 0 15px rgba(179, 125, 78, 0.4) !important; }
 
-/* Status */
-#status { font-size: 12px; color: #D4AF37; padding: 6px 10px; background: #050505; border-radius: 4px; min-width: 150px; text-align: center; border: 1px solid #443311; margin-left: auto; }
-#status.ok { color: #00ffcc; }
-#status.err { color: #ff0000; }
-#status.busy { color: #ffcc00; }
+button.btn-visual { background: transparent; color: #ff9900; border-color: #ff9900; }
+button.btn-visual:hover { background: rgba(255, 153, 0, 0.5); color: #000; border-color: #ffaa00; }
+button.btn-voice { background: transparent; color: #00ccff; border-color: #00ccff; }
+button.btn-voice:hover { background: rgba(0, 204, 255, 0.5); color: #000; border-color: #33ddff; }
+button.btn-video { background: transparent; color: #00ff99; border-color: #00ff99; }
+button.btn-video:hover { background: rgba(0, 255, 153, 0.5); color: #000; border-color: #33ffaa; }
 
-.gallery { display: grid; grid-template-columns: repeat(5, 1fr) !important; gap: 12px; align-items: start; }
-.thumb { box-sizing: content-box; aspect-ratio: 9 / 16; position: relative; overflow: hidden; border-radius: 10px; border: 2px solid #2a2a30; background: #0a1820; transition: border-color 0.2s; min-width: 0; }
-.thumb iframe { position: absolute; top: 0; left: 0; width: 1080px; height: 1920px; transform-origin: top left; border: none; pointer-events: auto; }
-.thumb.active { border-color: #ff7a2a; }
-.thumb-label { position: absolute; top: 6px; left: 6px; z-index: 100; background: rgba(255,122,42,0.95); color: #000; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 3px; letter-spacing: 0.5px; }
-.thumb-inner { width: 1080px; height: 1920px; position: absolute; top: 0; left: 0; transform-origin: top left; overflow: hidden; }
-@font-face { font-family: 'UTM Cookies'; src: url('/fonts/UTM-Cookies.ttf') format('truetype'); font-display: swap; }
-.thumb-inner .brand-watermark { position: absolute; top: 50px; right: 50px; z-index: 100; font-family: 'UTM Cookies', cursive; font-size: 60px; font-weight: 400; letter-spacing: 1px; color: #ff7a2a; padding: 14px 30px; background: rgba(255,122,42,0.12); border: 2px solid rgba(255,122,42,0.65); border-radius: 999px; text-shadow: 0 0 18px rgba(255,122,42,0.55), 0 2px 0 rgba(0,0,0,0.25); text-transform: uppercase; pointer-events: none; }
-.thumb-inner .tagline-footer { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 100; font-family: 'Inter', sans-serif; font-size: 26px; font-weight: 600; letter-spacing: 4px; color: #6db8b8; text-transform: uppercase; white-space: nowrap; pointer-events: none; text-shadow: 0 0 14px rgba(77,204,204,0.4); }
+/* Progress */
+#batchProgressContainer { display: none; align-items: center; gap: 12px; background: #050505; border: 1px solid #443311; padding: 6px 12px; border-radius: 4px; font-size: 12px; color: #ffcc00; margin-left: auto; max-width: 450px; }
+.progress-bar-bg { width: 100px; height: 8px; background: #221100; border-radius: 4px; overflow: hidden; border: 1px solid #443311; }
+.progress-bar-fg { height: 100%; background: #D4AF37; width: 0%; transition: width 0.3s; }
 
-.thumb-inner em { font-style: normal; font-weight: 700; color: #4dcccc !important; text-shadow: 0 0 20px rgba(77,204,204,0.6) !important; }
-.thumb-inner em.hl-teal { color: #4dcccc !important; font-style: normal; font-weight: 700; text-shadow: 0 0 20px rgba(77,204,204,0.6) !important; }
-.thumb-inner em.hl-orange { color: #ff7a2a !important; font-style: normal; font-weight: 700; text-shadow: 0 0 20px rgba(255,122,42,0.6) !important; }
-.thumb-inner .s1-title em { color: #ff7a2a !important; font-style: normal; font-weight: 900; text-shadow: 0 0 25px rgba(255,122,42,0.75) !important; }
-.thumb-inner .s6-title em { color: #ff7a2a !important; font-style: normal; font-weight: 900; text-shadow: 0 0 25px rgba(255,122,42,0.75) !important; }
+/* Table styles */
+table { width: 100%; border-collapse: collapse; background: #0d0d0d; border: 1px solid #443311; font-size: 12px; }
+th, td { border: 1px solid #443311; padding: 8px 10px; text-align: left; vertical-align: middle; }
+th { background: #050505; color: #D4AF37; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+tr:hover { background: #121212; }
+tr.published-row { opacity: 0.65; }
 
-.scene-section { margin-bottom: 22px; padding-bottom: 14px; border-bottom: 1px solid #2a2a30; }
-.scene-section h3 { margin: 0 0 10px; color: #ff7a2a; font-size: 14px; letter-spacing: 1px; }
-.field { margin-bottom: 10px; }
-.field label { display: block; font-size: 11px; color: #888; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
-.field textarea { width: 100%; background: #0a0a0a; color: #fff; border: 1px solid #2a2a30; border-radius: 4px; padding: 8px 10px; font-family: "Inter", monospace; font-size: 13px; resize: vertical; }
-.field textarea:focus { outline: none; border-color: #ff7a2a; }
-.hint { font-size: 10px; color: #555; margin-top: 4px; }
-.style-panel { background: #0d0d0f; border: 1px solid #1f1f24; border-radius: 4px; padding: 8px 10px; margin-bottom: 10px; }
-.style-panel summary { font-size: 11px; color: #4dcccc; cursor: pointer; padding: 2px 0; letter-spacing: 0.5px; text-transform: uppercase; outline: none; }
-.style-row { display: grid; grid-template-columns: 110px 1fr; gap: 6px; margin-top: 6px; align-items: center; }
-.style-row label { font-size: 10px; color: #888; text-transform: uppercase; }
-.style-row input { width: 100%; background: #0a0a0a; color: #fff; border: 1px solid #2a2a30; border-radius: 3px; padding: 4px 8px; font-family: monospace; font-size: 12px; }
-.style-row input:focus { outline: none; border-color: #4dcccc; }
-#renderLog { background: #0a0a0a; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 11px; white-space: pre-wrap; color: #aaa; max-height: 200px; overflow-y: auto; margin-top: 12px; }
-#stylebar:not(.show) .grp,
-#stylebar:not(.show) .swatch,
-#stylebar:not(.show) button {
-  opacity: 0.3;
-  pointer-events: none;
-  user-select: none;
+/* Custom Checkbox */
+input[type="checkbox"] { accent-color: #D4AF37; cursor: pointer; width: 16px; height: 16px; }
+
+/* Scene frame */
+.scene-col { width: 98px; text-align: center; }
+.iframe-container { position: relative; width: 90px; height: 160px; background: #050505; border: 1px solid #443311; border-radius: 4px; overflow: hidden; margin: 0 auto; }
+.iframe-container iframe { position: absolute; top: 0; left: 0; width: 1080px; height: 1920px; transform: scale(0.083333); transform-origin: top left; border: none; }
+.iframe-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: transparent; cursor: pointer; z-index: 5; }
+.iframe-container.editing { border-color: #D4AF37; box-shadow: 0 0 10px rgba(212, 175, 55, 0.4); }
+.iframe-container.editing .iframe-overlay { display: none; }
+
+/* Mini Player */
+.audio-mini { width: 100%; max-width: 140px; height: 28px; background: transparent; outline: none; }
+.video-mini { width: 90px; height: 160px; object-fit: cover; border-radius: 4px; border: 1px solid #443311; background: #000; cursor: pointer; }
+
+/* Warning pulse */
+@keyframes pulse-red {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
 }
+.warning-badge { display: flex; align-items: center; gap: 4px; color: #ff3333; font-size: 9px; font-weight: 800; animation: pulse-red 1.2s infinite; margin-top: 6px; }
+.btn-quick { background: transparent; color: #D4AF37; border: 1px solid #D4AF37; font-size: 9px; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-weight: 700; margin-top: 4px; display: inline-block; text-transform: uppercase; }
+.btn-quick:hover { background: #D4AF37; color: #000; }
+
+.status-badge { display: inline-block; padding: 3px 8px; border-radius: 99px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+.status-badge.draft { background: #222; color: #aaa; border: 1px solid #444; }
+.status-badge.approved { background: #221100; color: #ff9900; border: 1px solid #663300; }
+.status-badge.published { background: #002211; color: #00ff99; border: 1px solid #006633; }
+
+#renderLog { background: #050505; padding: 12px; border-radius: 4px; font-family: monospace; font-size: 11px; white-space: pre-wrap; color: #aaa; max-height: 180px; overflow-y: auto; margin-top: 15px; border: 1px solid #443311; }
 </style>
 </head><body>
 <div id="app">
   <div id="topbar">
-    <h2 id="openFolderBtn" style="cursor:pointer; user-select:none;" title="Mở thư mục workspace" onclick="openFolder()">📁 FOLDER</h2>
-    <button class="secondary" id="voiceBtn" onclick="pickVoice()" title="Click để chọn file voice (.wav)">🎤 Voice: ...</button>
-    <input type="file" id="voiceFile" accept="audio/wav,.wav" style="display:none">
-    <div id="status">Loading…</div>
-    <button class="secondary" onclick="reload()">Reload</button>
-    <button class="btn-save" onclick="save()">💾 SAVE</button>
-    <button class="btn-template" onclick="showTemplateModal()">💾 TEMPLATE</button>
-    <button class="btn-gen" onclick="render()">🎬 GEN VIDEO</button>
+    <h2><span style="font-size: 20px;">📁</span> Multi-Project Workspace: <span id="workspaceTitle">Loading...</span></h2>
+    
+    <!-- Progress bar chạy ngầm -->
+    <div id="batchProgressContainer">
+      <span id="batchProgressText">⚙️ Đang xử lý...</span>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fg" id="batchProgressFg"></div>
+      </div>
+    </div>
+    
+    <div style="display: flex; gap: 10px; align-items: center; margin-left: auto;">
+      <label style="font-size: 11px; color: #D4AF37; display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;">
+        <input type="checkbox" id="hidePublishedCheckbox" checked onchange="toggleHidePublished()"> Ẩn bài đã Post
+      </label>
+      <button class="secondary" onclick="reload()">🔄 Reload</button>
+      <button class="btn-visual" onclick="triggerBatch('visual')">🎨 Gen Visual</button>
+      <button class="btn-voice" onclick="triggerBatch('voice')">🎙️ Gen Voice</button>
+      <button class="btn-video" onclick="triggerBatch('video')">🎬 Gen Video</button>
+    </div>
   </div>
+
   <div id="stylebar">
     <div class="target" style="display: flex; align-items: center; gap: 12px; min-width: 150px; flex-shrink: 0;">
       <span id="styleTarget">Click vào chữ để chỉnh font/cỡ/giãn dòng</span>
     </div>
     <div class="grp" style="margin-left: auto;"><label>font</label><input type="text" id="styFs" placeholder="130px"><button type="button" class="bump" data-target="styFs" data-delta="-2">−</button><button type="button" class="bump" data-target="styFs" data-delta="2">+</button></div>
-    <div class="grp"><label>line</label><input type="text" id="styLh" placeholder="1.5"><button type="button" class="bump" data-target="styLh" data-delta="-0.05">−</button><button type="button" class="bump" data-target="styLh" data-delta="0.05">+</button></div>
+    <div class="grp"><label>line</label><input type="text" id="styLh" placeholder="1.25"><button type="button" class="bump" data-target="styLh" data-delta="-0.05">−</button><button type="button" class="bump" data-target="styLh" data-delta="0.05">+</button></div>
     <div class="grp"><label>spacing</label><input type="text" id="styLs" placeholder="-1px"><button type="button" class="bump" data-target="styLs" data-delta="-1">−</button><button type="button" class="bump" data-target="styLs" data-delta="1">+</button></div>
     <div class="grp"><label>gap</label><input type="text" id="styGap" placeholder="48px" style="width:60px"><button type="button" class="bump" data-target="styGap" data-delta="-4">−</button><button type="button" class="bump" data-target="styGap" data-delta="4">+</button></div>
     <div class="grp" id="grpTargetSelect" style="display: flex; gap: 6px; padding: 2px 6px; border-color: #443311; align-items: center; height: 32px;">
       <button type="button" class="secondary" id="btnSelectGeneral" style="padding: 2px 8px; font-size: 10px; border-radius: 4px; text-transform: none;">General</button>
       <button type="button" class="secondary" id="btnSelectHighlight" style="padding: 2px 8px; font-size: 10px; border-radius: 4px; text-transform: none;">Highlight</button>
-    </div>
-    <div class="grp" style="padding: 2px 6px; gap: 4px; height: 32px; display: flex; align-items: center;">
-      <label>color</label>
-      <input type="color" id="styColorPick" style="width: 28px; height: 24px; border: none; background: transparent; cursor: pointer; padding: 0;">
-      <input type="text" id="styColor" placeholder="#ffffff" style="width: 70px; display: none;">
-      <span style="color:#444;margin:0 2px">|</span>
       <button type="button" data-color="#ffffff" class="swatch" style="background:#ffffff"></button>
       <button type="button" data-color="#000000" class="swatch" style="background:#000000"></button>
       <button type="button" data-color="#ff7a2a" class="swatch" style="background:#ff7a2a"></button>
@@ -480,320 +486,41 @@ button.btn-template:hover, html body #app #topbar button.btn-template:hover { ba
       <button type="button" data-color="#cfd9d9" class="swatch" style="background:#cfd9d9"></button>
     </div>
   </div>
+
   <div id="main">
-    <div class="gallery" id="gallery"></div>
-    <div id="renderLog"></div>
+    <table id="projectTable">
+      <thead>
+        <tr>
+          <th style="width: 40px; text-align: center;"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()"></th>
+          <th style="width: 40px; text-align: center;">ID</th>
+          <th style="width: 200px;">Thư mục</th>
+          <th class="scene-col">S1 (HOOK)</th>
+          <th class="scene-col">S2 (STAT)</th>
+          <th class="scene-col">S3 (CARDS)</th>
+          <th class="scene-col">S4 (QUOTE)</th>
+          <th class="scene-col">S5 (LIST)</th>
+          <th class="scene-col">S6 (CTA)</th>
+          <th style="width: 150px;">Voice</th>
+          <th style="width: 110px; text-align: center;">Video Preview</th>
+          <th style="width: 100px; text-align: center;">Trạng thái</th>
+        </tr>
+      </thead>
+      <tbody id="projectTableBody">
+        <!-- Load dynamically -->
+      </tbody>
+    </table>
+    
+    <div id="renderLog">Workspace logs ready...</div>
   </div>
 </div>
 
 <script>
-// Templates với contenteditable + data-bind + data-sel (selector cho style bar)
-const ED = (id, sel) => `contenteditable="true" data-bind="${id}" data-sel="${sel}"`;
-const SCENE_TEMPLATES = {
-  1: (d) => `<div class="scene scene-1">
-    <div class="s1-top"><div class="s1-tag" ${ED('s1-tag','.s1-tag')}>${d['s1-tag']||''}</div></div>
-    <h1 class="s1-title" ${ED('s1-title','.s1-title')}>${d['s1-title']||''}</h1>
-    <div class="s1-bottom"><div class="s1-dot"></div><div class="s1-byline" ${ED('s1-byline','.s1-byline')}>${d['s1-byline']||''}</div></div>
-  </div>`,
-  2: (d) => `<div class="scene scene-2"><div class="s2-stat-wrap">
-    <div class="s2-big" ${ED('s2-num','.s2-big')}>${d['s2-num']||''}</div>
-    <div class="s2-label" ${ED('s2-label','.s2-label')}>${d['s2-label']||''}</div>
-    <div class="s2-note" ${ED('s2-note','.s2-note')}>${d['s2-note']||''}</div>
-  </div></div>`,
-  3: (d) => `<div class="scene scene-3">
-    <h2 class="s3-heading" ${ED('s3-heading','.s3-heading')}>${d['s3-heading']||''}</h2>
-    <div class="s3-cards">
-      <div class="s3-card s3-c1"><div class="s3-card-num" ${ED('s3-card-num-1','.s3-card-num')}>${d['s3-card-num-1']||'01'}</div><div class="s3-card-text" ${ED('s3-card-1','.s3-card-text')}>${d['s3-card-1']||''}</div></div>
-      <div class="s3-card s3-c2"><div class="s3-card-num" ${ED('s3-card-num-2','.s3-card-num')}>${d['s3-card-num-2']||'02'}</div><div class="s3-card-text" ${ED('s3-card-2','.s3-card-text')}>${d['s3-card-2']||''}</div></div>
-      <div class="s3-card s3-c3"><div class="s3-card-num" ${ED('s3-card-num-3','.s3-card-num')}>${d['s3-card-num-3']||'03'}</div><div class="s3-card-text" ${ED('s3-card-3','.s3-card-text')}>${d['s3-card-3']||''}</div></div>
-    </div></div>`,
-  4: (d) => `<div class="scene scene-4">
-    <div class="s4-quote-mark">✦</div>
-    <div class="s4-quote" ${ED('s4-quote','.s4-quote')}>${d['s4-quote']||''}</div>
-  </div>`,
-  5: (d) => `<div class="scene scene-5">
-    <h2 class="s5-heading" ${ED('s5-heading','.s5-heading')}>${d['s5-heading']||''}</h2>
-    <div class="s5-list">
-      <div class="s5-item s5-i1"><div class="s5-dot"></div><div class="s5-text" ${ED('s5-text-1','.s5-text')}>${d['s5-text-1']||''}</div></div>
-      <div class="s5-item s5-i2"><div class="s5-dot"></div><div class="s5-text" ${ED('s5-text-2','.s5-text')}>${d['s5-text-2']||''}</div></div>
-      <div class="s5-item s5-i3"><div class="s5-dot"></div><div class="s5-text" ${ED('s5-text-3','.s5-text')}>${d['s5-text-3']||''}</div></div>
-    </div></div>`,
-  6: (d) => `<div class="scene scene-6">
-    <h1 class="s6-title" ${ED('s6-title','.s6-title')}>${d['s6-title']||''}</h1>
-    <div class="s6-sub" ${ED('s6-sub','.s6-sub')}>${d['s6-sub']||''}</div>
-    <div class="s6-hashtag" ${ED('s6-hashtag','.s6-hashtag')}>${d['s6-hashtag']||''}</div>
-  </div>`,
-};
-
-const SCENE_NAMES = { 1: 'HOOK', 2: 'KHÁI NIỆM', 3: '3 DẤU HIỆU', 4: 'QUOTE', 5: 'CHA MẸ', 6: 'CTA' };
-
-let STATE = { fields: [], data: {} };
-
-// --- UNDO/REDO SYSTEM ---
-let UNDO_STACK = [];
-let REDO_STACK = [];
-const MAX_STACK = 100;
-let isTyping = false;
-let typingTimer = null;
-
-function snapshotState() {
-  return JSON.parse(JSON.stringify({
-    data: STATE.data,
-    styles: STATE.styles
-  }));
-}
-
-function pushUndo() {
-  const snap = snapshotState();
-  if (UNDO_STACK.length > 0) {
-    const last = UNDO_STACK[UNDO_STACK.length - 1];
-    if (JSON.stringify(last) === JSON.stringify(snap)) {
-      return;
-    }
-  }
-  UNDO_STACK.push(snap);
-  if (UNDO_STACK.length > MAX_STACK) {
-    UNDO_STACK.shift();
-  }
-  REDO_STACK = [];
-  console.log("[USER] Đã lưu snapshot trạng thái vào Undo Stack.");
-}
-
-function handleTypingChange() {
-  if (!isTyping) {
-    pushUndo();
-    isTyping = true;
-  }
-  clearTimeout(typingTimer);
-  typingTimer = setTimeout(() => {
-    isTyping = false;
-  }, 800);
-}
-
-function undo() {
-  if (UNDO_STACK.length === 0) {
-    console.log("[SYSTEM] Undo stack rỗng.");
-    return;
-  }
-  const current = snapshotState();
-  REDO_STACK.push(current);
-  const prev = UNDO_STACK.pop();
-  applyState(prev);
-  console.log("[SYSTEM] Thực hiện hoàn tác (Undo).");
-}
-
-function redo() {
-  if (REDO_STACK.length === 0) {
-    console.log("[SYSTEM] Redo stack rỗng.");
-    return;
-  }
-  const next = REDO_STACK.pop();
-  UNDO_STACK.push(snapshotState());
-  applyState(next);
-  console.log("[SYSTEM] Thực hiện làm lại (Redo).");
-}
-
-function applyState(state) {
-  STATE.data = state.data;
-  STATE.styles = state.styles;
-  
-  // Đồng bộ text
-  document.querySelectorAll('[data-bind]').forEach(el => {
-    const id = el.dataset.bind;
-    if (STATE.data[id] !== undefined) {
-      const htmlVal = newlineToBr(STATE.data[id]);
-      if (el.innerHTML !== htmlVal) {
-        el.innerHTML = htmlVal;
-      }
-    }
-  });
-  
-  // Đồng bộ style
-  for (let i = 1; i <= 6; i++) {
-    const el = document.getElementById('thumb-' + i);
-    if (el) applyStylesToThumb(el);
-  }
-  
-  // Cập nhật StyleBar
-  if (CURRENT_SEL) {
-    const el = document.querySelector(CURRENT_SEL);
-    if (el) {
-      const label = CURRENT_SEL.includes('em') ? 'Highlight' : null;
-      focusStyleBar(el, CURRENT_SEL, label);
-    }
-  }
-  setStatus('Đã khôi phục trạng thái', 'ok');
-}
-
-// Bắt phím nóng toàn cục
-window.addEventListener('keydown', (e) => {
-  const isZ = e.key.toLowerCase() === 'z';
-  const isY = e.key.toLowerCase() === 'y';
-  const isH = e.key.toLowerCase() === 'h';
-  if ((e.ctrlKey || e.metaKey) && isZ) {
-    e.preventDefault();
-    undo();
-  }
-  if ((e.ctrlKey || e.metaKey) && (isY || (e.shiftKey && isZ))) {
-    e.preventDefault();
-    redo();
-  }
-  if ((e.ctrlKey || e.metaKey) && isH) {
-    const activeEl = document.activeElement;
-    if (activeEl && activeEl.hasAttribute('contenteditable')) {
-      e.preventDefault();
-      const parentSel = activeEl.dataset.sel;
-      if (parentSel) {
-        let highlightSel = parentSel + " em";
-        let hlLabel = parentSel.replace(/^\./, '').toUpperCase() + " Highlight";
-        let hasHighlightSupport = true;
-        
-        if (parentSel === ".s3-card-text") {
-          highlightSel = "em.hl-teal";
-          hlLabel = "Highlight (Teal)";
-          const em = activeEl.querySelector('em');
-          if (em && em.classList.contains('hl-orange')) {
-            highlightSel = "em.hl-orange";
-            hlLabel = "Highlight (Orange)";
-          }
-        } else if (parentSel === ".s1-title") {
-          highlightSel = ".s1-title em";
-          hlLabel = "S1 Title Highlight";
-        } else if (parentSel === ".s6-title") {
-          highlightSel = ".s6-title em";
-          hlLabel = "S6 Title Highlight";
-        } else if (parentSel === ".s4-quote") {
-          highlightSel = ".s4-quote em";
-          hlLabel = "S4 Quote Highlight";
-        }
-        
-        if (hasHighlightSupport) {
-          const sel = window.getSelection();
-          if (sel.rangeCount > 0 && !sel.getRangeAt(0).collapsed) {
-            pushUndo();
-            let className = '';
-            if (highlightSel.includes('.hl-teal')) className = 'hl-teal';
-            else if (highlightSel.includes('.hl-orange')) className = 'hl-orange';
-            const newEm = makeSelectionHighlight(activeEl, className);
-            if (newEm) {
-              focusStyleBar(newEm, highlightSel, hlLabel);
-            }
-          }
-        }
-      }
-    }
-  }
-});
-// ------------------------
-
-// Enter trong textarea → tự convert thành <br> khi preview/save.
-// Load từ server thì <br> → \n để textarea hiển thị xuống dòng tự nhiên.
-const newlineToBr = (s) => (s || '').replace(/\r?\n/g, '<br>');
-const brToNewline = (s) => (s || '').replace(/<br\s*\/?>/gi, '\n');
-
-function setStatus(msg, cls = '') {
-  const s = document.getElementById('status');
-  s.textContent = msg;
-  s.className = cls;
-}
-
-function renderGallery() {
-  const g = document.getElementById('gallery');
-  g.innerHTML = '';
-  const ro = new ResizeObserver(entries => {
-    for (let entry of entries) {
-      const t = entry.target;
-      const w = t.clientWidth;
-      const inner = t.querySelector('.thumb-inner');
-      if (inner) {
-        inner.style.transform = `scale(${w / 1080})`;
-      }
-    }
-  });
-  for (let i = 1; i <= 6; i++) {
-    const thumb = document.createElement('div');
-    thumb.className = 'thumb';
-    thumb.innerHTML = `<div class="thumb-label">S${i} · ${SCENE_NAMES[i]}</div><div class="thumb-inner" id="thumb-${i}"><div class="brand-watermark">PK NHI BOOM BOOM</div></div>`;
-    g.appendChild(thumb);
-    ro.observe(thumb);
-  }
-  requestAnimationFrame(() => {
-    updateAllThumbs();
-    wireEditables();
-  });
-}
-
-function wireEditables() {
-  document.querySelectorAll('[data-bind]').forEach(el => {
-    if (el._wired) return;
-    el._wired = true;
-    el.addEventListener('input', () => {
-      const id = el.dataset.bind;
-      handleTypingChange();
-      STATE.data[id] = el.innerHTML;
-    });
-  });
-  let isHighlightClick = false;
-  document.querySelectorAll('[data-sel]').forEach(el => {
-    if (el._wiredFocus) return;
-    el._wiredFocus = true;
-
-    const checkSelection = () => {
-      const sel = window.getSelection();
-      if (sel.rangeCount > 0) {
-        const node = sel.anchorNode;
-        if (node) {
-          const parent = node.nodeType === 3 ? node.parentElement : node;
-          const em = parent.closest('em');
-          const parentSel = el.dataset.sel;
-          
-          if (em && el.contains(em)) {
-            let highlightSel = "";
-            let label = "";
-            if (em.classList.contains('hl-teal')) {
-              highlightSel = "em.hl-teal";
-              label = `${parentSel} > highlight (Teal)`;
-            } else if (em.classList.contains('hl-orange')) {
-              highlightSel = "em.hl-orange";
-              label = `${parentSel} > highlight (Orange)`;
-            } else {
-              if (parentSel === ".s1-title") {
-                highlightSel = ".s1-title em";
-                label = "S1 Title Highlight";
-              } else if (parentSel === ".s6-title") {
-                highlightSel = ".s6-title em";
-                label = "S6 Title Highlight";
-              } else if (parentSel === ".s4-quote") {
-                highlightSel = ".s4-quote em";
-                label = "S4 Quote Highlight";
-              } else {
-                highlightSel = "em";
-                label = `${parentSel} > highlight`;
-              }
-            }
-            focusStyleBar(em, highlightSel, label);
-          } else {
-            focusStyleBar(el);
-          }
-        }
-      }
-    };
-
-    el.addEventListener('mouseup', () => {
-      setTimeout(checkSelection, 10);
-    });
-    el.addEventListener('keyup', () => {
-      setTimeout(checkSelection, 10);
-    });
-    el.addEventListener('focus', () => {
-      setTimeout(checkSelection, 50);
-    });
-  });
-}
-
+let PROJECTS = [];
+let CURRENT_FOLDER = null;
 let CURRENT_SEL = null;
-let ACTIVE_EM = null;
+let FOCUS_IFRAME = null;
 
+// --- UNDO/REDO & Styles support ---
 function rgbToHex(rgb) {
   if (!rgb) return '#ffffff';
   if (rgb.startsWith('#')) return rgb.length === 7 ? rgb : '#ffffff';
@@ -802,177 +529,6 @@ function rgbToHex(rgb) {
   return '#' + m.slice(0,3).map(n => parseInt(n).toString(16).padStart(2,'0')).join('');
 }
 
-function makeSelectionHighlight(parentEl, className = '') {
-  const sel = window.getSelection();
-  if (!sel.rangeCount) return null;
-  const range = sel.getRangeAt(0);
-  if (range.collapsed) return null;
-  if (!parentEl.contains(range.commonAncestorContainer)) return null;
-
-  let container = range.commonAncestorContainer;
-  if (container.nodeType === 3) container = container.parentNode;
-  const em = container.closest('em');
-  if (em) return em;
-
-  const emNode = document.createElement('em');
-  if (className && className.trim() && !className.includes(' ')) {
-    emNode.classList.add(className.trim());
-  }
-  try {
-    range.surroundContents(emNode);
-  } catch (err) {
-    const html = range.cloneContents();
-    const div = document.createElement('div');
-    div.appendChild(html);
-    const text = div.textContent;
-    const emHTML = className ? `<em class="${className}">${text}</em>` : `<em>${text}</em>`;
-    document.execCommand('insertHTML', false, emHTML);
-    const ems = parentEl.querySelectorAll('em');
-    return ems[ems.length - 1] || null;
-  }
-  
-  parentEl.dispatchEvent(new Event('input'));
-  sel.removeAllRanges();
-  const newRange = document.createRange();
-  newRange.selectNodeContents(emNode);
-  sel.addRange(newRange);
-  return emNode;
-}
-
-function makeSelectionGeneral(parentEl) {
-  const sel = window.getSelection();
-  if (!sel.rangeCount) return;
-  const range = sel.getRangeAt(0);
-  if (range.collapsed) return;
-  if (!parentEl.contains(range.commonAncestorContainer)) return;
-
-  let container = range.commonAncestorContainer;
-  if (container.nodeType === 3) container = container.parentNode;
-  const em = container.closest('em');
-  if (em) {
-    const textNode = document.createTextNode(em.textContent);
-    const parent = em.parentNode;
-    parent.replaceChild(textNode, em);
-
-    parentEl.dispatchEvent(new Event('input'));
-    sel.removeAllRanges();
-    const newRange = document.createRange();
-    newRange.selectNodeContents(textNode);
-    sel.addRange(newRange);
-  }
-}
-
-function focusStyleBar(el, customSel = null, customLabel = null) {
-  const sel = customSel || el.dataset.sel;
-  if (!sel) return;
-  CURRENT_SEL = sel;
-  ACTIVE_EM = (el && el.tagName === 'EM') ? el : null;
-  document.getElementById('stylebar').classList.add('show');
-  document.getElementById('styleTarget').textContent = '🎨 ' + (customLabel || sel);
-  const cur = STATE.styles[sel] || {};
-  const cs = getComputedStyle(el);
-  const getPropVal = (prop, styleProp) => {
-    if (ACTIVE_EM) {
-      return ACTIVE_EM.style.getPropertyValue(prop) || cs[styleProp];
-    }
-    return cur[prop] || cs[styleProp];
-  };
-  document.getElementById('styFs').value = formatForDisplay('font-size',     getPropVal('font-size', 'fontSize'));
-  document.getElementById('styLh').value = formatForDisplay('line-height',   getPropVal('line-height', 'lineHeight'));
-  document.getElementById('styLs').value = formatForDisplay('letter-spacing',getPropVal('letter-spacing', 'letterSpacing'));
-  ['styFs','styLh','styLs'].forEach(id => autosizeInput(document.getElementById(id)));
-  const colorVal = ACTIVE_EM ? (ACTIVE_EM.style.getPropertyValue('color') || cs.color) : (cur['color'] || cs.color);
-  document.getElementById('styColor').value = colorVal;
-  document.getElementById('styColorPick').value = rgbToHex(colorVal);
-  ['styFs','styLh','styLs','styColor','styGap'].forEach(id => { const e = document.getElementById(id); if (e) autosizeInput(e); });
-  // group-gap: luôn đọc từ .s3-cards (sync với .s5-list)
-  const gapTargets = document.querySelectorAll('.s3-cards, .s5-list');
-  if (gapTargets.length) {
-    const gapVal = (STATE.styles['.s3-cards'] && STATE.styles['.s3-cards']['gap'])
-                || getComputedStyle(gapTargets[0]).gap;
-    document.getElementById('styGap').value = formatForDisplay('gap', gapVal);
-    autosizeInput(document.getElementById('styGap'));
-  }
-  autosizeInput(document.getElementById('styColor'));
-
-  // Cập nhật active/disabled state cho group chọn nhanh General/Highlight sát bên trái Khung color
-  const grpSelect = document.getElementById('grpTargetSelect');
-  if (grpSelect) {
-    const parentEl = el.closest('[data-sel]');
-    if (parentEl) {
-      const parentSel = parentEl.dataset.sel;
-      const btnGeneral = document.getElementById('btnSelectGeneral');
-      const btnHighlight = document.getElementById('btnSelectHighlight');
-      
-      // Tất cả mọi phần tử gõ chữ đều hỗ trợ Highlight!
-      let hasHighlightSupport = true;
-      let highlightSel = parentSel + " em";
-      let hlLabel = parentSel.replace(/^\./, '').toUpperCase() + " Highlight";
-      
-      if (parentSel === ".s3-card-text") {
-        highlightSel = "em.hl-teal";
-        hlLabel = "Highlight (Teal)";
-        const em = parentEl.querySelector('em');
-        if (em && em.classList.contains('hl-orange')) {
-          highlightSel = "em.hl-orange";
-          hlLabel = "Highlight (Orange)";
-        }
-      } else if (parentSel === ".s1-title") {
-        highlightSel = ".s1-title em";
-        hlLabel = "S1 Title Highlight";
-      } else if (parentSel === ".s6-title") {
-        highlightSel = ".s6-title em";
-        hlLabel = "S6 Title Highlight";
-      } else if (parentSel === ".s4-quote") {
-        highlightSel = ".s4-quote em";
-        hlLabel = "S4 Quote Highlight";
-      }
-
-      if (hasHighlightSupport) {
-        btnGeneral.disabled = false;
-        btnGeneral.style.opacity = "1";
-        btnGeneral.style.cursor = "pointer";
-        btnHighlight.disabled = false;
-        btnHighlight.style.opacity = "1";
-        btnHighlight.style.cursor = "pointer";
-        
-        btnGeneral.onmousedown = (e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          const sel = window.getSelection();
-          if (sel.rangeCount > 0 && !sel.getRangeAt(0).collapsed) {
-            pushUndo();
-            makeSelectionGeneral(parentEl);
-          }
-          focusStyleBar(parentEl);
-        };
-        btnHighlight.onmousedown = (e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          const sel = window.getSelection();
-          let targetEl = parentEl.querySelector('em') || parentEl;
-          if (sel.rangeCount > 0 && !sel.getRangeAt(0).collapsed) {
-            pushUndo();
-            let className = '';
-            if (highlightSel.includes('.hl-teal')) className = 'hl-teal';
-            else if (highlightSel.includes('.hl-orange')) className = 'hl-orange';
-            const newEm = makeSelectionHighlight(parentEl, className);
-            if (newEm) targetEl = newEm;
-          }
-          focusStyleBar(targetEl, highlightSel, hlLabel);
-        };
-        
-        if (CURRENT_SEL === parentSel) {
-          btnGeneral.classList.add('active');
-          btnHighlight.classList.remove('active');
-        } else {
-          btnGeneral.classList.remove('active');
-          btnHighlight.classList.add('active');
-        }
-      } else {
-        // Không hỗ trợ Highlight -> Disable nút Highlight, chọn General làm active
-        btnGeneral.disabled = false;
-        btnGeneral.style.opacity = "1";
         btnGeneral.style.cursor = "pointer";
         btnGeneral.classList.add('active');
         
@@ -1456,8 +1012,508 @@ async function confirmSaveToTemplate(templateName) {
 </body></html>
 """
 
+import queue
+import shutil
+
+ROOT = Path(r"E:\HuuDat\BrianD\TOOL_BrianD")
+SKILL_DIR = Path(__file__).parent.parent.parent
+SCRIPT_DIR = SKILL_DIR / "scripts"
+TEMPLATES = SKILL_DIR / "_templates"
+PY = r"C:\Users\Admin\AppData\Local\Programs\Python\Python311\python.exe"
+
+PAGE_PROFILES = {}
+try:
+    _profile_path = SKILL_DIR / "video_brand_profiles.json"
+    if _profile_path.exists():
+        PAGE_PROFILES = json.loads(_profile_path.read_text(encoding="utf-8"))
+except Exception as _e:
+    print(f"  ⚠ Lỗi load video_brand_profiles.json: {_e}")
+
+BATCH_QUEUE = queue.Queue()
+BATCH_STATUS = {
+    "running": False,
+    "current_path": "",
+    "current_action": "",
+    "current_index": 0,
+    "total": 0,
+    "log": [],
+    "progress_pct": 0
+}
+
+def ensure_vbs(out_dir: Path, template: str):
+    vbs_path = out_dir / "MO_EDITOR.vbs"
+    editor_py = str((TEMPLATES / template / "editor_server.py").resolve())
+    vbs_content = (
+        "' Mo Editor cho workspace nay\r\n"
+        "Set objFSO = CreateObject(\"Scripting.FileSystemObject\")\r\n"
+        "strDir = objFSO.GetParentFolderName(WScript.ScriptFullName)\r\n"
+        "Set objShell = CreateObject(\"WScript.Shell\")\r\n"
+        "objShell.CurrentDirectory = strDir\r\n\r\n"
+        f"objShell.Run \"\"\"{PY}\"\" \"\"{editor_py}\"\" --workspace \"\"\" & strDir & \"\"\"\", 0, False\r\n"
+    )
+    vbs_path.write_text(vbs_content, encoding="utf-16")
+
+def transcribe(wav_file: Path, out_file: Path):
+    code = f"""
+import sys, json, pathlib
+sys.stdout.reconfigure(encoding='utf-8')
+from faster_whisper import WhisperModel
+try:
+    model = WhisperModel("base", device="cuda", compute_type="float16")
+    segments, info = model.transcribe(r"{wav_file}", language="vi", beam_size=5, word_timestamps=False)
+    segments = list(segments)
+    print("✓ Sử dụng GPU (cuda) để transcribe")
+except Exception as e:
+    print(f"⚠ Lỗi GPU (cuda) hoặc OOM: {{e}}. Fallback về CPU.")
+    model = WhisperModel("base", device="cpu", compute_type="int8")
+    segments, info = model.transcribe(r"{wav_file}", language="vi", beam_size=5, word_timestamps=False)
+    segments = list(segments)
+out = []
+for seg in segments:
+    out.append({{"start": round(seg.start, 3), "end": round(seg.end, 3), "text": seg.text.strip()}})
+result = {{"duration": round(info.duration, 3), "segments": out}}
+pathlib.Path(r"{out_file}").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')
+"""
+    return subprocess.run([PY, "-c", code], capture_output=True, text=True, encoding="utf-8")
+
+def update_timeline_from_transcript(out_dir: Path, wav_filename: str = "narration.wav"):
+    import re
+    from difflib import SequenceMatcher
+    
+    def clean_text(text):
+        if not text: return ""
+        return re.sub(r'[^\w\s]', '', str(text).lower()).strip()
+        
+    def clean_html(text):
+        if not text: return ""
+        text = re.sub(r'<[^>]+>', ' ', text)
+        text = re.sub(r'&nbsp;', ' ', text, flags=re.IGNORECASE)
+        text = re.sub(r'&amp;', '&', text, flags=re.IGNORECASE)
+        return ' '.join(text.split())
+
+    tr_file = out_dir / "transcript.json"
+    co_file = out_dir / "content.json"
+    sc_file = out_dir / "script.txt"
+    
+    if not tr_file.exists() or not co_file.exists():
+        return
+        
+    tr = json.loads(tr_file.read_text(encoding="utf-8"))
+    co = json.loads(co_file.read_text(encoding="utf-8"))
+    duration = tr.get("duration", 60.0)
+    segments = tr.get("segments", [])
+    sids_sorted = sorted(co.get("scenes", {}).keys())
+    n_scenes = len(sids_sorted)
+    if n_scenes < 2: return
+
+    lines = []
+    if sc_file.exists():
+        lines = [l.strip() for l in sc_file.read_text(encoding="utf-8-sig").splitlines() if l.strip()]
+        
+    if len(lines) != n_scenes:
+        lines = []
+        for sid in sids_sorted:
+            scene = co["scenes"][sid]
+            scene_text = ""
+            if sid == "s1":
+                scene_text = scene.get("title", "")
+            elif sid == "s2":
+                scene_text = scene.get("note", "") or scene.get("label", "")
+            elif sid == "s3":
+                scene_text = scene.get("heading", "") + " " + " ".join(c.get("text", "") for c in scene.get("cards", []))
+            elif sid == "s4":
+                scene_text = scene.get("quote_html", "")
+            elif sid == "s5":
+                scene_text = scene.get("heading", "") + " " + " ".join(i.get("text", "") for i in scene.get("items", []))
+            elif sid == "s6":
+                scene_text = scene.get("sub", "")
+            lines.append(clean_html(scene_text))
+
+    char_map = []
+    full_transcript = ""
+    for seg in segments:
+        text = seg["text"].strip().lower()
+        if not text: continue
+        s_us = float(seg["start"])
+        e_us = float(seg["end"])
+        c_dur = (e_us - s_us) / len(text)
+        for i, char in enumerate(text):
+            char_map.append((char, s_us + i * c_dur, s_us + (i + 1) * c_dur))
+            full_transcript += char
+        char_map.append((' ', e_us, e_us))
+        full_transcript += ' '
+
+    anchors = {}
+    ptr = 0
+    for idx, sid in enumerate(sids_sorted):
+        target = clean_text(lines[idx])
+        if not target:
+            anchors[sid] = None
+            continue
+            
+        window = full_transcript[ptr : ptr + 1000]
+        matcher = SequenceMatcher(None, window, target)
+        m = matcher.find_longest_match(0, len(window), 0, len(target))
+        
+        if m.size > 10 or (len(target) > 0 and m.size / len(target) > 0.25):
+            gs = max(0, min(len(char_map)-1, (ptr + m.a) - m.b))
+            ge = min(len(char_map)-1, gs + len(target))
+            anchors[sid] = (char_map[gs][1], char_map[ge][2])
+            ptr = gs + m.size
+        else:
+            anchors[sid] = None
+
+    boundaries = {}
+    last_end = 0.0
+    for i, sid in enumerate(sids_sorted):
+        if anchors[sid] is not None:
+            s, e = anchors[sid]
+        else:
+            next_anc_sid = next((sids_sorted[j] for j in range(i+1, len(sids_sorted)) if anchors[sids_sorted[j]] is not None), None)
+            g_start = last_end
+            g_end = anchors[next_anc_sid][0] if next_anc_sid else duration
+            
+            next_idx = sids_sorted.index(next_anc_sid) if next_anc_sid else len(sids_sorted)
+            orphans = sids_sorted[i : next_idx]
+            total_chars = sum(len(clean_text(lines[sids_sorted.index(o)])) for o in orphans)
+            g_dur = max(0.0, g_end - g_start)
+            curr_s = g_start
+            for o_sid in orphans:
+                o_text = clean_text(lines[sids_sorted.index(o_sid)])
+                o_dur = g_dur * (len(o_text) / total_chars) if total_chars > 0 else (g_dur / len(orphans))
+                o_e = min(g_end, curr_s + o_dur)
+                if o_sid == sids_sorted[-1]:
+                    o_e = duration
+                anchors[o_sid] = (curr_s, o_e)
+                curr_s = o_e
+            s, e = anchors[sid]
+
+        def snap_t(t, fps=30):
+            f = 1.0 / fps
+            return round(round(t / f) * f, 2)
+            
+        boundaries[sid] = snap_t(last_end)
+        last_end = snap_t(e if i < len(sids_sorted) - 1 else duration)
+
+    timeline = {}
+    for i, sid in enumerate(sids_sorted):
+        out_t = boundaries[sids_sorted[i+1]] if i+1 < len(sids_sorted) else duration
+        timeline[sid] = {"in": round(boundaries[sid], 2), "out": round(out_t, 2)}
+    co["timeline"] = timeline
+
+    def find_segment_start(keywords, after_t, before_t):
+        for seg in segments:
+            if seg["start"] < after_t or seg["start"] >= before_t: continue
+            text = clean_text(seg["text"])
+            for kw in keywords:
+                if text.startswith(kw):
+                    return seg["start"]
+        return None
+
+    kw_groups = [
+        (["mot", "một", "1"], "c1", "i1"),
+        (["hai", "2"], "c2", "i2"),
+        (["ba", "3"], "c3", "i3"),
+    ]
+    for sid in ("s3", "s5"):
+        scene = co["scenes"].get(sid)
+        tl = co["timeline"].get(sid)
+        if not scene or not tl: continue
+        has_cards = "cards" in scene
+        has_items = "items" in scene
+        if not (has_cards or has_items): continue
+        et = {}
+        for kws, c_key, i_key in kw_groups:
+            t = find_segment_start(kws, tl["in"], tl["out"])
+            if t is None: continue
+            et[c_key if has_cards else i_key] = round(t, 2)
+        if et:
+            scene["element_times"] = et
+
+    if "voice" not in co: co["voice"] = {}
+    co["voice"]["file"] = wav_filename
+    co["voice"]["duration"] = duration
+    co_file.write_text(json.dumps(co, ensure_ascii=False, indent=2), encoding="utf-8")
+
+def get_project_status(folder_name, db_items):
+    match = re.match(r"^T\d{2}\.\d{2}_\d{2}h\d{2}_(.+)$", folder_name)
+    slug = match.group(1) if match else folder_name
+    slug = slug.strip().lower()
+    
+    for item in db_items:
+        item_topic = item.get("topic", "")
+        if not item_topic:
+            continue
+        item_slug = slugify_vietnamese(item_topic)
+        if item_slug == slug or item_slug in slug or slug in item_slug:
+            return item.get("status", "Draft")
+    return "Draft"
+
+def get_project_files_info(proj_dir: Path, db_items):
+    script_file = proj_dir / "script.txt"
+    content_file = proj_dir / "content.json"
+    
+    script_mtime = script_file.stat().st_mtime if script_file.exists() else 0
+    vbs_mtime = content_file.stat().st_mtime if content_file.exists() else 0
+    
+    voice_file = None
+    wavs = [p for p in proj_dir.glob("*.wav") if p.name != "narration.wav" and not p.name.endswith(".tmp")]
+    if wavs:
+        wavs = sorted(wavs, key=lambda p: p.stat().st_mtime, reverse=True)
+        voice_file = wavs[0]
+    else:
+        n_wav = proj_dir / "narration.wav"
+        if n_wav.exists():
+            voice_file = n_wav
+            
+    voice_mtime = voice_file.stat().st_mtime if voice_file else 0
+    voice_name = voice_file.name if voice_file else ""
+    
+    voice_duration = 0.0
+    if voice_file and voice_file.exists():
+        try:
+            out = subprocess.run(["ffprobe","-v","error","-show_entries","format=duration","-of","default=noprint_wrappers=1:nokey=1",str(voice_file)], capture_output=True, text=True, timeout=5).stdout.strip()
+            voice_duration = float(out) if out else 0.0
+        except Exception: pass
+    
+    video_file = None
+    mp4s = [p for p in proj_dir.glob("*.mp4") if not p.name.endswith(".tmp")]
+    if mp4s:
+        mp4s = sorted(mp4s, key=lambda p: p.stat().st_mtime, reverse=True)
+        video_file = mp4s[0]
+        
+    video_mtime = video_file.stat().st_mtime if video_file else 0
+    video_name = video_file.name if video_file else ""
+    
+    status = get_project_status(proj_dir.name, db_items)
+    
+    warnings = []
+    if script_mtime > 0 and (vbs_mtime == 0 or script_mtime > vbs_mtime + 2):
+        warnings.append("kịch bản mới hơn vbs")
+    if script_mtime > 0 and (voice_mtime == 0 or script_mtime > voice_mtime + 2):
+        warnings.append("kịch bản mới hơn voice")
+    if voice_mtime > 0 and (video_mtime == 0 or voice_mtime > video_mtime + 2):
+        warnings.append("voice mới hơn video")
+        
+    return {
+        "name": proj_dir.name,
+        "path": str(proj_dir.resolve()).replace("\\", "/"),
+        "script_mtime": script_mtime,
+        "vbs_mtime": vbs_mtime,
+        "voice_name": voice_name,
+        "voice_mtime": voice_mtime,
+        "voice_duration": round(voice_duration, 1),
+        "video_name": video_name,
+        "video_mtime": video_mtime,
+        "status": status,
+        "warnings": warnings
+    }
+
+def list_projects():
+    parent_dir = WORK.parent
+    projects = []
+    
+    db_items = []
+    db_path = Path(r"E:\HuuDat\BrianD\TOOL_BrianD\FB-Tools\up-data\bsimple_content_data.json")
+    if db_path.exists():
+        try:
+            db_items = json.loads(db_path.read_text(encoding="utf-8"))
+        except Exception as e:
+            print(f"[SYSTEM] Lỗi load UP database: {e}")
+            
+    if parent_dir.exists():
+        subdirs = [d for d in parent_dir.iterdir() if d.is_dir() and not d.name.startswith("_") and not d.name.startswith(".")]
+        subdirs = sorted(subdirs, key=lambda d: d.stat().st_mtime, reverse=True)
+        
+        for d in subdirs:
+            if (d / "index.html").exists() or (d / "content.json").exists() or (d / "script.txt").exists():
+                info = get_project_files_info(d, db_items)
+                projects.append(info)
+    return projects
+
+def batch_worker():
+    global BATCH_STATUS
+    while True:
+        task = BATCH_QUEUE.get()
+        if task is None:
+            break
+            
+        path_str, action = task
+        proj_path = Path(path_str)
+        
+        BATCH_STATUS["running"] = True
+        BATCH_STATUS["current_path"] = proj_path.name
+        BATCH_STATUS["current_action"] = action
+        BATCH_STATUS["current_index"] += 1
+        pct = int((BATCH_STATUS["current_index"] - 1) / BATCH_STATUS["total"] * 100)
+        BATCH_STATUS["progress_pct"] = pct
+        
+        log_msg = f"[SYSTEM] Bắt đầu {action.upper()} cho {proj_path.name}"
+        print(log_msg)
+        BATCH_STATUS["log"].append(log_msg)
+        
+        try:
+            if action == "visual":
+                script_txt = proj_path / "script.txt"
+                if not script_txt.exists():
+                    raise FileNotFoundError(f"Không tìm thấy script.txt trong {proj_path.name}")
+                    
+                fill_script = SCRIPT_DIR / "fill_content.py"
+                cmd = [PY, str(fill_script), "--template", "01_Text_ViCon", "--script-file", str(script_txt), "--output-dir", str(proj_path)]
+                p = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
+                if p.returncode != 0:
+                    raise RuntimeError(f"fill_content.py fail: {p.stderr}")
+                    
+                tpl_dir = TEMPLATES / "01_Text_ViCon"
+                workdir_in_tpl = tpl_dir / f"_pipeline_{proj_path.name}"
+                workdir_in_tpl.mkdir(exist_ok=True)
+                
+                content_json_src = proj_path / "content.json"
+                if content_json_src.exists():
+                    (workdir_in_tpl / "content.json").write_text(content_json_src.read_text(encoding="utf-8"), encoding="utf-8")
+                
+                wavs = [p for p in proj_path.glob("*.wav") if p.name != "narration.wav" and not p.name.endswith(".tmp")]
+                voice_filename = "narration.wav"
+                if wavs:
+                    wavs = sorted(wavs, key=lambda p: p.stat().st_mtime, reverse=True)
+                    shutil.copy(wavs[0], workdir_in_tpl / wavs[0].name)
+                    voice_filename = wavs[0].name
+                else:
+                    n_wav = proj_path / "narration.wav"
+                    if n_wav.exists():
+                        shutil.copy(n_wav, workdir_in_tpl / "narration.wav")
+                        
+                compose_script = tpl_dir / "compose.py"
+                cmd_compose = [PY, str(compose_script), workdir_in_tpl.name]
+                p_compose = subprocess.run(cmd_compose, capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=str(tpl_dir))
+                if p_compose.returncode != 0:
+                    raise RuntimeError(f"compose.py fail: {p_compose.stderr}")
+                    
+                composed_html = workdir_in_tpl / "index.html"
+                if composed_html.exists():
+                    html_content = composed_html.read_text(encoding="utf-8")
+                    html_content = re.sub(r'src="narration\.wav"', f'src="{voice_filename}"', html_content)
+                    composed_html.write_text(html_content, encoding="utf-8")
+                    shutil.copy(composed_html, proj_path / "index.html")
+                
+                ensure_vbs(proj_path, "01_Text_ViCon")
+                msg = f"[SYSTEM] Thành công Visual cho {proj_path.name}"
+                print(msg)
+                BATCH_STATUS["log"].append(msg)
+                
+            elif action == "voice":
+                script_txt = proj_path / "script.txt"
+                if not script_txt.exists():
+                    raise FileNotFoundError(f"Không tìm thấy script.txt trong {proj_path.name}")
+                
+                voice_name = "TT_06"
+                profile = PAGE_PROFILES.get("vicon")
+                if profile and "default_voice" in profile:
+                    voice_name = profile["default_voice"]
+                    
+                timestamp = time.strftime("T%m.%d_%Hh%M")
+                voice_filename = f"TT_{timestamp}.wav"
+                out_wav = proj_path / voice_filename
+                
+                gen_voice_script = SCRIPT_DIR / "gen_voice.py"
+                cmd = [PY, str(gen_voice_script), "--script-file", str(script_txt), "--voice", voice_name, "--output", str(out_wav)]
+                p = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
+                if p.returncode != 0 or not out_wav.exists():
+                    raise RuntimeError(f"gen_voice.py fail: {p.stderr}")
+                    
+                sync_latest_voice(proj_path)
+                
+                tr_file = proj_path / "transcript.json"
+                if tr_file.exists():
+                    tr_file.unlink()
+                tr_result = transcribe(out_wav, tr_file)
+                if tr_result.returncode != 0 or not tr_file.exists():
+                    raise RuntimeError(f"whisper transcribe fail: {tr_result.stderr}")
+                    
+                update_timeline_from_transcript(proj_path, voice_filename)
+                
+                tpl_dir = TEMPLATES / "01_Text_ViCon"
+                workdir_in_tpl = tpl_dir / f"_pipeline_{proj_path.name}"
+                workdir_in_tpl.mkdir(exist_ok=True)
+                
+                content_json_src = proj_path / "content.json"
+                if content_json_src.exists():
+                    (workdir_in_tpl / "content.json").write_text(content_json_src.read_text(encoding="utf-8"), encoding="utf-8")
+                shutil.copy(out_wav, workdir_in_tpl / voice_filename)
+                
+                compose_script = tpl_dir / "compose.py"
+                cmd_compose = [PY, str(compose_script), workdir_in_tpl.name]
+                p_compose = subprocess.run(cmd_compose, capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=str(tpl_dir))
+                
+                composed_html = workdir_in_tpl / "index.html"
+                if composed_html.exists():
+                    html_content = composed_html.read_text(encoding="utf-8")
+                    html_content = re.sub(r'src="narration\.wav"', f'src="{voice_filename}"', html_content)
+                    composed_html.write_text(html_content, encoding="utf-8")
+                    shutil.copy(composed_html, proj_path / "index.html")
+                
+                msg = f"[SYSTEM] Thành công Voice cho {proj_path.name}"
+                print(msg)
+                BATCH_STATUS["log"].append(msg)
+                
+            elif action == "video":
+                wavs = [p for p in proj_path.glob("*.wav") if p.name != "narration.wav" and not p.name.endswith(".tmp")]
+                if wavs:
+                    wavs = sorted(wavs, key=lambda p: p.stat().st_mtime, reverse=True)
+                    if not (proj_path / wavs[0].name).exists():
+                        shutil.copy(wavs[0], proj_path / wavs[0].name)
+                
+                ts_part = time.strftime("T%m.%d_%Hh%M")
+                match = re.match(r"^T\d{2}\.\d{2}_\d{2}h\d{2}_(.+)$", proj_path.name)
+                slug_part = match.group(1) if match else proj_path.name
+                slug_clean = slugify_vietnamese(slug_part, max_len=60)
+                out_name = f"{slug_clean}_{ts_part}.mp4"
+                
+                cmd = f'npx -y -p hyperframes hyperframes render . --output "{out_name}" --fps 30 --quality draft'
+                p = subprocess.run(cmd, shell=True, cwd=str(proj_path), capture_output=True, text=True, encoding="utf-8", errors="replace")
+                if p.returncode != 0 or not (proj_path / out_name).exists():
+                    raise RuntimeError(f"hyperframes render fail: {p.stderr}")
+                    
+                out_mp4 = proj_path / out_name
+                co_file = proj_path / "content.json"
+                if co_file.exists() and out_mp4.exists():
+                    try:
+                        co_data = json.loads(co_file.read_text(encoding="utf-8"))
+                        voice_dur = float(co_data.get("voice", {}).get("duration", 0))
+                        if voice_dur > 0.5:
+                            locked = proj_path / f"{out_mp4.stem}_locked.mp4"
+                            lock_cmd = (
+                                f'ffmpeg -y -i "{out_mp4.name}" -vf "tpad=stop_mode=clone:stop_duration={voice_dur}" '
+                                f'-t {voice_dur} -c:v libx264 -preset ultrafast -crf 23 -c:a copy "{locked.name}"'
+                            )
+                            p_lock = subprocess.run(lock_cmd, shell=True, cwd=str(proj_path), capture_output=True, text=True, encoding="utf-8", errors="replace")
+                            if p_lock.returncode == 0 and locked.exists():
+                                os.remove(out_mp4)
+                                os.rename(locked, out_mp4)
+                    except Exception as e_dur:
+                        print(f"[SYSTEM] Lỗi khóa thời lượng: {e_dur}")
+                
+                msg = f"[SYSTEM] Thành công Render Video cho {proj_path.name} -> {out_name}"
+                print(msg)
+                BATCH_STATUS["log"].append(msg)
+                
+        except Exception as ex:
+            err_msg = f"[SYSTEM] LỖI khi xử lý {proj_path.name} action {action}: {ex}"
+            print(err_msg)
+            BATCH_STATUS["log"].append(err_msg)
+            
+        BATCH_STATUS["progress_pct"] = int(BATCH_STATUS["current_index"] / BATCH_STATUS["total"] * 100)
+        BATCH_QUEUE.task_done()
+        
+    BATCH_STATUS["running"] = False
+    BATCH_STATUS["current_path"] = ""
+    BATCH_STATUS["current_action"] = ""
+
+threading.Thread(target=batch_worker, daemon=True).start()
+
 
 class Handler(BaseHTTPRequestHandler):
+
     render_status = {"running": False, "last_out": ""}
 
     def log_message(self, fmt, *args): pass  # silence access log
@@ -1477,52 +1533,28 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = urllib.parse.urlparse(self.path).path
         if path == "/":
-            sync_latest_voice(WORK)
-            # Inject CSS từ workspace index.html → editor preview render = MP4 render
-            html_serve = EDITOR_HTML
+            self._send(200, "text/html; charset=utf-8", EDITOR_HTML)
+        elif path == "/api/projects":
             try:
-                idx_html = INDEX.read_text(encoding="utf-8")
-                # Extract toàn bộ <style> block của index.html (skeleton CSS + Boss save override)
-                style_blocks = re.findall(r'<style[^>]*>(.*?)</style>', idx_html, re.DOTALL)
-                workspace_css = "\n".join(style_blocks)
-                # Rewrite font URL './fontname.ttf' → '/workspace-file/fontname.ttf' (endpoint serve from workspace)
-                workspace_css = re.sub(
-                    r"url\(['\"]\./([^'\"]+\.(?:ttf|otf|woff2?))['\"]\)",
-                    r"url('/workspace-file/\1')",
-                    workspace_css, flags=re.IGNORECASE
-                )
-                # Map #root thành .thumb-inner để background gradient và kích thước được áp dụng chính xác cho preview
-                workspace_css = re.sub(r'#root\b', '.thumb-inner', workspace_css)
-                # Scope CSS vào .thumb-inner để không leak UI editor
-                # (wrap selectors bắt đầu bằng dấu chấm hoặc #root đã map, bỏ qua @font-face/@import/etc)
-                scoped = re.sub(
-                    r'(^|\})\s*(\.[\w][\w\-,\s\.]*\{)',
-                    lambda m: m.group(1) + " .thumb-inner " + m.group(2),
-                    workspace_css,
-                    flags=re.MULTILINE
-                )
-                # Override: force scene visible (skeleton có opacity:0 cho GSAP, editor preview phải show)
-                override = '.thumb-inner .scene{opacity:1!important;position:relative!important;}'
-                inject = f'<style id="_from_workspace">{scoped}\n{override}</style>'
-                html_serve = html_serve.replace('</head>', inject + '</head>', 1)
-                # Thay thế FOLDER title thành icon + tên thư mục dạng chữ thường, nhỏ, xuống dòng tự nhiên, đẩy lên trên
-                html_serve = html_serve.replace(
-                    '📁 FOLDER',
-                    f'<span style="font-size: 16px; line-height: 1;">📁</span><span style="word-break: break-all; text-transform: none; font-size: 12px; font-weight: 600; line-height: 1.2; margin-top: 2px; letter-spacing: 0.5px;">{WORK.name}</span>'
-                )
+                projects = list_projects()
+                self._send(200, "application/json; charset=utf-8", json.dumps(projects, ensure_ascii=False))
             except Exception as e:
-                print(f"[/] inject workspace CSS fail: {e}")
-            self._send(200, "text/html; charset=utf-8", html_serve)
+                self._send(500, "application/json; charset=utf-8", json.dumps({"ok": False, "msg": str(e)}))
+        elif path == "/api/video-9x16/batch-status":
+            self._send(200, "application/json; charset=utf-8", json.dumps(BATCH_STATUS, ensure_ascii=False))
         elif path.startswith("/workspace-file/"):
-            # Serve file từ workspace (font, audio...) cho editor preview
             fname = path[len("/workspace-file/"):]
             if "/" in fname or "\\" in fname or ".." in fname:
                 self._send(400, "text/plain", "Bad name"); return
-            fp = WORK / fname
+            folder_path = get_path_from_query(self.path)
+            fp = folder_path / fname
             if fp.exists():
                 ext = fp.suffix.lower()
-                ctype = {".ttf": "font/ttf", ".otf": "font/otf", ".woff": "font/woff", ".woff2": "font/woff2", ".wav": "audio/wav"}.get(ext, "application/octet-stream")
-                self.send_response(200); self.send_header("Content-Type", ctype); self.send_header("Access-Control-Allow-Origin", "*"); self.end_headers()
+                ctype = {".ttf": "font/ttf", ".otf": "font/otf", ".woff": "font/woff", ".woff2": "font/woff2", ".wav": "audio/wav", ".mp3": "audio/mpeg", ".mp4": "video/mp4"}.get(ext, "application/octet-stream")
+                self.send_response(200)
+                self.send_header("Content-Type", ctype)
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
                 self.wfile.write(fp.read_bytes())
             else:
                 self._send(404, "text/plain", "Not found")
@@ -1537,38 +1569,63 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 self._send(404, "text/plain", "Font not found")
         elif path == "/load":
-            sync_latest_voice(WORK)
-            html = INDEX.read_text(encoding="utf-8")
+            folder_path = get_path_from_query(self.path)
+            sync_latest_voice(folder_path)
+            index_file = folder_path / "index.html"
+            if not index_file.exists():
+                self._send(200, "application/json; charset=utf-8", json.dumps({"fields": FIELDS, "data": {}, "styleFields": STYLE_FIELDS, "styles": {}}, ensure_ascii=False))
+                return
+            html = index_file.read_text(encoding="utf-8")
             data = {f["id"]: clean_boom_boom(get_inner(html, f["id"])) for f in FIELDS}
             styles = {sf["sel"]: {p: get_css(html, sf["sel"], p) for p in sf["props"]} for sf in STYLE_FIELDS}
             self._send(200, "application/json; charset=utf-8",
                        json.dumps({"fields": FIELDS, "data": data, "styleFields": STYLE_FIELDS, "styles": styles}, ensure_ascii=False))
-        elif path == "/list-templates":
-            try:
-                templates_dir = Path(__file__).parent.parent
-                subdirs = [d.name for d in templates_dir.iterdir() if d.is_dir() and not d.name.startswith("_")]
-                self._send(200, "application/json; charset=utf-8", json.dumps({"ok": True, "templates": sorted(subdirs)}))
-            except Exception as e:
-                self._send(500, "application/json; charset=utf-8", json.dumps({"ok": False, "msg": str(e)}))
-        elif path == "/render-status":
-            self._send(200, "application/json", json.dumps(Handler.render_status))
         elif path == "/workspace-info":
-            self._send(200, "application/json", json.dumps({"workspace": str(WORK.resolve())}))
+            folder_path = get_path_from_query(self.path)
+            self._send(200, "application/json", json.dumps({"workspace": str(folder_path.resolve())}))
         elif path == "/heartbeat":
             global LAST_HEARTBEAT
             LAST_HEARTBEAT = time.time()
             self._send(200, "application/json", '{"ok":true}')
         elif path.startswith("/preview/"):
-            sync_latest_voice(WORK)
-            # Serve index.html nhưng inject CSS+JS để chỉ show 1 scene + contenteditable + postMessage sync
+            folder_path = get_path_from_query(self.path)
+            sync_latest_voice(folder_path)
             try:
                 n = int(path.rsplit("/", 1)[-1].split("?")[0])
             except Exception:
                 self._send(400, "text/plain", "Bad scene number"); return
-            html = INDEX.read_text(encoding="utf-8")
+            
+            index_file = folder_path / "index.html"
+            if not index_file.exists():
+                self._send(404, "text/plain", "Project index.html not found"); return
+            
+            html = index_file.read_text(encoding="utf-8")
+            
+            try:
+                style_blocks = re.findall(r'<style[^>]*>(.*?)</style>', html, re.DOTALL)
+                workspace_css = "\n".join(style_blocks)
+                workspace_css = re.sub(
+                    r"url\(['\"]\./([^'\"]+\.(?:ttf|otf|woff2?))['\"]\)",
+                    rf"url('/workspace-file/\1?path={urllib.parse.quote(str(folder_path.resolve()))}')",
+                    workspace_css, flags=re.IGNORECASE
+                )
+                workspace_css = re.sub(r'#root\b', '.thumb-inner', workspace_css)
+                scoped = re.sub(
+                    r'(^|\})\s*(\.[\w][\w\-,\s\.]*\{)',
+                    lambda m: m.group(1) + " .thumb-inner " + m.group(2),
+                    workspace_css,
+                    flags=re.MULTILINE
+                )
+                override = '.thumb-inner .scene{opacity:1!important;position:relative!important;}'
+                inject_style_str = f'<style id="_from_workspace">{scoped}\n{override}</style>'
+            except Exception as e_css:
+                print(f"[preview] css extraction fail: {e_css}")
+                inject_style_str = ""
+            
             edit_ids = [f["id"] for f in FIELDS]
             inject_css = (
                 "<style id=\"_preview_override\">"
+                "body{background:transparent!important;overflow:hidden!important;}"
                 ".scene{opacity:0!important;transition:none!important;}"
                 f"#s{n}{{opacity:1!important;}}"
                 "[contenteditable=\"true\"]{cursor:text;}"
@@ -1580,6 +1637,7 @@ class Handler(BaseHTTPRequestHandler):
                 "<script>(function(){"
                 f"const SCENE_NUM={n};"
                 f"const EDIT_IDS={json.dumps(edit_ids)};"
+                f"const FOLDER_PATH={json.dumps(str(folder_path.resolve()).replace('\\\\', '/'))};"
                 "function setupEdit(){"
                 "  EDIT_IDS.forEach(id=>{"
                 "    const el=document.getElementById(id); if(!el || el._wired) return;"
@@ -1588,9 +1646,9 @@ class Handler(BaseHTTPRequestHandler):
                 "    el.addEventListener('mousedown',e=>e.stopPropagation(),true);"
                 "    el.addEventListener('focus',()=>{"
                 "      const sel='.'+ (el.className.match(/\\bs\\d-[\\w-]+/)||[''])[0];"
-                "      parent.postMessage({t:'focus',scene:SCENE_NUM,id,sel,html:el.innerHTML},'*');"
+                "      parent.postMessage({t:'focus',scene:SCENE_NUM,id,sel,html:el.innerHTML,path:FOLDER_PATH},'*');"
                 "    });"
-                "    el.addEventListener('input',()=>{ parent.postMessage({t:'changed',id,html:el.innerHTML},'*'); });"
+                "    el.addEventListener('input',()=>{ parent.postMessage({t:'changed',id,html:el.innerHTML,path:FOLDER_PATH},'*'); });"
                 "  });"
                 "}"
                 "function trySeek(){"
@@ -1616,22 +1674,40 @@ class Handler(BaseHTTPRequestHandler):
                 "if(document.readyState==='complete')init(); else window.addEventListener('load',init);"
                 "})();</script>"
             )
-            html = html.replace("</head>", inject_css + "</head>", 1)
+            
+            html = re.sub(
+                r"url\(['\"]\./([^'\"]+\.(?:ttf|otf|woff2?))['\"]\)",
+                rf"url('/workspace-file/\1?path={urllib.parse.quote(str(folder_path.resolve()))}')",
+                html, flags=re.IGNORECASE
+            )
+            
+            html = re.sub(
+                r'(<audio[^>]*\bsrc=")([^"]+)(")',
+                rf'\g<1>/workspace-file/\2?path={urllib.parse.quote(str(folder_path.resolve()))}\g<3>',
+                html, flags=re.IGNORECASE
+            )
+            
+            if inject_style_str:
+                html = html.replace("</head>", inject_style_str + inject_css + "</head>", 1)
+            else:
+                html = html.replace("</head>", inject_css + "</head>", 1)
+                
             if "</body>" in html:
                 html = html.replace("</body>", inject_js + "</body>", 1)
             else:
                 html = html + inject_js
             self._send(200, "text/html; charset=utf-8", html)
         elif path == "/narration.wav":
-            # Phục vụ latest .wav trong workspace (ưu tiên content.json voice.file)
-            wav = _find_voice_wav(WORK)
+            folder_path = get_path_from_query(self.path)
+            wav = _find_voice_wav(folder_path)
             if wav and wav.exists():
                 self._send(200, "audio/wav", wav.read_bytes())
             else:
                 self._send(404, "text/plain", "no audio")
         elif path == "/voice-info":
-            sync_latest_voice(WORK)
-            wav = _find_voice_wav(WORK)
+            folder_path = get_path_from_query(self.path)
+            sync_latest_voice(folder_path)
+            wav = _find_voice_wav(folder_path)
             info = {"exists": False, "filename": "", "size": 0, "duration": 0}
             if wav and wav.exists():
                 info = {"exists": True, "filename": wav.name, "size": wav.stat().st_size, "duration": 0}
