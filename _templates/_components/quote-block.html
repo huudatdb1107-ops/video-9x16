@@ -1,0 +1,62 @@
+<!--
+COMPONENT: quote-block
+PURPOSE: Khối trích dẫn ngắn 1-2 câu, có dấu hoa thị/sao ✦ phía trên — dùng cho scene Quote
+PROPS:
+  text:  string (có thể chứa <em> highlight)
+  mark:  "✦" | "❝" | "—" | "✧" — default ✦
+USAGE:
+  <div class="hf-quote-block">
+    <div class="hf-quote-mark">✦</div>
+    <div class="hf-quote-text">
+      Hiếu động sẽ <em>giảm dần</em>.<br>
+      Tăng động cần <em>can thiệp sớm</em>.
+    </div>
+  </div>
+GSAP:
+  tl.from(".hf-quote-mark", { scale: 0.4, opacity: 0, duration: 0.9, ease: "back.out(1.6)" }, t);
+  tl.from(".hf-quote-text", { y: 50, opacity: 0, duration: 1.2, ease: "power3.out" }, t+0.2);
+-->
+<style>
+.hf-quote-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 920px;
+}
+.hf-quote-mark {
+  font-family: "Inter", sans-serif;
+  font-size: 180px;
+  color: #ff7a2a;
+  line-height: 0.5;
+  margin-bottom: 50px;
+  text-shadow: 0 0 40px rgba(255, 122, 42, 0.55);
+}
+.hf-quote-mark[data-color="teal"] { color: #4dcccc; text-shadow: 0 0 40px rgba(77, 204, 204, 0.55); }
+.hf-quote-mark[data-color="cyan"] { color: #5cb6ff; text-shadow: 0 0 40px rgba(92, 182, 255, 0.55); }
+
+.hf-quote-text {
+  font-family: "Inter", sans-serif;
+  font-size: 64px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.55;
+  letter-spacing: -0.3px;
+}
+.hf-quote-text em {
+  color: #4dcccc;
+  font-weight: 800;
+  font-style: normal;
+  text-shadow: 0 0 24px rgba(77, 204, 204, 0.45);
+}
+.hf-quote-text em.hl-orange { color: #ff7a2a; text-shadow: 0 0 24px rgba(255, 122, 42, 0.45); }
+.hf-quote-text em.hl-cyan   { color: #5cb6ff; text-shadow: 0 0 24px rgba(92, 182, 255, 0.45); }
+</style>
+
+<div class="hf-quote-block">
+  <div class="hf-quote-mark">✦</div>
+  <div class="hf-quote-text">
+    [Quote line 1] <em>[keyword]</em>.<br>
+    [Quote line 2] <em>[keyword]</em>.
+  </div>
+</div>

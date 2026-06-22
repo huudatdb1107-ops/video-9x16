@@ -1,0 +1,23 @@
+<!--
+COMPONENT: background-gradient-orange
+PURPOSE: Background ấm rực — gradient cam vàng nâu, phù hợp branding B.SIMPLE / năng lượng / sáng tạo
+USAGE: Đặt đầu body, z-index 0
+PALETTE: warm-sunset
+-->
+<style>
+#bg-orange-root {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 80%, rgba(255, 138, 58, 0.35) 0%, transparent 55%),
+    radial-gradient(circle at 80% 20%, rgba(255, 122, 42, 0.25) 0%, transparent 50%),
+    linear-gradient(135deg, #2a1208 0%, #1a0a04 50%, #0a0502 100%);
+}
+#bg-orange-root::before {
+  content: ""; position: absolute; inset: 0;
+  background-image:
+    radial-gradient(rgba(255, 200, 100, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+</style>
+
+<div id="bg-orange-root"></div>

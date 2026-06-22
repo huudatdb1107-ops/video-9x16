@@ -1,0 +1,29 @@
+<!--
+COMPONENT: eyebrow-tag
+PURPOSE: Small uppercase label đặt trên đầu mỗi scene title — chỉ chủ đề scene
+PROPS:
+  text   (string, uppercase)
+  color  (cyan | teal | orange) — default cyan
+USAGE:
+  <div class="hf-eyebrow" data-color="cyan">PRIVATE GOOGLE PHOTOS?</div>
+GSAP:
+  tl.from(".hf-eyebrow", { y: -20, opacity: 0, duration: 0.6, ease: "power2.out" }, t);
+-->
+<style>
+.hf-eyebrow {
+  font-family: "Inter", sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 24px;
+  color: #5cb6ff;
+}
+.hf-eyebrow[data-color="teal"]   { color: #4dcccc; }
+.hf-eyebrow[data-color="orange"] { color: #ff7a2a; }
+.hf-eyebrow[data-color="cyan"]   { color: #5cb6ff; }
+.hf-eyebrow[data-color="muted"]  { color: #a0c4c4; }
+</style>
+
+<div class="hf-eyebrow" data-color="cyan">[EYEBROW TEXT]</div>

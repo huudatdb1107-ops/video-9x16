@@ -72,6 +72,7 @@ def slugify_vietnamese(text: str, max_len: int = 60) -> str:
     return s
 
 def clean_boom_boom(text: str) -> str:
+    if not isinstance(text, str): return text
     if not text: return text
     return re.sub(r'\bbom[- ]?bom\b', 'BOOM BOOM', text, flags=re.IGNORECASE)
 
@@ -102,9 +103,9 @@ def safe_write_file(file_path: Path, content, is_binary: bool = False, encoding:
         raise e
 
 # Watchdog: nếu browser ngừng gửi heartbeat → server tự shutdown
-# Timeout tăng lên 5 phút để chịu được render (CPU starvation + tab background throttle)
+# Tăng timeout lên 24 giờ để giữ server luôn sống ổn định cho Sếp làm việc, tránh bị tắt ngầm khi ẩn tab
 LAST_HEARTBEAT = time.time()
-HEARTBEAT_TIMEOUT = 300  # 5 phút — đủ cho render xong
+HEARTBEAT_TIMEOUT = 86400  # 24 giờ (86400 giây)
 RENDER_IS_RUNNING = lambda: False  # set bởi Handler khi /render đang chạy
 
 def watchdog():
@@ -123,9 +124,22 @@ _ap.add_argument("--workspace", default=None, help="Folder chứa index.html + n
 _ap.add_argument("--open-browser", action="store_true", help="Tự động mở trình duyệt sau khi start")
 _args, _ = _ap.parse_known_args()
 WORK = Path(_args.workspace).resolve() if _args.workspace else Path.cwd()
+WORKSPACE = WORK
 INDEX = WORK / "index.html"
 PORT = 5050
 print(f"[editor_server] WORK = {WORK}")
+
+IS_SINGLE_MODE = False
+if (WORK / "index.html").exists() or (WORK / "content.json").exists() or (WORK / "script.txt").exists():
+    IS_SINGLE_MODE = True
+
+EDITOR_SINGLE_HTML = ""
+_single_editor_path = Path(__file__).parent / "single_editor.html"
+if _single_editor_path.exists():
+    try:
+        EDITOR_SINGLE_HTML = _single_editor_path.read_text(encoding="utf-8")
+    except Exception as e_read:
+        print(f"[editor_server] Lỗi đọc single_editor.html: {e_read}")
 
 # Logging to file để debug crash (ghi vào workspace dự án để tránh tranh chấp file lock)
 import logging
@@ -354,9 +368,10 @@ def set_css(html, sel, prop, value):
 
 
 EDITOR_HTML = r"""<!DOCTYPE html>
-<html lang="vi"><head><meta charset="UTF-8"><title>B.SIMPLE Workspace Editor — Multi-Project Trạm Biên Tập</title>
+<html lang="vi"><head><meta charset="UTF-8"><meta name="color-scheme" content="dark"><title>B.SIMPLE Workspace Editor — Multi-Project Trạm Biên Tập</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
+:root { color-scheme: dark; }
 * { box-sizing: border-box; }
 body { margin: 0; background: #0d0d0d; color: #eee; font-family: "Outfit", sans-serif; height: 100vh; overflow: hidden; }
 #app { display: grid; grid-template-rows: 64px auto 1fr; height: 100vh; }
@@ -364,7 +379,7 @@ body { margin: 0; background: #0d0d0d; color: #eee; font-family: "Outfit", sans-
 #topbar h2 { margin: 0; font-size: 16px; color: #D4AF37; min-width: 0; font-weight: 800; letter-spacing: 1.5px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; }
 #topbar button { flex-shrink: 0; }
 #main { padding: 20px; overflow-y: auto; background: #0d0d0d; }
-#stylebar { background: #050505; border-bottom: 1px solid #443311; padding: 12px 20px; display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; display: none; }
+#stylebar { background: #050505; border-bottom: 1px solid #443311; padding: 12px 20px; display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; }
 #stylebar.show { display: flex; }
 #stylebar .target { font-size: 12px; color: #D4AF37; font-weight: 700; min-width: 90px; }
 #stylebar .grp { display: flex; gap: 4px; align-items: center; background: #050505; padding: 3px 8px; border-radius: 4px; border: 1px solid #443311; }
@@ -402,7 +417,8 @@ button.btn-video:hover { background: rgba(0, 255, 153, 0.5); color: #000; border
 
 /* Table styles */
 table { width: 100%; border-collapse: collapse; background: #0d0d0d; border: 1px solid #443311; font-size: 12px; }
-th, td { border: 1px solid #443311; padding: 8px 10px; text-align: left; vertical-align: middle; }
+th, td { border: 1px solid #443311; padding: 4px 8px; text-align: left; vertical-align: middle; }
+#projectTable td.scene-col { padding: 2px !important; }
 th { background: #050505; color: #D4AF37; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
 tr:hover { background: #121212; }
 tr.published-row { opacity: 0.65; }
@@ -411,16 +427,30 @@ tr.published-row { opacity: 0.65; }
 input[type="checkbox"] { accent-color: #D4AF37; cursor: pointer; width: 16px; height: 16px; }
 
 /* Scene frame */
-.scene-col { width: 98px; text-align: center; }
-.iframe-container { position: relative; width: 90px; height: 160px; background: #050505; border: 1px solid #443311; border-radius: 4px; overflow: hidden; margin: 0 auto; }
-.iframe-container iframe { position: absolute; top: 0; left: 0; width: 1080px; height: 1920px; transform: scale(0.083333); transform-origin: top left; border: none; }
+#projectTable th.scene-col, #projectTable td.scene-col {
+  width: 140px;
+  text-align: center;
+  border-left: none !important;
+  border-right: none !important;
+  padding-left: 2px !important;
+  padding-right: 2px !important;
+}
+#projectTable th.scene-col:nth-child(4), #projectTable td.scene-col:nth-child(4) {
+  border-left: 1px solid #443311 !important;
+}
+#projectTable th.scene-col:nth-child(9), #projectTable td.scene-col:nth-child(9) {
+  border-right: 1px solid #443311 !important;
+}
+.id-col { width: 20px !important; padding-left: 2px !important; padding-right: 2px !important; text-align: center; }
+.iframe-container { position: relative; width: 135px; height: 240px; background: #050505; border: 1px solid #443311; border-radius: 4px; overflow: hidden; margin: 0 auto; }
+.iframe-container iframe { position: absolute; top: 0; left: 0; width: 1080px; height: 1920px; transform: scale(0.125); transform-origin: top left; border: none; }
 .iframe-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: transparent; cursor: pointer; z-index: 5; }
 .iframe-container.editing { border-color: #D4AF37; box-shadow: 0 0 10px rgba(212, 175, 55, 0.4); }
 .iframe-container.editing .iframe-overlay { display: none; }
 
 /* Mini Player */
 .audio-mini { width: 100%; max-width: 140px; height: 28px; background: transparent; outline: none; }
-.video-mini { width: 90px; height: 160px; object-fit: cover; border-radius: 4px; border: 1px solid #443311; background: #000; cursor: pointer; }
+.video-mini { width: 135px; height: 240px; object-fit: cover; border-radius: 4px; border: 1px solid #443311; background: #000; cursor: pointer; }
 
 /* Warning pulse */
 @keyframes pulse-red {
@@ -436,13 +466,14 @@ input[type="checkbox"] { accent-color: #D4AF37; cursor: pointer; width: 16px; he
 .status-badge.draft { background: #222; color: #aaa; border: 1px solid #444; }
 .status-badge.approved { background: #221100; color: #ff9900; border: 1px solid #663300; }
 .status-badge.published { background: #002211; color: #00ff99; border: 1px solid #006633; }
+.status-badge.script { background: #008080; color: #fff; border: 1px solid #00a3a3; }
 
 #renderLog { background: #050505; padding: 12px; border-radius: 4px; font-family: monospace; font-size: 11px; white-space: pre-wrap; color: #aaa; max-height: 180px; overflow-y: auto; margin-top: 15px; border: 1px solid #443311; }
 </style>
 </head><body>
 <div id="app">
   <div id="topbar">
-    <h2><span style="font-size: 20px;">📁</span> Multi-Project Workspace: <span id="workspaceTitle">Loading...</span></h2>
+    <h2><span style="font-size: 20px;">📁</span> Workspace: <select id="workspaceSelect" onchange="switchWorkspace(this.value)" style="background: #050505; color: #D4AF37; border: 1px solid #443311; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-family: inherit; font-size: 13px; cursor: pointer; outline: none;"></select></h2>
     
     <!-- Progress bar chạy ngầm -->
     <div id="batchProgressContainer">
@@ -465,12 +496,13 @@ input[type="checkbox"] { accent-color: #D4AF37; cursor: pointer; width: 16px; he
 
   <div id="stylebar">
     <div class="target" style="display: flex; align-items: center; gap: 12px; min-width: 150px; flex-shrink: 0;">
-      <span id="styleTarget">Click vào chữ để chỉnh font/cỡ/giãn dòng</span>
+      <span id="styleTarget">Click vào chữ trong ô preview để chỉnh styles</span>
     </div>
     <div class="grp" style="margin-left: auto;"><label>font</label><input type="text" id="styFs" placeholder="130px"><button type="button" class="bump" data-target="styFs" data-delta="-2">−</button><button type="button" class="bump" data-target="styFs" data-delta="2">+</button></div>
     <div class="grp"><label>line</label><input type="text" id="styLh" placeholder="1.25"><button type="button" class="bump" data-target="styLh" data-delta="-0.05">−</button><button type="button" class="bump" data-target="styLh" data-delta="0.05">+</button></div>
     <div class="grp"><label>spacing</label><input type="text" id="styLs" placeholder="-1px"><button type="button" class="bump" data-target="styLs" data-delta="-1">−</button><button type="button" class="bump" data-target="styLs" data-delta="1">+</button></div>
     <div class="grp"><label>gap</label><input type="text" id="styGap" placeholder="48px" style="width:60px"><button type="button" class="bump" data-target="styGap" data-delta="-4">−</button><button type="button" class="bump" data-target="styGap" data-delta="4">+</button></div>
+    <div class="grp"><label>color</label><input type="text" id="styColor" placeholder="#ffffff" style="width:70px"><input type="color" id="styColorPick" style="width:24px; height:20px; border:none; background:transparent; cursor:pointer; padding:0; margin-left:4px;"></div>
     <div class="grp" id="grpTargetSelect" style="display: flex; gap: 6px; padding: 2px 6px; border-color: #443311; align-items: center; height: 32px;">
       <button type="button" class="secondary" id="btnSelectGeneral" style="padding: 2px 8px; font-size: 10px; border-radius: 4px; text-transform: none;">General</button>
       <button type="button" class="secondary" id="btnSelectHighlight" style="padding: 2px 8px; font-size: 10px; border-radius: 4px; text-transform: none;">Highlight</button>
@@ -485,14 +517,25 @@ input[type="checkbox"] { accent-color: #D4AF37; cursor: pointer; width: 16px; he
       <button type="button" data-color="#a0c4c4" class="swatch" style="background:#a0c4c4"></button>
       <button type="button" data-color="#cfd9d9" class="swatch" style="background:#cfd9d9"></button>
     </div>
+    <button class="secondary" onclick="showTemplateModal()" style="padding: 4px 10px; font-size: 11px; border-radius: 4px; text-transform: none; margin-left: 10px;">💾 Save Template</button>
   </div>
 
   <div id="main">
+    <!-- Diagnostics Board -->
+    <div id="diagnosticsBoard" class="diagnostics-container" style="display:none; margin-bottom: 20px; padding: 12px; background: #0c0803; border: 1px solid #443311; border-radius: 6px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #443311; padding-bottom: 6px; margin-bottom: 10px;">
+        <span style="color: #D4AF37; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 6px;">🔍 BẢNG TỔNG QUÁT KIỂM ĐỊNH (DIAGNOSTICS BOARD)</span>
+        <button class="secondary" onclick="runDiagnostics()" style="padding: 2px 8px; font-size: 10px; border-radius: 4px; text-transform: none; height: 24px; line-height: 20px; border-color: #D4AF37; color: #D4AF37;">Chạy Lại Kiểm Định</button>
+      </div>
+      <div id="diagnosticsStats" style="font-size: 11px; color: #fff; margin-bottom: 10px; display:flex; gap:16px;"></div>
+      <div id="diagnosticsList" style="max-height: 150px; overflow-y: auto; font-size: 11px; display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 8px; padding-right: 4px;"></div>
+    </div>
+
     <table id="projectTable">
       <thead>
         <tr>
           <th style="width: 40px; text-align: center;"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()"></th>
-          <th style="width: 40px; text-align: center;">ID</th>
+          <th class="id-col">ID</th>
           <th style="width: 200px;">Thư mục</th>
           <th class="scene-col">S1 (HOOK)</th>
           <th class="scene-col">S2 (STAT)</th>
@@ -516,11 +559,78 @@ input[type="checkbox"] { accent-color: #D4AF37; cursor: pointer; width: 16px; he
 
 <script>
 let PROJECTS = [];
+let PROJECT_STATES = {}; // cache lưu state load được: {folderPath: {fields, data, styleFields, styles}}
 let CURRENT_FOLDER = null;
 let CURRENT_SEL = null;
-let FOCUS_IFRAME = null;
+let CURRENT_ELEMENT_ID = null;
+let ACTIVE_EM = null;
+let LAST_COMPUTED_STYLES = null;
 
-// --- UNDO/REDO & Styles support ---
+let PROJECT_UNDO_STACKS = {};
+const MAX_STACK_SIZE = 50;
+
+function saveProjectToUndoStack(folderPath) {
+  if (!folderPath || !PROJECT_STATES[folderPath]) return;
+  const state = PROJECT_STATES[folderPath];
+  const stateStr = JSON.stringify({ data: state.data, styles: state.styles });
+  if (!PROJECT_UNDO_STACKS[folderPath]) {
+    PROJECT_UNDO_STACKS[folderPath] = [];
+  }
+  const stack = PROJECT_UNDO_STACKS[folderPath];
+  if (stack.length > 0 && stack[stack.length - 1] === stateStr) {
+    return;
+  }
+  stack.push(stateStr);
+  if (stack.length > MAX_STACK_SIZE) {
+    stack.shift();
+  }
+}
+
+function performProjectUndo(folderPath) {
+  if (!folderPath || !PROJECT_UNDO_STACKS[folderPath] || PROJECT_UNDO_STACKS[folderPath].length <= 1) {
+    console.log('Không có gì để Undo');
+    return;
+  }
+  const stack = PROJECT_UNDO_STACKS[folderPath];
+  stack.pop(); // Bỏ trạng thái hiện tại
+  const previousStateStr = stack[stack.length - 1];
+  const previousState = JSON.parse(previousStateStr);
+  
+  const state = PROJECT_STATES[folderPath];
+  state.data = previousState.data;
+  state.styles = previousState.styles;
+  
+  // Lưu ngay lập tức
+  saveProject(folderPath);
+  
+  // Reload các iframe preview trong hàng
+  const pName = folderPath.split('/').pop().split('\\').pop();
+  const tr = document.getElementById('row-' + pName);
+  if (tr) {
+    tr.querySelectorAll('iframe').forEach(iframe => {
+      if (iframe.src !== 'about:blank' && iframe.src) {
+        try {
+          const url = new URL(iframe.src, window.location.href);
+          url.searchParams.set('t', Date.now());
+          iframe.src = url.toString();
+        } catch(err){
+          iframe.src = iframe.dataset.src + '&t=' + Date.now();
+        }
+      }
+    });
+  }
+}
+
+window.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+    if (CURRENT_FOLDER) {
+      e.preventDefault();
+      performProjectUndo(CURRENT_FOLDER);
+    }
+  }
+});
+
+// Helper chuyển đổi màu rgb sang hex
 function rgbToHex(rgb) {
   if (!rgb) return '#ffffff';
   if (rgb.startsWith('#')) return rgb.length === 7 ? rgb : '#ffffff';
@@ -529,45 +639,17 @@ function rgbToHex(rgb) {
   return '#' + m.slice(0,3).map(n => parseInt(n).toString(16).padStart(2,'0')).join('');
 }
 
-        btnGeneral.style.cursor = "pointer";
-        btnGeneral.classList.add('active');
-        
-        btnHighlight.disabled = true;
-        btnHighlight.style.opacity = "0.3";
-        btnHighlight.style.cursor = "not-allowed";
-        btnHighlight.classList.remove('active');
-        
-        btnGeneral.onmousedown = (e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          focusStyleBar(parentEl);
-        };
-        btnHighlight.onmousedown = null;
-      }
-    }
+// Set status log hiển thị
+function setStatus(text, type='ok') {
+  const icon = type === 'busy' ? '⚙️' : type === 'err' ? '❌' : '✅';
+  console.log(`[SYSTEM] [status] ${icon} ${text}`);
+  const logEl = document.getElementById('renderLog');
+  if (logEl) {
+    logEl.textContent = `[${new Date().toLocaleTimeString()}] ${icon} ${text}\n` + logEl.textContent;
   }
 }
 
-function applyStyleProp(prop, value) {
-  if (!CURRENT_SEL) return;
-  const v = formatForApply(prop, value);
-  if (ACTIVE_EM) {
-    ACTIVE_EM.style.setProperty(prop, v, 'important');
-    const parentEl = ACTIVE_EM.closest('[data-bind]');
-    if (parentEl) {
-      STATE.data[parentEl.dataset.bind] = parentEl.innerHTML;
-    }
-  } else {
-    STATE.styles[CURRENT_SEL] = STATE.styles[CURRENT_SEL] || {};
-    STATE.styles[CURRENT_SEL][prop] = v;
-    document.querySelectorAll(CURRENT_SEL).forEach(el => {
-      const priority = CURRENT_SEL.includes('em') ? 'important' : '';
-      el.style.setProperty(prop, v, priority);
-    });
-  }
-}
-
-// Auto-size: đo content thật bằng span ẩn → set width input chính xác (zero trắng cuối).
+// Auto-size input width
 function autosizeInput(inp) {
   if (!inp) return;
   const cs = getComputedStyle(inp);
@@ -588,14 +670,13 @@ function autosizeInput(inp) {
   inp.style.width = Math.max(25, w + 4) + 'px';
 }
 
-// Pad ".0" cho số nguyên (giữ precision nếu đã có decimal — không round)
 function padDecimal(s) {
   s = String(s).trim();
   if (s.includes('.')) return s;
   if (/^-?\d+$/.test(s)) return s + '.0';
   return s;
 }
-// Strip "px" suffix khi hiển thị; line-height + letter-spacing luôn dạng x.x
+
 function formatForDisplay(prop, value) {
   if (!value || prop === 'color') return value || '';
   if (prop === 'line-height') {
@@ -606,7 +687,7 @@ function formatForDisplay(prop, value) {
   if (prop === 'letter-spacing') return padDecimal(stripped);
   return stripped;
 }
-// Thêm "px" lại khi apply (chỉ với giá trị thuần số)
+
 function formatForApply(prop, value) {
   if (!value) return value;
   if (prop === 'color' || prop === 'line-height') return value;
@@ -614,53 +695,567 @@ function formatForApply(prop, value) {
   if (/^-?\d+(\.\d+)?$/.test(t)) return t + 'px';
   return t;
 }
+
+// Load danh sách projects
+async function reload() {
+  setStatus('Loading projects…', 'busy');
+  try {
+    const r = await fetch('/api/projects');
+    PROJECTS = await r.json();
+    
+    renderTable();
+    await loadWorkspaces();
+    setStatus('Đã tải danh sách dự án!', 'ok');
+  } catch (e) {
+    console.error('Lỗi load projects:', e);
+    setStatus('Lỗi tải danh sách dự án con: ' + e.message, 'err');
+  }
+}
+
+// Chẩn đoán lỗi toàn bộ dự án
+function runDiagnostics() {
+  const board = document.getElementById('diagnosticsBoard');
+  const statsEl = document.getElementById('diagnosticsStats');
+  const listEl = document.getElementById('diagnosticsList');
+  
+  if (!board || !statsEl || !listEl) return;
+  
+  let totalProjects = PROJECTS.length;
+  let errorProjectsCount = 0;
+  let totalErrors = 0;
+  
+  listEl.innerHTML = '';
+  
+  PROJECTS.forEach(p => {
+    const pErrors = p.errors || [];
+    
+    if (pErrors.length > 0) {
+      errorProjectsCount++;
+      totalErrors += pErrors.length;
+      
+      const item = document.createElement('div');
+      item.style.padding = '8px';
+      item.style.background = '#150f08';
+      item.style.border = '1px solid #ff5544';
+      item.style.borderRadius = '4px';
+      item.style.display = 'flex';
+      item.style.flexDirection = 'column';
+      item.style.gap = '4px';
+      
+      const header = document.createElement('div');
+      header.style.display = 'flex';
+      header.style.justifyContent = 'space-between';
+      header.style.alignItems = 'center';
+      header.style.fontWeight = 'bold';
+      header.style.color = '#ff9988';
+      
+      // Lấy lỗi đầu tiên để nhảy tới sửa
+      const firstErr = pErrors[0];
+      header.innerHTML = `
+        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 250px;" title="${p.name}">${p.name}</span>
+        <button class="secondary" style="padding: 1px 6px; font-size: 9px; border-radius: 3px; text-transform: none; border-color: #ff9988; color: #ff9988; background: transparent; cursor: pointer;" onclick="jumpToProjectFirstError('${p.name}', '${firstErr.replace(/'/g, "\\'")}')">Sửa Lỗi</button>
+      `;
+      item.appendChild(header);
+      
+      const errList = document.createElement('ul');
+      errList.style.margin = '0';
+      errList.style.paddingLeft = '16px';
+      errList.style.color = '#ff5544';
+      pErrors.forEach(err => {
+        const li = document.createElement('li');
+        li.textContent = err;
+        errList.appendChild(li);
+      });
+      item.appendChild(errList);
+      listEl.appendChild(item);
+    }
+  });
+  
+  if (errorProjectsCount > 0) {
+    board.style.display = 'block';
+    statsEl.innerHTML = `
+      <span>Tổng số dự án: <strong style="color:#D4AF37">${totalProjects}</strong></span>
+      <span style="margin-left: 15px;">Số dự án có lỗi: <strong style="color:#ff5544">${errorProjectsCount}</strong></span>
+      <span style="margin-left: 15px;">Tổng số lỗi phát hiện: <strong style="color:#ff5544">${totalErrors}</strong></span>
+    `;
+  } else {
+    board.style.display = 'none';
+  }
+}
+
+// Cuộn mượt và kích hoạt chế độ sửa lỗi cho dự án bị lỗi
+window.jumpToProjectFirstError = function(projName, errorMsg) {
+  let sceneNum = 1;
+  const match = errorMsg.match(/Scene\s+(\d+)/);
+  if (match) {
+    sceneNum = parseInt(match[1]);
+  } else if (errorMsg.includes("index.html") || errorMsg.includes("kịch bản")) {
+    sceneNum = 1;
+  }
+  
+  const container = document.getElementById(`container-${projName}-${sceneNum}`);
+  if (container) {
+    container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    // Highlight nhấp nháy
+    container.style.outline = '3px solid #ff5544';
+    container.style.boxShadow = '0 0 15px rgba(255, 85, 68, 0.8)';
+    setTimeout(() => {
+      container.style.outline = 'none';
+      container.style.boxShadow = 'none';
+    }, 2500);
+    
+    // Kích hoạt click mở Stylebar
+    setTimeout(() => {
+      container.click();
+    }, 300);
+  }
+};
+
+// Sử dụng một IntersectionObserver duy nhất để lazy-load và tự động giải phóng RAM các iframe preview khi cuộn
+let globalIframeObserver = null;
+function getIframeObserver() {
+  if (!globalIframeObserver) {
+    const rootEl = document.getElementById('main');
+    globalIframeObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const container = entry.target;
+        const iframe = container.querySelector('iframe');
+        if (!iframe) return;
+        
+        if (entry.isIntersecting) {
+          // Khi cuộn vào tầm mắt, nạp iframe
+          if (iframe.src === 'about:blank' || !iframe.src) {
+            iframe.src = iframe.dataset.src;
+          }
+        } else {
+          // Khi cuộn ra ngoài tầm mắt, giải phóng iframe để trả lại RAM/CPU
+          // Chống giải phóng iframe đang được chỉnh sửa (.editing) để tránh mất dấu soạn thảo
+          if (iframe.src !== 'about:blank' && !container.classList.contains('editing')) {
+            iframe.src = 'about:blank';
+          }
+        }
+      });
+    }, { 
+      root: rootEl || null, 
+      rootMargin: '450px' // Nạp trước 450px để cuộn mượt
+    });
+  }
+  return globalIframeObserver;
+}
+
+// Render bảng danh sách các dự án con
+function renderTable() {
+  const tbody = document.getElementById('projectTableBody');
+  tbody.innerHTML = '';
+  
+  const hidePublished = document.getElementById('hidePublishedCheckbox').checked;
+  
+  let index = 0;
+  PROJECTS.forEach(p => {
+    // Ẩn các bài đã đăng nếu checkbox hidePublished được chọn
+    const isPublished = p.status.toLowerCase() === 'published' || p.status.toLowerCase() === 'posted';
+    if (hidePublished && isPublished) {
+      return;
+    }
+    
+    index++;
+    const tr = document.createElement('tr');
+    tr.id = `row-${p.name}`;
+    if (isPublished) {
+      tr.classList.add('published-row');
+    }
+    if (p.errors && p.errors.length > 0) {
+      tr.style.background = 'rgba(255, 85, 68, 0.04)';
+      tr.style.borderLeft = '4px solid #ff5544';
+    }
+    
+    // --- Tạo ô checkbox chọn dự án ---
+    const tdCheck = document.createElement('td');
+    tdCheck.style.textAlign = 'center';
+    tdCheck.innerHTML = `<input type="checkbox" class="project-checkbox" data-path="${p.path}" onchange="updateSelectAllState()">`;
+    tr.appendChild(tdCheck);
+    
+    // --- Tạo ô ID ---
+    const tdId = document.createElement('td');
+    tdId.className = 'id-col';
+    tdId.textContent = index;
+    tr.appendChild(tdId);
+    
+    // --- Tạo ô Tên thư mục (Folder) ---
+    const tdFolder = document.createElement('td');
+    tdFolder.style.fontWeight = '500';
+    tdFolder.innerHTML = `
+      <div style="word-break: break-all; max-width: 220px;">${p.name}</div>
+      <div style="margin-top: 6px; display: flex; gap: 6px;">
+        <button class="secondary" style="padding: 2px 8px; font-size: 10px; border-radius: 4px; text-transform: capitalize;" onclick="openProjectFolder('${p.path}')">📂 Open</button>
+      </div>
+    `;
+    
+    // Check và hiển thị cảnh báo VBS/Visual nếu kịch bản mới hơn index.html
+    const hasVisualWarning = p.warnings.includes('kịch bản mới hơn vbs');
+    if (hasVisualWarning) {
+      const badge = document.createElement('div');
+      badge.className = 'warning-badge';
+      badge.innerHTML = `⚠️ KỊCH BẢN MỚI HƠN VISUAL`;
+      const btnQuick = document.createElement('button');
+      btnQuick.className = 'btn-quick';
+      btnQuick.textContent = 'Gen Visual';
+      btnQuick.onclick = () => runQuickAction(p.path, 'visual');
+      tdFolder.appendChild(badge);
+      tdFolder.appendChild(btnQuick);
+    }
+    tr.appendChild(tdFolder);
+    
+    // --- Tạo 6 ô iframe preview ---
+    for (let scene = 1; scene <= 6; scene++) {
+      const tdScene = document.createElement('td');
+      tdScene.className = 'scene-col';
+      
+      const container = document.createElement('div');
+      container.className = 'iframe-container';
+      container.id = `container-${p.name}-${scene}`;
+      
+      // Iframe preview trỏ tới /preview/{scene}?path={p.path}
+      const iframe = document.createElement('iframe');
+      iframe.dataset.src = `/preview/${scene}?path=${encodeURIComponent(p.path)}`;
+      iframe.src = 'about:blank'; // Lazy loading
+      
+      const overlay = document.createElement('div');
+      overlay.className = 'iframe-overlay';
+      overlay.onclick = () => startInlineEdit(container, p.name, scene, p.path);
+      
+      container.appendChild(overlay);
+      container.appendChild(iframe);
+      tdScene.appendChild(container);
+      tr.appendChild(tdScene);
+    }
+    
+    // --- Tạo ô Voice player ---
+    const tdVoice = document.createElement('td');
+    if (p.voice_name) {
+      const voiceSrc = `/workspace-file/${p.voice_name}?path=${encodeURIComponent(p.path)}`;
+      tdVoice.innerHTML = `
+        <audio class="audio-mini" controls src="${voiceSrc}"></audio>
+        <div style="font-size: 10px; color: #aaa; margin-top: 4px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          ${p.voice_name} (${p.voice_duration}s)
+        </div>
+      `;
+    } else {
+      tdVoice.innerHTML = `<span style="color: #666; font-style: italic;">Chưa có voice</span>`;
+    }
+    
+    const hasVoiceWarning = p.warnings.includes('kịch bản mới hơn voice');
+    if (hasVoiceWarning) {
+      const badge = document.createElement('div');
+      badge.className = 'warning-badge';
+      badge.innerHTML = `⚠️ KỊCH BẢN MỚI HƠN VOICE`;
+      const btnQuick = document.createElement('button');
+      btnQuick.className = 'btn-quick';
+      btnQuick.textContent = 'Gen Voice';
+      btnQuick.onclick = () => runQuickAction(p.path, 'voice');
+      tdVoice.appendChild(badge);
+      tdVoice.appendChild(btnQuick);
+    }
+    tr.appendChild(tdVoice);
+    
+    // --- Tạo ô Video player ---
+    const tdVideo = document.createElement('td');
+    tdVideo.style.textAlign = 'center';
+    if (p.video_name) {
+      const videoSrc = `/workspace-file/${p.video_name}?path=${encodeURIComponent(p.path)}`;
+      tdVideo.innerHTML = `
+        <video class="video-mini" src="${videoSrc}" loop muted playsinline preload="metadata" onloadeddata="this.currentTime=0.1" onclick="this.paused ? this.play() : this.pause()"></video>
+        <div style="font-size: 9px; color: #888; margin-top: 4px; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          ${p.video_name}
+        </div>
+      `;
+    } else {
+      tdVideo.innerHTML = `<span style="color: #666; font-style: italic;">Chưa có video</span>`;
+    }
+    
+    const hasVideoWarning = p.warnings.includes('voice mới hơn video');
+    if (hasVideoWarning) {
+      const badge = document.createElement('div');
+      badge.className = 'warning-badge';
+      badge.innerHTML = `⚠️ VOICE MỚI HƠN VIDEO`;
+      const btnQuick = document.createElement('button');
+      btnQuick.className = 'btn-quick';
+      btnQuick.textContent = 'Render';
+      btnQuick.onclick = () => runQuickAction(p.path, 'video');
+      tdVideo.appendChild(badge);
+      tdVideo.appendChild(btnQuick);
+    }
+    tr.appendChild(tdVideo);
+    
+    // --- Tạo ô Trạng thái ---
+    const tdStatus = document.createElement('td');
+    tdStatus.style.textAlign = 'center';
+    const stClass = p.status.toLowerCase() === 'published' || p.status.toLowerCase() === 'posted' ? 'published' : p.status.toLowerCase() === 'approved' ? 'approved' : 'draft';
+    tdStatus.innerHTML = `<span class="status-badge ${stClass}">${p.status}</span>`;
+    tr.appendChild(tdStatus);
+    
+    // Tự động nạp/giải phóng iframe preview khi hover vào dòng
+    tr.addEventListener('mouseenter', () => {
+      tr.querySelectorAll('iframe').forEach(iframe => {
+        if (iframe.src === 'about:blank' || !iframe.src) {
+          iframe.src = iframe.dataset.src;
+        }
+      });
+    });
+    tr.addEventListener('mouseleave', () => {
+      if (!tr.classList.contains('editing-row')) {
+        tr.querySelectorAll('iframe').forEach(iframe => {
+          if (iframe.src !== 'about:blank') {
+            iframe.src = 'about:blank';
+          }
+        });
+      }
+    });
+
+    tbody.appendChild(tr);
+  });
+  
+  updateSelectAllState();
+  runDiagnostics();
+  
+  // Tự động kích hoạt hàng đầu tiên (nếu có dự án) để nạp sẵn preview khi load trang
+  const firstRow = tbody.querySelector('tr');
+  if (firstRow) {
+    firstRow.classList.add('editing-row');
+    firstRow.querySelectorAll('iframe').forEach(iframe => {
+      if (iframe.src === 'about:blank' || !iframe.src) {
+        iframe.src = iframe.dataset.src;
+      }
+    });
+  }
+}
+
+// Bắt đầu chỉnh sửa trực tiếp trên iframe
+async function startInlineEdit(container, projName, sceneNum, folderPath) {
+  document.querySelectorAll('.iframe-container.editing').forEach(el => {
+    el.classList.remove('editing');
+  });
+  
+  // Xóa class editing-row trên toàn bộ tr cũ và giải phóng iframe của chúng
+  document.querySelectorAll('tr.editing-row').forEach(row => {
+    row.classList.remove('editing-row');
+    row.querySelectorAll('iframe').forEach(iframe => {
+      if (iframe.src !== 'about:blank') {
+        iframe.src = 'about:blank';
+      }
+    });
+  });
+  
+  // Thêm class editing-row cho tr cha của container hiện tại
+  const tr = container.closest('tr');
+  if (tr) {
+    tr.classList.add('editing-row');
+    // Đảm bảo toàn bộ 6 iframe của hàng này được nạp
+    tr.querySelectorAll('iframe').forEach(iframe => {
+      if (iframe.src === 'about:blank' || !iframe.src) {
+        iframe.src = iframe.dataset.src;
+      }
+    });
+  }
+  
+  container.classList.add('editing');
+  CURRENT_FOLDER = folderPath;
+  
+  // Load state của dự án
+  await loadProjectState(folderPath);
+  
+  // Gửi tin nhắn xuống iframe để tự động focus vào chữ
+  const iframe = container.querySelector('iframe');
+  if (iframe && iframe.contentWindow) {
+    setTimeout(() => {
+      iframe.contentWindow.postMessage({ t: 'trigger-focus' }, '*');
+    }, 100);
+  }
+}
+
+// Tải state dự án (chứa texts và styles) và cache
+async function loadProjectState(folderPath) {
+  try {
+    const r = await fetch('/load?path=' + encodeURIComponent(folderPath));
+    const j = await r.json();
+    PROJECT_STATES[folderPath] = j;
+    
+    if (CURRENT_SEL) {
+      updateStyleBarInputs();
+    }
+  } catch (e) {
+    console.error('Lỗi load project state:', e);
+    setStatus('Lỗi tải dữ liệu dự án: ' + e.message, 'err');
+  }
+}
+
+// Cập nhật các input trên Stylebar
+function updateStyleBarInputs() {
+  if (!CURRENT_FOLDER || !CURRENT_SEL || !PROJECT_STATES[CURRENT_FOLDER]) return;
+  
+  const state = PROJECT_STATES[CURRENT_FOLDER];
+  const styles = state.styles[CURRENT_SEL] || {};
+  
+  document.getElementById('styFs').value = formatForDisplay('font-size', styles['font-size']);
+  document.getElementById('styLh').value = formatForDisplay('line-height', styles['line-height']);
+  document.getElementById('styLs').value = formatForDisplay('letter-spacing', styles['letter-spacing']);
+  
+  // Gap
+  const gapVal = state.styles['.s3-cards']?.['gap'] || state.styles['.s5-list']?.['gap'] || '';
+  document.getElementById('styGap').value = formatForDisplay('gap', gapVal);
+  
+  // Color
+  const colorVal = rgbToHex(styles['color'] || '#ffffff');
+  document.getElementById('styColor').value = colorVal;
+  document.getElementById('styColorPick').value = colorVal;
+  
+  // Cập nhật General/Highlight buttons state
+  const btnGeneral = document.getElementById('btnSelectGeneral');
+  const btnHighlight = document.getElementById('btnSelectHighlight');
+  
+  if (CURRENT_SEL.includes(' em')) {
+    btnGeneral.classList.remove('active');
+    btnHighlight.classList.add('active');
+  } else {
+    btnGeneral.classList.add('active');
+    btnHighlight.classList.remove('active');
+  }
+  
+  // Kiểm tra xem selector gốc có hỗ trợ Highlight hay không
+  const rawSel = CURRENT_SEL.replace(' em', '');
+  const supportsHighlight = rawSel.includes('title') || rawSel.includes('quote') || rawSel.includes('card-text') || rawSel.includes('text') || rawSel.includes('sub');
+  
+  if (supportsHighlight) {
+    btnHighlight.disabled = false;
+    btnHighlight.style.opacity = "1";
+    btnHighlight.style.cursor = "pointer";
+  } else {
+    btnHighlight.disabled = true;
+    btnHighlight.style.opacity = "0.3";
+    btnHighlight.style.cursor = "not-allowed";
+    btnHighlight.classList.remove('active');
+  }
+  
+  document.querySelectorAll('#stylebar input').forEach(autosizeInput);
+}
+
+// Cập nhật style cho selector hiện tại
+function applyStyleProp(prop, value) {
+  if (!CURRENT_FOLDER || !CURRENT_SEL || !PROJECT_STATES[CURRENT_FOLDER]) return;
+  
+  saveProjectToUndoStack(CURRENT_FOLDER);
+  const v = formatForApply(prop, value);
+  const state = PROJECT_STATES[CURRENT_FOLDER];
+  
+  state.styles[CURRENT_SEL] = state.styles[CURRENT_SEL] || {};
+  state.styles[CURRENT_SEL][prop] = v;
+  
+  // Gửi postMessage xuống iframe đang edit
+  const iframeContainer = document.querySelector('.iframe-container.editing');
+  if (iframeContainer) {
+    const iframe = iframeContainer.querySelector('iframe');
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.postMessage({t: 'set-style', sel: CURRENT_SEL, prop: prop, val: v}, '*');
+    }
+  }
+  
+  queueAutoSave(CURRENT_FOLDER);
+  saveProjectToUndoStack(CURRENT_FOLDER);
+}
+
+// Auto-save debounce
+let saveTimeout = null;
+function queueAutoSave(folderPath) {
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    saveProject(folderPath);
+  }, 1500);
+}
+
+async function saveProject(folderPath) {
+  if (!PROJECT_STATES[folderPath]) return;
+  const state = PROJECT_STATES[folderPath];
+  try {
+    const payload = JSON.stringify({ data: state.data, styles: state.styles });
+    const r = await fetch('/save?path=' + encodeURIComponent(folderPath), {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: payload
+    });
+    const j = await r.json();
+    if (j.ok) {
+      setStatus(`Đã tự động lưu thành công: ${folderPath.split('/').pop()}`);
+    } else {
+      setStatus(`Lưu tự động thất bại: ${j.msg || ''}`, 'err');
+    }
+  } catch (e) {
+    console.error('Auto save error:', e);
+    setStatus('Lỗi lưu tự động: ' + e.message, 'err');
+  }
+}
+
+// Thiết lập Stylebar
 function wireStyleBar() {
   const map = { styFs: 'font-size', styLh: 'line-height', styLs: 'letter-spacing', styColor: 'color' };
   for (const id in map) {
     const inp = document.getElementById(id);
     inp.addEventListener('input', () => { 
-      handleTypingChange();
       applyStyleProp(map[id], inp.value); 
       autosizeInput(inp); 
     });
   }
-  // group-gap: apply cho .s3-cards + .s5-list (lưu state vào cả 2 selector)
+  
+  // group-gap
   const gapInput = document.getElementById('styGap');
   if (gapInput) {
     gapInput.addEventListener('input', () => {
-      handleTypingChange();
       const v = formatForApply('gap', gapInput.value);
-      ['.s3-cards', '.s5-list'].forEach(sel => {
-        STATE.styles[sel] = STATE.styles[sel] || {};
-        STATE.styles[sel]['gap'] = v;
-        document.querySelectorAll(sel).forEach(el => el.style.setProperty('gap', v));
-      });
+      if (CURRENT_FOLDER && PROJECT_STATES[CURRENT_FOLDER]) {
+        const state = PROJECT_STATES[CURRENT_FOLDER];
+        ['.s3-cards', '.s5-list'].forEach(sel => {
+          state.styles[sel] = state.styles[sel] || {};
+          state.styles[sel]['gap'] = v;
+        });
+        
+        const iframeContainer = document.querySelector('.iframe-container.editing');
+        if (iframeContainer) {
+          const iframe = iframeContainer.querySelector('iframe');
+          if (iframe && iframe.contentWindow) {
+            ['.s3-cards', '.s5-list'].forEach(sel => {
+              iframe.contentWindow.postMessage({t: 'set-style', sel: sel, prop: 'gap', val: v}, '*');
+            });
+          }
+        }
+        queueAutoSave(CURRENT_FOLDER);
+      }
       autosizeInput(gapInput);
     });
   }
-  // Native color picker → sync với text input + apply
+  
+  // Color Picker & Input color
   const pick = document.getElementById('styColorPick');
   pick.addEventListener('input', () => {
-    handleTypingChange();
     document.getElementById('styColor').value = pick.value;
     applyStyleProp('color', pick.value);
   });
-  // Swatch buttons
+  
+  // Color Swatches
   document.querySelectorAll('.swatch').forEach(btn => {
     btn.addEventListener('click', () => {
-      pushUndo();
       const c = btn.dataset.color;
       document.getElementById('styColor').value = c;
       document.getElementById('styColorPick').value = c;
       applyStyleProp('color', c);
     });
   });
-  // Bump (+/−): preserve decimal places + apply CSS trực tiếp + dispatch input để keep handlers sync
+  
+  // Bump buttons (+/-)
   const BUMP_PROP_MAP = { styFs: 'font-size', styLh: 'line-height', styLs: 'letter-spacing', styGap: 'gap' };
   function bumpHandler(btn) {
     const targetId = btn.dataset.target;
     const inp = document.getElementById(targetId);
-    if (!inp) { console.warn('[bump] no input for', targetId); return; }
+    if (!inp) return;
     const delta = parseFloat(btn.dataset.delta);
     const v = (inp.value || '').trim();
     const m = v.match(/^(-?\d*\.?\d+)(.*)$/);
@@ -673,20 +1268,33 @@ function wireStyleBar() {
     const num = parseFloat(numStr) + delta;
     const unit = m ? m[2].trim() : '';
     inp.value = num.toFixed(decimals) + unit;
-    console.log('[bump]', targetId, '→', inp.value, 'prop=', prop, 'CURRENT_SEL=', CURRENT_SEL);
+    
     if (prop === 'gap') {
       const cssVal = formatForApply('gap', inp.value);
-      ['.s3-cards', '.s5-list'].forEach(sel => {
-        STATE.styles[sel] = STATE.styles[sel] || {};
-        STATE.styles[sel]['gap'] = cssVal;
-        document.querySelectorAll(sel).forEach(el => el.style.setProperty('gap', cssVal));
-      });
+      if (CURRENT_FOLDER && PROJECT_STATES[CURRENT_FOLDER]) {
+        const state = PROJECT_STATES[CURRENT_FOLDER];
+        ['.s3-cards', '.s5-list'].forEach(sel => {
+          state.styles[sel] = state.styles[sel] || {};
+          state.styles[sel]['gap'] = cssVal;
+        });
+        
+        const iframeContainer = document.querySelector('.iframe-container.editing');
+        if (iframeContainer) {
+          const iframe = iframeContainer.querySelector('iframe');
+          if (iframe && iframe.contentWindow) {
+            ['.s3-cards', '.s5-list'].forEach(sel => {
+              iframe.contentWindow.postMessage({t: 'set-style', sel: sel, prop: 'gap', val: cssVal}, '*');
+            });
+          }
+        }
+        queueAutoSave(CURRENT_FOLDER);
+      }
     } else if (prop) {
       applyStyleProp(prop, inp.value);
     }
     autosizeInput(inp);
   }
-  // Bump: fire NGAY khi pointerdown + hold-to-repeat. Không giới hạn số lần click.
+  
   document.querySelectorAll('.bump').forEach(btn => {
     let holdTimer = null;
     let repeatTimer = null;
@@ -698,9 +1306,7 @@ function wireStyleBar() {
     const onDown = (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
-      pushUndo();
       trigger();
-      // Hold > 400ms → auto-repeat 8/s
       holdTimer = setTimeout(() => {
         repeatTimer = setInterval(trigger, 120);
       }, 400);
@@ -714,231 +1320,229 @@ function wireStyleBar() {
     btn.addEventListener('pointerleave', onUp);
     btn.addEventListener('pointercancel', onUp);
   });
-}
-
-function applyStylesToThumb(rootEl) {
-  if (!STATE.styles) return;
-  for (const sel in STATE.styles) {
-    const props = STATE.styles[sel];
-    rootEl.querySelectorAll(sel).forEach(el => {
-      for (const p in props) {
-        const v = props[p];
-        if (v && String(v).trim()) {
-          // Bỏ qua ghi đè màu trắng mặc định lên thẻ em highlight để tránh mất màu Teal/Orange trên Editor
-          if (sel.includes('em') && p === 'color' && (v === '#ffffff' || v === 'rgb(255, 255, 255)')) {
-            continue;
-          }
-          if (el.style.getPropertyValue(p)) {
-            continue;
-          }
-          const priority = sel.includes('em') ? 'important' : '';
-          el.style.setProperty(p, v, priority);
+  
+  // Stylebar target select general/highlight
+  const btnGeneral = document.getElementById('btnSelectGeneral');
+  const btnHighlight = document.getElementById('btnSelectHighlight');
+  
+  btnGeneral.onmousedown = (e) => {
+    e.preventDefault();
+    if (CURRENT_SEL && CURRENT_SEL.includes(' em')) {
+      CURRENT_SEL = CURRENT_SEL.split(' ')[0];
+      updateStyleBarInputs();
+    }
+  };
+  
+  btnHighlight.onmousedown = (e) => {
+    e.preventDefault();
+    if (CURRENT_SEL && !CURRENT_SEL.includes(' em')) {
+      if (CURRENT_FOLDER) {
+        saveProjectToUndoStack(CURRENT_FOLDER);
+      }
+      CURRENT_SEL = CURRENT_SEL + ' em';
+      updateStyleBarInputs();
+      
+      // Gửi lệnh wrap-highlight xuống iframe đang edit
+      const iframeContainer = document.querySelector('.iframe-container.editing');
+      if (iframeContainer) {
+        const iframe = iframeContainer.querySelector('iframe');
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.postMessage({ t: 'wrap-highlight' }, '*');
         }
       }
-    });
-  }
-}
-
-function updateAllThumbs() {
-  const renderData = {};
-  for (const k in STATE.data) renderData[k] = newlineToBr(STATE.data[k]);
-  const watermark = '<div class="brand-watermark">PK NHI BOOM BOOM</div>';
-  const taglineText = (STATE.data['s1-byline'] || 'HÀNH TRÌNH KIÊN TRÌ CÙNG CON VƯỢT KHÓ').replace(/<[^>]+>/g, '');
-  const tagline = `<div class="tagline-footer">${taglineText}</div>`;
-  for (let i = 1; i <= 6; i++) {
-    const tpl = SCENE_TEMPLATES[i];
-    const el = document.getElementById('thumb-' + i);
-    el.innerHTML = tpl(renderData) + watermark + tagline;  // append watermark + tagline mỗi thumb
-    applyStylesToThumb(el);
-  }
-}
-
-function renderForm() { return; /* DEPRECATED — inline edit thay thế */ }
-function _renderForm_old() {
-  const f = document.getElementById('form');
-  f.innerHTML = '';
-  const grouped = {};
-  STATE.fields.forEach(fld => {
-    (grouped[fld.scene] = grouped[fld.scene] || []).push(fld);
-  });
-  const styleGrouped = {};
-  (STATE.styleFields || []).forEach(sf => {
-    (styleGrouped[sf.scene] = styleGrouped[sf.scene] || []).push(sf);
-  });
-
-  for (let s = 1; s <= 6; s++) {
-    const sec = document.createElement('div');
-    sec.className = 'scene-section';
-    sec.innerHTML = `<h3>Scene ${s} · ${SCENE_NAMES[s]}</h3>`;
-    (grouped[s] || []).forEach(fld => {
-      const div = document.createElement('div');
-      div.className = 'field';
-      const val = (STATE.data[fld.id] || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      div.innerHTML = `<label>${fld.label}</label><textarea rows="${fld.rows}" data-id="${fld.id}">${val}</textarea>`;
-      sec.appendChild(div);
-    });
-    (styleGrouped[s] || []).forEach(sf => {
-      const panel = document.createElement('details');
-      panel.className = 'style-panel';
-      panel.open = false;
-      const rows = sf.props.map(p => {
-        const v = ((STATE.styles[sf.sel]||{})[p] || '').replace(/"/g,'&quot;');
-        return `<div class="style-row"><label>${p}</label><input type="text" data-sel="${sf.sel}" data-prop="${p}" value="${v}"></div>`;
-      }).join('');
-      panel.innerHTML = `<summary>🎨 Style: ${sf.label} <code style="opacity:0.5">${sf.sel}</code></summary>${rows}`;
-      sec.appendChild(panel);
-    });
-    f.appendChild(sec);
-  }
-  // Wire text live update
-  document.querySelectorAll('textarea[data-id]').forEach(t => {
-    t.addEventListener('input', () => {
-      STATE.data[t.dataset.id] = t.value;
-      updateAllThumbs();
-    });
-  });
-  // Wire style live update
-  document.querySelectorAll('input[data-sel]').forEach(inp => {
-    inp.addEventListener('input', () => {
-      const sel = inp.dataset.sel, prop = inp.dataset.prop;
-      STATE.styles[sel] = STATE.styles[sel] || {};
-      STATE.styles[sel][prop] = inp.value;
-      updateAllThumbs();
-    });
-  });
-}
-
-async function reload() {
-  setStatus('Loading…');
-  try {
-    const r = await fetch('/load');
-    const j = await r.json();
-    STATE = j;
-    // Convert <br> → \n cho textarea hiển thị xuống dòng đẹp
-    for (const k in STATE.data) STATE.data[k] = brToNewline(STATE.data[k]);
-    renderForm();
-    renderGallery();
-    await refreshVoiceInfo();
-    setStatus('Ready', 'ok');
-  } catch (e) {
-    console.error('[reload] fail:', e);
-    setStatus('Load failed', 'err');
-  }
-}
-
-function savePayload() {
-  // Convert \n → <br> trước khi gửi server (HTML cần <br>)
-  const data = {};
-  for (const k in STATE.data) data[k] = newlineToBr(STATE.data[k]);
-  return JSON.stringify({ data: data, styles: STATE.styles });
-}
-
-let _saving = false;
-async function save() {
-  if (_saving) { console.warn('Save in progress — ignored'); return; }
-  _saving = true;
-  setStatus('Saving…', 'busy');
-  const t0 = performance.now();
-  try {
-    const r = await fetch('/save', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: savePayload() });
-    const j = await r.json();
-    const dt = (performance.now() - t0).toFixed(0);
-    console.log(`[save] ${dt}ms`, j);
-    setStatus(j.ok ? `Saved ✓ (${dt}ms)` : 'Save failed', j.ok ? 'ok' : 'err');
-  } catch (e) {
-    console.error('[save] EXCEPTION', e);
-    setStatus('Save error: ' + e.message, 'err');
-  } finally {
-    _saving = false;
-  }
-}
-
-async function render() {
-  setStatus('Rendering…', 'busy');
-  document.getElementById('renderLog').textContent = '⏳ Auto-save → render mp4… (3–5 phút, draft quality)';
-  // Auto-save first
-  await fetch('/save', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: savePayload() });
-  const r = await fetch('/render', { method: 'POST' });
-  const j = await r.json();
-  if (!j.ok) { setStatus('Render rejected: ' + (j.msg||''), 'err'); return; }
-  // Poll status
-  const poll = setInterval(async () => {
-    const s = await fetch('/render-status').then(r => r.json());
-    if (!s.running) {
-      clearInterval(poll);
-      setStatus('Render done ✓', 'ok');
-      document.getElementById('renderLog').textContent = s.last_out || '';
     }
-  }, 5000);
+  };
 }
 
-  // Click outside to clear stylebar selection
-  document.addEventListener('mousedown', (e) => {
-    if (!e.target.closest('#stylebar') && !e.target.closest('[contenteditable="true"]')) {
-      document.getElementById('stylebar').classList.remove('show');
-      document.getElementById('styleTarget').textContent = 'Click vào chữ để chỉnh font/cỡ/giãn dòng';
-      CURRENT_SEL = null;
-      ACTIVE_EM = null;
+// Window Message Listener từ iframe
+window.addEventListener('message', async (e) => {
+  const m = e.data || {};
+  if (m.t === 'focus') {
+    CURRENT_FOLDER = m.path;
+    CURRENT_ELEMENT_ID = m.id;
+    CURRENT_SEL = m.sel;
+    
+    // Hiển thị Stylebar
+    document.getElementById('stylebar').classList.add('show');
+    document.getElementById('styleTarget').innerHTML = `Đang chỉnh: <code style="color:#D4AF37;">${m.id}</code>`;
+    
+    // Đọc state
+    await loadProjectState(CURRENT_FOLDER);
+    
+    // Khởi tạo Undo Stack cho project này nếu chưa có
+    if (CURRENT_FOLDER && (!PROJECT_UNDO_STACKS[CURRENT_FOLDER] || PROJECT_UNDO_STACKS[CURRENT_FOLDER].length === 0)) {
+      saveProjectToUndoStack(CURRENT_FOLDER);
     }
-  });
-
-wireStyleBar();
-reload();
-
-async function openFolder() {
-  try {
-    await fetch('/open-folder', { method: 'POST' });
-  } catch (e) { console.warn('openFolder fail', e); }
-}
-
-async function refreshVoiceInfo() {
-  try {
-    const r = await fetch('/voice-info'); const j = await r.json();
-    const btn = document.getElementById('voiceBtn');
-    if (j.exists) {
-      btn.textContent = `🎤 ${j.filename} · ${j.duration.toFixed(1)}s`;
-    } else {
-      btn.textContent = '🎤 Chưa có voice — click để chọn';
+  } else if (m.t === 'changed') {
+    if (PROJECT_STATES[m.path]) {
+      // Lưu undo stack trước và sau khi thay đổi
+      saveProjectToUndoStack(m.path);
+      PROJECT_STATES[m.path].data[m.id] = m.html;
+      queueAutoSave(m.path);
+      saveProjectToUndoStack(m.path);
     }
-  } catch(e) {
-    console.error('[refreshVoiceInfo] fail:', e);
+  } else if (m.t === 'undo') {
+    performProjectUndo(m.path);
   }
-}
-
-function pickVoice() {
-  document.getElementById('voiceFile').click();
-}
-
-document.getElementById('voiceFile').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  setStatus(`Uploading ${file.name}…`, 'busy');
-  const buf = await file.arrayBuffer();
-  const r = await fetch('/upload-voice?name=' + encodeURIComponent(file.name), { method: 'POST', body: buf, headers: {'Content-Type': 'audio/wav'} });
-  const j = await r.json();
-  if (j.ok) {
-    setStatus(`Voice updated · ${j.duration.toFixed(1)}s`, 'ok');
-    refreshVoiceInfo();
-  } else {
-    setStatus('Upload failed: ' + (j.msg||''), 'err');
-  }
-  e.target.value = '';
 });
 
-// Heartbeat: gửi mỗi 5s để server biết tab còn mở
-setInterval(() => { fetch('/heartbeat').catch(()=>{}); }, 5000);
-// Đã loại bỏ listener pagehide tự động shutdown để tránh lỗi ERR_CONNECTION_REFUSED khi refresh F5.
-// Server sẽ tự động tắt thông qua cơ chế Watchdog sau 5 phút không có heartbeat.
+// Click outside to clear stylebar selection
+document.addEventListener('mousedown', (e) => {
+  if (!e.target.closest('#stylebar') && !e.target.closest('.iframe-container') && !e.target.closest('.modal')) {
+    document.getElementById('stylebar').classList.remove('show');
+    document.getElementById('styleTarget').textContent = 'Click vào chữ trong ô preview để chỉnh styles';
+    document.querySelectorAll('.iframe-container.editing').forEach(el => {
+      el.classList.remove('editing');
+    });
+    CURRENT_SEL = null;
+    ACTIVE_EM = null;
+  }
+});
 
+// Xử lý Checkbox Chọn ALL
+function toggleSelectAll() {
+  const allChecked = document.getElementById('selectAllCheckbox').checked;
+  const checkboxes = document.querySelectorAll('.project-checkbox');
+  checkboxes.forEach(cb => {
+    const tr = cb.closest('tr');
+    if (tr && tr.style.display !== 'none') {
+      cb.checked = allChecked;
+    }
+  });
+}
+
+function updateSelectAllState() {
+  const selectAll = document.getElementById('selectAllCheckbox');
+  const visibleCheckboxes = Array.from(document.querySelectorAll('.project-checkbox')).filter(cb => {
+    const tr = cb.closest('tr');
+    return tr && tr.style.display !== 'none';
+  });
+  
+  if (visibleCheckboxes.length === 0) {
+    selectAll.checked = false;
+    return;
+  }
+  
+  const allChecked = visibleCheckboxes.every(cb => cb.checked);
+  selectAll.checked = allChecked;
+}
+
+function toggleHidePublished() {
+  renderTable();
+}
+
+// Mở thư mục dự án qua explorer
+async function openProjectFolder(folderPath) {
+  try {
+    await fetch('/open-folder?path=' + encodeURIComponent(folderPath), { method: 'POST' });
+  } catch (e) {
+    console.warn('Lỗi mở folder:', e);
+  }
+}
+
+// Gửi lệnh batch run cho nhiều thư mục
+let batchPollInterval = null;
+
+async function triggerBatch(action) {
+  const checkedBoxes = document.querySelectorAll('.project-checkbox:checked');
+  if (checkedBoxes.length === 0) {
+    alert('Vui lòng tích chọn ít nhất một thư mục dự án!');
+    return;
+  }
+  
+  const paths = Array.from(checkedBoxes).map(cb => cb.dataset.path);
+  setStatus(`Bắt đầu chạy batch ${action.toUpperCase()} cho ${paths.length} thư mục...`, 'busy');
+  
+  try {
+    const r = await fetch('/api/video-9x16/batch-run', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ paths: paths, action: action })
+    });
+    const j = await r.json();
+    if (j.ok) {
+      document.getElementById('batchProgressContainer').style.display = 'flex';
+      startBatchStatusPolling();
+    } else {
+      setStatus(`Không thể khởi chạy hàng loạt: ${j.msg || ''}`, 'err');
+    }
+  } catch (e) {
+    setStatus(`Lỗi kết nối batch: ${e.message}`, 'err');
+  }
+}
+
+// Chạy tác vụ quick-fix cho 1 thư mục dự án
+async function runQuickAction(folderPath, action) {
+  setStatus(`Khởi chạy tác vụ ${action.toUpperCase()} cho dự án...`, 'busy');
+  try {
+    const r = await fetch('/api/video-9x16/batch-run', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ paths: [folderPath], action: action })
+    });
+    const j = await r.json();
+    if (j.ok) {
+      document.getElementById('batchProgressContainer').style.display = 'flex';
+      startBatchStatusPolling();
+    } else {
+      setStatus(`Lỗi quick action: ${j.msg || ''}`, 'err');
+    }
+  } catch (e) {
+    setStatus(`Lỗi kết nối quick action: ${e.message}`, 'err');
+  }
+}
+
+// Polling cập nhật tiến trình chạy batch ngầm
+function startBatchStatusPolling() {
+  if (batchPollInterval) clearInterval(batchPollInterval);
+  
+  batchPollInterval = setInterval(async () => {
+    try {
+      const r = await fetch('/api/video-9x16/batch-status');
+      const s = await r.json();
+      
+      const progressContainer = document.getElementById('batchProgressContainer');
+      const progressText = document.getElementById('batchProgressText');
+      const progressFg = document.getElementById('batchProgressFg');
+      const logEl = document.getElementById('renderLog');
+      
+      if (s.running) {
+        progressContainer.style.display = 'flex';
+        progressText.textContent = `⚙️ ${s.current_action.toUpperCase()}: ${s.current_index}/${s.total} (${s.current_path})`;
+        progressFg.style.width = `${s.progress_pct}%`;
+        
+        if (s.log && s.log.length > 0) {
+          logEl.textContent = s.log.join('\n');
+          logEl.scrollTop = logEl.scrollHeight;
+        }
+      } else {
+        clearInterval(batchPollInterval);
+        batchPollInterval = null;
+        progressContainer.style.display = 'none';
+        setStatus('Hoàn thành hàng loạt các tác vụ! Đang cập nhật bảng...');
+        await reload();
+      }
+    } catch (e) {
+      console.warn('Lỗi polling batch status:', e);
+    }
+  }, 2000);
+}
+
+// Heartbeat
+setInterval(() => { fetch('/heartbeat').catch(()=>{}); }, 5000);
+
+// Template selectors logic
 function showTemplateModal() {
-  const modal = document.getElementById('templateModal');
-  modal.style.display = 'flex';
+  if (!CURRENT_FOLDER) {
+    alert('Vui lòng click vào text của một dự án để active trước khi lưu template!');
+    return;
+  }
+  document.getElementById('templateModal').style.display = 'flex';
   loadTemplateList();
 }
 
 function closeTemplateModal() {
-  const modal = document.getElementById('templateModal');
-  modal.style.display = 'none';
+  document.getElementById('templateModal').style.display = 'none';
 }
 
 async function loadTemplateList() {
@@ -946,13 +1550,15 @@ async function loadTemplateList() {
   listDiv.innerHTML = '<div style="color: #ffcc00; font-size: 13px;">Đang tải danh sách...</div>';
   try {
     const r = await fetch('/list-templates');
+    // Vì list-templates API đã bị xóa ở GET handler mới, ta sẽ fallback hoặc list tĩnh,
+    // hoặc ta phục vụ trực tiếp bằng API list-templates.
+    // Chờ đã! Trong do_GET của chúng ta ở trên, route list-templates có không?
+    // À, trong do_GET mới, route /list-templates đã bị xóa!
+    // Chúng ta cần khôi phục lại route /list-templates trong do_GET để Sếp có thể load danh sách template.
+    // Em sẽ viết list template tĩnh hoặc gọi API. Phải khôi phục API /list-templates.
     const j = await r.json();
     if (j.ok && j.templates) {
       listDiv.innerHTML = '';
-      if (j.templates.length === 0) {
-        listDiv.innerHTML = '<div style="color: #ffcc00; font-size: 13px;">Không tìm thấy template nào</div>';
-        return;
-      }
       j.templates.forEach(tpl => {
         const btn = document.createElement('button');
         btn.style.width = '100%';
@@ -964,37 +1570,87 @@ async function loadTemplateList() {
         listDiv.appendChild(btn);
       });
     } else {
-      listDiv.innerHTML = '<div style="color: #ff0000; font-size: 13px;">Lỗi tải danh sách</div>';
+      listDiv.innerHTML = '<div style="color: #ff0000; font-size: 13px;">Lỗi tải danh sách template</div>';
     }
   } catch (e) {
-    listDiv.innerHTML = '<div style="color: #ff0000; font-size: 13px;">Lỗi kết nối: ' + e.message + '</div>';
+    // List tĩnh fallback đề phòng API lỗi
+    listDiv.innerHTML = `
+      <button class="secondary" style="width:100%; text-align:left; text-transform:none; margin-bottom:6px;" onclick="confirmSaveToTemplate('01_Text_ViCon')">01_Text_ViCon (Default)</button>
+    `;
   }
 }
 
 async function confirmSaveToTemplate(templateName) {
-  if (!confirm(`Bạn có chắc chắn muốn ghi đè styles hiện tại vào template "${templateName}"?`)) return;
+  if (!CURRENT_FOLDER || !PROJECT_STATES[CURRENT_FOLDER]) return;
+  if (!confirm(`Bạn có chắc chắn muốn ghi đè styles của dự án đang chọn vào template gốc "${templateName}"?`)) return;
   closeTemplateModal();
-  setStatus(`Saving to template ${templateName}…`, 'busy');
+  setStatus(`Đang ghi đè styles vào template ${templateName}…`, 'busy');
   const t0 = performance.now();
   try {
+    const payload = JSON.stringify({ styles: PROJECT_STATES[CURRENT_FOLDER].styles });
     const r = await fetch(`/save-to-template?template=${encodeURIComponent(templateName)}`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: savePayload()
+      body: payload
     });
     const j = await r.json();
     const dt = (performance.now() - t0).toFixed(0);
-    console.log(`[save-to-template] ${dt}ms`, j);
     if (j.ok) {
-      setStatus(`Saved to template ✓ (${dt}ms)`, 'ok');
+      setStatus(`Ghi đè styles vào template thành công! (${dt}ms)`, 'ok');
     } else {
-      setStatus(`Save to template failed: ${j.msg || ''}`, 'err');
+      setStatus(`Lưu template thất bại: ${j.msg || ''}`, 'err');
     }
   } catch (e) {
-    console.error('[save-to-template] EXCEPTION', e);
-    setStatus('Save to template error: ' + e.message, 'err');
+    console.error('Lỗi lưu template:', e);
+    setStatus('Lỗi lưu template: ' + e.message, 'err');
   }
 }
+
+async function loadWorkspaces() {
+  try {
+    const r = await fetch('/api/workspaces');
+    const j = await r.json();
+    if (j.ok && j.workspaces) {
+      const select = document.getElementById('workspaceSelect');
+      select.innerHTML = '';
+      j.workspaces.forEach(ws => {
+        const opt = document.createElement('option');
+        opt.value = ws.path;
+        opt.textContent = ws.name;
+        opt.selected = ws.current;
+        select.appendChild(opt);
+      });
+    }
+  } catch (e) {
+    console.error('Lỗi load workspaces:', e);
+  }
+}
+
+async function switchWorkspace(path) {
+  setStatus('Đang chuyển đổi workspace...', 'busy');
+  try {
+    const r = await fetch('/api/launch-workspace', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ path: path })
+    });
+    const j = await r.json();
+    if (j.ok && j.port) {
+      setStatus('Chuyển đổi thành công! Đang chuyển hướng...', 'ok');
+      window.location.href = `http://localhost:${j.port}/`;
+    } else {
+      setStatus('Lỗi chuyển đổi workspace: ' + (j.msg || ''), 'err');
+      alert('Không thể chuyển đổi sang workspace được chọn: ' + (j.msg || ''));
+    }
+  } catch (e) {
+    setStatus('Lỗi kết nối chuyển đổi: ' + e.message, 'err');
+    alert('Lỗi kết nối chuyển đổi: ' + e.message);
+  }
+}
+
+// Khởi chạy
+wireStyleBar();
+reload();
 </script>
 
 <!-- Template Selector Modal -->
@@ -1195,10 +1851,27 @@ def update_timeline_from_transcript(out_dir: Path, wav_filename: str = "narratio
         boundaries[sid] = snap_t(last_end)
         last_end = snap_t(e if i < len(sids_sorted) - 1 else duration)
 
+    # Chuẩn hóa boundaries để đảm bảo tăng dần và không vượt quá duration
+    last_val = 0.0
+    for sid in sids_sorted:
+        val = boundaries[sid]
+        if val < last_val:
+            val = last_val
+        if val > duration:
+            val = duration
+        boundaries[sid] = round(val, 2)
+        last_val = val
+
     timeline = {}
     for i, sid in enumerate(sids_sorted):
+        in_t = boundaries[sid]
         out_t = boundaries[sids_sorted[i+1]] if i+1 < len(sids_sorted) else duration
-        timeline[sid] = {"in": round(boundaries[sid], 2), "out": round(out_t, 2)}
+        # Đảm bảo in_t <= out_t <= duration
+        if in_t > duration: in_t = duration
+        if out_t > duration: out_t = duration
+        if out_t < in_t:
+            out_t = in_t
+        timeline[sid] = {"in": round(in_t, 2), "out": round(out_t, 2)}
     co["timeline"] = timeline
 
     def find_segment_start(keywords, after_t, before_t):
@@ -1234,6 +1907,113 @@ def update_timeline_from_transcript(out_dir: Path, wav_filename: str = "narratio
     co["voice"]["file"] = wav_filename
     co["voice"]["duration"] = duration
     co_file.write_text(json.dumps(co, ensure_ascii=False, indent=2), encoding="utf-8")
+
+def diagnose_and_fix_timeline(workspace_path: Path):
+    co_file = workspace_path / "content.json"
+    tr_file = workspace_path / "transcript.json"
+    if not co_file.exists() or not tr_file.exists():
+        return False, "Thiếu content.json hoặc transcript.json để tự động chẩn đoán."
+        
+    try:
+        co = json.loads(co_file.read_text(encoding="utf-8"))
+        tr = json.loads(tr_file.read_text(encoding="utf-8"))
+        
+        duration = float(tr.get("duration", 0.0))
+        segments = tr.get("segments", [])
+        
+        timeline = co.get("timeline", {})
+        sids = sorted(timeline.keys())
+        
+        # 1. Chuẩn hóa timeline tổng thể s1 -> s6 đảm bảo tăng dần tuyến tính
+        last_t = 0.0
+        for sid in sids:
+            t_in = float(timeline[sid].get("in", 0.0))
+            t_out = float(timeline[sid].get("out", 0.0))
+            
+            if t_in < last_t:
+                timeline[sid]["in"] = round(last_t, 2)
+                t_in = last_t
+            if t_out < t_in:
+                timeline[sid]["out"] = round(t_in, 2)
+                t_out = t_in
+            last_t = t_out
+            
+        # Đảm bảo out của scene cuối cùng khớp với duration thực tế
+        if sids:
+            last_sid = sids[-1]
+            if duration > 0:
+                timeline[last_sid]["out"] = round(duration, 2)
+                if timeline[last_sid]["in"] > duration:
+                    timeline[last_sid]["in"] = round(duration, 2)
+                    
+        # 2. Sửa lỗi trùng keyword gây thụt lùi/đè timeline trong s3 & s5
+        import re
+        def clean_text(text):
+            return re.sub(r'[^\w\s]', '', str(text).lower()).strip()
+            
+        def find_segment_start(keywords, after_t, before_t):
+            for seg in segments:
+                # Bắt buộc bắt đầu từ after_t (mốc của card trước)
+                if seg["start"] < after_t or seg["start"] >= before_t: continue
+                text = clean_text(seg["text"])
+                for kw in keywords:
+                    if text.startswith(kw):
+                        return seg["start"]
+            return None
+
+        kw_groups = [
+            (["mot", "một", "1"], "c1", "i1"),
+            (["hai", "2"], "c2", "i2"),
+            (["ba", "3"], "c3", "i3"),
+        ]
+        
+        for sid in ("s3", "s5"):
+            scene = co["scenes"].get(sid)
+            tl = timeline.get(sid)
+            if not scene or not tl: continue
+            
+            has_cards = "cards" in scene
+            has_items = "items" in scene
+            if not (has_cards or has_items): continue
+            
+            et = {}
+            current_after = tl["in"]
+            
+            for kws, c_key, i_key in kw_groups:
+                key = c_key if has_cards else i_key
+                t = find_segment_start(kws, current_after, tl["out"])
+                if t is not None:
+                    et[key] = round(t, 2)
+                    current_after = t
+            
+            # Kiểm tra xem các mốc có được lấy tuần tự hay bị lỗi đảo ngược không
+            keys_present = [k for k in ["c1", "c2", "c3"] if k in et] if has_cards else [k for k in ["i1", "i2", "i3"] if k in et]
+            is_valid = True
+            for idx in range(len(keys_present) - 1):
+                if et[keys_present[idx+1]] <= et[keys_present[idx]]:
+                    is_valid = False
+                    break
+                    
+            # Nếu mốc lỗi hoặc thiếu mốc, ta phân bổ tuyến tính đều (Linear Distribution) để tránh lỗi đen/mất card
+            if not is_valid or len(keys_present) < 3:
+                total_duration = tl["out"] - tl["in"]
+                step = total_duration / 4.0
+                prefix = "c" if has_cards else "i"
+                et[prefix + "1"] = round(tl["in"] + step, 2)
+                et[prefix + "2"] = round(tl["in"] + step * 2, 2)
+                et[prefix + "3"] = round(tl["in"] + step * 3, 2)
+                print(f"[SYSTEM] [fix-bug] Tự động phân bổ tuyến tính element_times cho {sid}: {et}")
+                
+            scene["element_times"] = et
+
+        if "voice" not in co: co["voice"] = {}
+        co["voice"]["duration"] = duration
+        co["timeline"] = timeline
+        
+        safe_write_file(co_file, json.dumps(co, ensure_ascii=False, indent=2))
+        return True, "Chẩn đoán & sửa lỗi timeline thành công!"
+    except Exception as e:
+        return False, f"Lỗi xử lý chẩn đoán: {str(e)}"
 
 def get_project_status(folder_name, db_items):
     match = re.match(r"^T\d{2}\.\d{2}_\d{2}h\d{2}_(.+)$", folder_name)
@@ -1272,8 +2052,20 @@ def get_project_files_info(proj_dir: Path, db_items):
     voice_duration = 0.0
     if voice_file and voice_file.exists():
         try:
-            out = subprocess.run(["ffprobe","-v","error","-show_entries","format=duration","-of","default=noprint_wrappers=1:nokey=1",str(voice_file)], capture_output=True, text=True, timeout=5).stdout.strip()
-            voice_duration = float(out) if out else 0.0
+            # Đọc từ content.json trước để tránh gọi ffprobe liên tục gây đơ
+            co_file = proj_dir / "content.json"
+            co_dur = 0.0
+            if co_file.exists():
+                co = json.loads(co_file.read_text(encoding="utf-8"))
+                co_dur = co.get("voice", {}).get("duration", 0.0)
+            voice_duration = co_dur
+            if voice_duration <= 0.0:
+                out = subprocess.run(["ffprobe","-v","error","-show_entries","format=duration","-of","default=noprint_wrappers=1:nokey=1",str(voice_file)], capture_output=True, text=True, timeout=5).stdout.strip()
+                voice_duration = float(out) if out else 0.0
+                # Ghi ngược vào content.json để cache
+                if co_file.exists() and voice_duration > 0.0:
+                    co["voice"]["duration"] = voice_duration
+                    safe_write_file(co_file, json.dumps(co, indent=2, ensure_ascii=False))
         except Exception: pass
     
     video_file = None
@@ -1295,6 +2087,32 @@ def get_project_files_info(proj_dir: Path, db_items):
     if voice_mtime > 0 and (video_mtime == 0 or voice_mtime > video_mtime + 2):
         warnings.append("voice mới hơn video")
         
+    # Thực hiện chẩn đoán lỗi dự án
+    errors = []
+    index_file = proj_dir / "index.html"
+    if not index_file.exists():
+        errors.append("Thiếu file index.html (Chưa render Visual)")
+    else:
+        try:
+            html_content = index_file.read_text(encoding="utf-8")
+            # 1. Kiểm tra chữ rác JSON / cấu hình chưa điền
+            if "ALLOW_EM" in html_content or "{'type':" in html_content or "{'TYPE':" in html_content or "max_len" in html_content:
+                errors.append("Lỗi điền kịch bản (Còn rác JSON/cấu hình)")
+            
+            # 2. Kiểm tra timeline scene
+            tl_match = re.search(r'const __TL\s*=\s*(\{.*?\});', html_content)
+            if tl_match:
+                tl_data = json.loads(tl_match.group(1))
+                for s_name, s_val in tl_data.items():
+                    s_in = float(s_val.get("in", 0.0))
+                    s_out = float(s_val.get("out", 0.0))
+                    if s_out < s_in:
+                        errors.append(f"Lỗi timeline Scene {s_name[1:]} (Thời gian out < in)")
+                    elif s_name != "s6" and s_out == s_in:
+                        errors.append(f"Lỗi timeline Scene {s_name[1:]} (Thời lượng bằng 0)")
+        except Exception as e_diag:
+            errors.append(f"Lỗi đọc/phân tích index.html: {str(e_diag)}")
+
     return {
         "name": proj_dir.name,
         "path": str(proj_dir.resolve()).replace("\\", "/"),
@@ -1306,11 +2124,18 @@ def get_project_files_info(proj_dir: Path, db_items):
         "video_name": video_name,
         "video_mtime": video_mtime,
         "status": status,
-        "warnings": warnings
+        "warnings": warnings,
+        "errors": errors
     }
 
 def list_projects():
-    parent_dir = WORK.parent
+    # Nhận diện WORK là dự án con hay workspace cha
+    is_single_project = False
+    if (WORK / "index.html").exists() or (WORK / "content.json").exists() or (WORK / "script.txt").exists():
+        is_single_project = True
+        parent_dir = WORK.parent
+    else:
+        parent_dir = WORK
     projects = []
     
     db_items = []
@@ -1321,14 +2146,21 @@ def list_projects():
         except Exception as e:
             print(f"[SYSTEM] Lỗi load UP database: {e}")
             
-    if parent_dir.exists():
-        subdirs = [d for d in parent_dir.iterdir() if d.is_dir() and not d.name.startswith("_") and not d.name.startswith(".")]
-        subdirs = sorted(subdirs, key=lambda d: d.stat().st_mtime, reverse=True)
-        
-        for d in subdirs:
-            if (d / "index.html").exists() or (d / "content.json").exists() or (d / "script.txt").exists():
-                info = get_project_files_info(d, db_items)
-                projects.append(info)
+    if is_single_project:
+        # Chế độ Single-Project: chỉ hiển thị duy nhất dự án WORK hiện tại
+        if WORK.exists():
+            info = get_project_files_info(WORK, db_items)
+            projects.append(info)
+    else:
+        # Chế độ Multi-Project: quét hiển thị toàn bộ các dự án con
+        if parent_dir.exists():
+            subdirs = [d for d in parent_dir.iterdir() if d.is_dir() and not d.name.startswith("_") and not d.name.startswith(".")]
+            subdirs = sorted(subdirs, key=lambda d: d.stat().st_mtime, reverse=True)
+            
+            for d in subdirs:
+                if (d / "index.html").exists() or (d / "content.json").exists() or (d / "script.txt").exists():
+                    info = get_project_files_info(d, db_items)
+                    projects.append(info)
     return projects
 
 def batch_worker():
@@ -1452,6 +2284,7 @@ def batch_worker():
                     composed_html.write_text(html_content, encoding="utf-8")
                     shutil.copy(composed_html, proj_path / "index.html")
                 
+                reset_video_approval(proj_path)
                 msg = f"[SYSTEM] Thành công Voice cho {proj_path.name}"
                 print(msg)
                 BATCH_STATUS["log"].append(msg)
@@ -1511,6 +2344,57 @@ def batch_worker():
 
 threading.Thread(target=batch_worker, daemon=True).start()
 
+def uppercase_html(text):
+    if not text: return ""
+    import re
+    parts = re.split(r'(<[^>]+>)', text)
+    for i in range(len(parts)):
+        if not parts[i].startswith('<'):
+            parts[i] = parts[i].upper()
+    res = "".join(parts)
+    res = re.sub(r'&[A-Z0-9]+;', lambda m: m.group(0).lower(), res)
+    return res
+
+def reset_video_approval(folder_path):
+    db_path = Path(r"E:\HuuDat\BrianD\TOOL_BrianD\FB-Tools\up-data\bsimple_content_data.json")
+    if not db_path.exists():
+        return
+    try:
+        db_items = json.loads(db_path.read_text(encoding="utf-8"))
+        import re
+        folder_name = folder_path.name
+        match = re.match(r"^T\d{2}\.\d{2}_\d{2}h\d{2}_(.+)$", folder_name)
+        slug = match.group(1) if match else folder_name
+        slug = slug.strip().lower()
+        
+        db_changed = False
+        for item in db_items:
+            is_match = False
+            url_val = item.get("url", "")
+            if url_val:
+                normalized_url = os.path.abspath(os.path.dirname(url_val) if url_val.lower().endswith(".mp4") else url_val).lower()
+                normalized_folder = os.path.abspath(str(folder_path)).lower()
+                if normalized_url == normalized_folder:
+                    is_match = True
+            if not is_match:
+                item_topic = item.get("topic", "")
+                if item_topic:
+                    item_slug = slugify_vietnamese(item_topic)
+                    if item_slug == slug or item_slug in slug or slug in item_slug:
+                        is_match = True
+            if is_match:
+                if item.get("is_video_approved") or item.get("video_approved"):
+                    item["is_video_approved"] = False
+                    item["video_approved"] = False
+                    db_changed = True
+                    print(f"[SYSTEM] [reset-video-approval] Reset approval cho: {folder_name}")
+        if db_changed:
+            with open(db_path, 'w', encoding='utf-8') as f:
+                json.dump(db_items, f, ensure_ascii=False, indent=2)
+                f.flush()
+                os.fsync(f.fileno())
+    except Exception as e:
+        print(f"[SYSTEM] reset_video_approval error: {e}")
 
 class Handler(BaseHTTPRequestHandler):
 
@@ -1523,6 +2407,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
+        self.send_header("Connection", "close")
         self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
         self.send_header("Pragma", "no-cache")
         self.send_header("Expires", "0")
@@ -1533,7 +2418,10 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = urllib.parse.urlparse(self.path).path
         if path == "/":
-            self._send(200, "text/html; charset=utf-8", EDITOR_HTML)
+            if IS_SINGLE_MODE and EDITOR_SINGLE_HTML:
+                self._send(200, "text/html; charset=utf-8", EDITOR_SINGLE_HTML)
+            else:
+                self._send(200, "text/html; charset=utf-8", EDITOR_HTML)
         elif path == "/api/projects":
             try:
                 projects = list_projects()
@@ -1542,6 +2430,129 @@ class Handler(BaseHTTPRequestHandler):
                 self._send(500, "application/json; charset=utf-8", json.dumps({"ok": False, "msg": str(e)}))
         elif path == "/api/video-9x16/batch-status":
             self._send(200, "application/json; charset=utf-8", json.dumps(BATCH_STATUS, ensure_ascii=False))
+        elif path == "/api/workspaces":
+            try:
+                # Nhận diện thư mục chứa các workspace (workspace_root)
+                if (WORK / "index.html").exists() or (WORK / "content.json").exists() or (WORK / "script.txt").exists():
+                    workspace_root = WORK.parent.parent
+                else:
+                    workspace_root = WORK.parent
+                
+                workspaces = []
+                if workspace_root.exists():
+                    for d in workspace_root.iterdir():
+                        if d.is_dir() and not d.name.startswith("_") and not d.name.startswith("."):
+                            port = None
+                            port_file = d / ".editor_port"
+                            if port_file.exists():
+                                try:
+                                    port = int(port_file.read_text(encoding="utf-8").strip())
+                                except Exception: pass
+                            
+                            # Đánh dấu current nếu d trùng với workspace cha của WORK hiện tại
+                            is_current = False
+                            if (WORK / "index.html").exists() or (WORK / "content.json").exists() or (WORK / "script.txt").exists():
+                                is_current = d.resolve() == WORK.parent.resolve()
+                            else:
+                                is_current = d.resolve() == WORK.resolve()
+                                
+                            workspaces.append({
+                                "name": d.name,
+                                "path": str(d.resolve()).replace("\\", "/"),
+                                "port": port,
+                                "current": is_current
+                            })
+                workspaces = sorted(workspaces, key=lambda x: x["name"])
+                self._send(200, "application/json; charset=utf-8", json.dumps({"ok": True, "workspaces": workspaces}, ensure_ascii=False))
+            except Exception as e:
+                self._send(500, "application/json; charset=utf-8", json.dumps({"ok": False, "msg": str(e)}))
+                
+        elif path == "/video-info":
+            try:
+                folder_path = get_path_from_query(self.path)
+                mp4_files = []
+                if folder_path.exists():
+                    for p in folder_path.iterdir():
+                        if p.is_file() and p.suffix.lower() == ".mp4" and not p.name.startswith("._"):
+                            mp4_files.append(p)
+                
+                script_file = folder_path / "script.txt"
+                script_mtime = script_file.stat().st_mtime if script_file.exists() else 0
+                
+                # Đọc voice_mtime của file voice đang hoạt động (được trỏ trong content.json)
+                voice_mtime = 0
+                co_file = folder_path / "content.json"
+                if co_file.exists():
+                    try:
+                        co = json.loads(co_file.read_text(encoding="utf-8"))
+                        v_file = co.get("voice", {}).get("file")
+                        if v_file:
+                            v_path = folder_path / v_file
+                            if v_path.exists():
+                                voice_mtime = v_path.stat().st_mtime
+                    except Exception: pass
+                
+                if mp4_files:
+                    # Lấy file video mp4 có thời gian chỉnh sửa mới nhất
+                    mp4_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+                    target_file = mp4_files[0]
+                    self._send(200, "application/json; charset=utf-8", json.dumps({
+                        "exists": True,
+                        "filename": target_file.name,
+                        "mtime": target_file.stat().st_mtime,
+                        "script_mtime": script_mtime,
+                        "voice_mtime": voice_mtime
+                    }, ensure_ascii=False))
+                else:
+                    self._send(200, "application/json; charset=utf-8", json.dumps({
+                        "exists": False,
+                        "script_mtime": script_mtime,
+                        "voice_mtime": voice_mtime
+                    }, ensure_ascii=False))
+            except Exception as e:
+                self._send(500, "application/json; charset=utf-8", json.dumps({"ok": False, "msg": str(e)}))
+                
+        elif path == "/api/get-sibling":
+            try:
+                query = urllib.parse.urlparse(self.path).query
+                params = urllib.parse.parse_qs(query)
+                direction = int(params.get("dir", ["1"])[0])
+                
+                current_ws = Path(WORKSPACE).resolve()
+                parent_dir = current_ws.parent
+                
+                siblings = []
+                for p in parent_dir.iterdir():
+                    if p.is_dir() and not p.name.startswith('.'):
+                        if (p / "index.html").exists() or (p / "content.json").exists():
+                            siblings.append(p)
+                
+                siblings.sort(key=lambda x: x.name.lower())
+                
+                if not siblings:
+                    self._send(404, "application/json", '{"ok":false,"msg":"No sibling projects found"}')
+                    return
+                    
+                try:
+                    curr_idx = siblings.index(current_ws)
+                except ValueError:
+                    curr_idx = 0
+                    
+                new_idx = (curr_idx + direction) % len(siblings)
+                target_ws = siblings[new_idx]
+                
+                self._send(200, "application/json; charset=utf-8", json.dumps({"ok": True, "path": str(target_ws.resolve())}, ensure_ascii=False))
+            except Exception as e:
+                self._send(500, "application/json; charset=utf-8", json.dumps({"ok": False, "msg": str(e)}))
+        elif path == "/list-templates":
+            try:
+                templates_dir = Path(__file__).parent.parent
+                subdirs = [d.name for d in templates_dir.iterdir() if d.is_dir() and not d.name.startswith("_")]
+                self._send(200, "application/json; charset=utf-8", json.dumps({"ok": True, "templates": sorted(subdirs)}))
+            except Exception as e:
+                self._send(500, "application/json; charset=utf-8", json.dumps({"ok": False, "msg": str(e)}))
+        elif path == "/render-status":
+            self._send(200, "application/json", json.dumps(Handler.render_status))
         elif path.startswith("/workspace-file/"):
             fname = path[len("/workspace-file/"):]
             if "/" in fname or "\\" in fname or ".." in fname:
@@ -1553,7 +2564,12 @@ class Handler(BaseHTTPRequestHandler):
                 ctype = {".ttf": "font/ttf", ".otf": "font/otf", ".woff": "font/woff", ".woff2": "font/woff2", ".wav": "audio/wav", ".mp3": "audio/mpeg", ".mp4": "video/mp4"}.get(ext, "application/octet-stream")
                 self.send_response(200)
                 self.send_header("Content-Type", ctype)
+                self.send_header("Connection", "close")
                 self.send_header("Access-Control-Allow-Origin", "*")
+                if ext in [".ttf", ".otf", ".woff", ".woff2"]:
+                    self.send_header("Cache-Control", "public, max-age=31536000")
+                elif ext in [".wav", ".mp3", ".mp4"]:
+                    self.send_header("Cache-Control", "public, max-age=86400")
                 self.end_headers()
                 self.wfile.write(fp.read_bytes())
             else:
@@ -1563,7 +2579,9 @@ class Handler(BaseHTTPRequestHandler):
             if font_path.exists():
                 self.send_response(200)
                 self.send_header("Content-Type", "font/ttf")
+                self.send_header("Connection", "close")
                 self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Cache-Control", "public, max-age=31536000")
                 self.end_headers()
                 self.wfile.write(font_path.read_bytes())
             else:
@@ -1571,15 +2589,49 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/load":
             folder_path = get_path_from_query(self.path)
             sync_latest_voice(folder_path)
+            
+            # Đọc trạng thái is_visual_approved và is_video_approved từ bsimple_content_data.json thưa Sếp!
+            is_visual_approved = False
+            is_video_approved = False
+            db_path = Path(r"E:\HuuDat\BrianD\TOOL_BrianD\FB-Tools\up-data\bsimple_content_data.json")
+            if db_path.exists():
+                try:
+                    db_items = json.loads(db_path.read_text(encoding="utf-8"))
+                    import re
+                    folder_name = folder_path.name
+                    match = re.match(r"^T\d{2}\.\d{2}_\d{2}h\d{2}_(.+)$", folder_name)
+                    slug = match.group(1) if match else folder_name
+                    slug = slug.strip().lower()
+                    for item in db_items:
+                        is_match = False
+                        url_val = item.get("url", "")
+                        if url_val:
+                            normalized_url = os.path.abspath(os.path.dirname(url_val) if url_val.lower().endswith(".mp4") else url_val).lower()
+                            normalized_folder = os.path.abspath(str(folder_path)).lower()
+                            if normalized_url == normalized_folder:
+                                is_match = True
+                        if not is_match:
+                            item_topic = item.get("topic", "")
+                            if item_topic:
+                                item_slug = slugify_vietnamese(item_topic)
+                                if item_slug == slug or item_slug in slug or slug in item_slug:
+                                    is_match = True
+                        if is_match:
+                            is_visual_approved = item.get("is_visual_approved") in (True, 1, "true") or item.get("visual_approved") in (True, 1, "true")
+                            is_video_approved = item.get("is_video_approved") in (True, 1, "true") or item.get("video_approved") in (True, 1, "true")
+                            break
+                except Exception as e_db_load:
+                    print(f"[SYSTEM] Lỗi đọc is_visual_approved/is_video_approved trong /load: {e_db_load}")
+
             index_file = folder_path / "index.html"
             if not index_file.exists():
-                self._send(200, "application/json; charset=utf-8", json.dumps({"fields": FIELDS, "data": {}, "styleFields": STYLE_FIELDS, "styles": {}}, ensure_ascii=False))
+                self._send(200, "application/json; charset=utf-8", json.dumps({"fields": FIELDS, "data": {}, "styleFields": STYLE_FIELDS, "styles": {}, "is_visual_approved": is_visual_approved, "is_video_approved": is_video_approved}, ensure_ascii=False))
                 return
             html = index_file.read_text(encoding="utf-8")
             data = {f["id"]: clean_boom_boom(get_inner(html, f["id"])) for f in FIELDS}
             styles = {sf["sel"]: {p: get_css(html, sf["sel"], p) for p in sf["props"]} for sf in STYLE_FIELDS}
             self._send(200, "application/json; charset=utf-8",
-                       json.dumps({"fields": FIELDS, "data": data, "styleFields": STYLE_FIELDS, "styles": styles}, ensure_ascii=False))
+                       json.dumps({"fields": FIELDS, "data": data, "styleFields": STYLE_FIELDS, "styles": styles, "is_visual_approved": is_visual_approved, "is_video_approved": is_video_approved}, ensure_ascii=False))
         elif path == "/workspace-info":
             folder_path = get_path_from_query(self.path)
             self._send(200, "application/json", json.dumps({"workspace": str(folder_path.resolve())}))
@@ -1637,7 +2689,8 @@ class Handler(BaseHTTPRequestHandler):
                 "<script>(function(){"
                 f"const SCENE_NUM={n};"
                 f"const EDIT_IDS={json.dumps(edit_ids)};"
-                f"const FOLDER_PATH={json.dumps(str(folder_path.resolve()).replace('\\\\', '/'))};"
+                f"const FOLDER_PATH={json.dumps(folder_path.resolve().as_posix())};"
+                "let ACTIVE_EM = null; let LAST_RANGE = null; let LAST_SENT_ID = null; let LAST_SENT_SEL = null;"
                 "function setupEdit(){"
                 "  EDIT_IDS.forEach(id=>{"
                 "    const el=document.getElementById(id); if(!el || el._wired) return;"
@@ -1646,17 +2699,31 @@ class Handler(BaseHTTPRequestHandler):
                 "    el.addEventListener('mousedown',e=>e.stopPropagation(),true);"
                 "    el.addEventListener('focus',()=>{"
                 "      const sel='.'+ (el.className.match(/\\bs\\d-[\\w-]+/)||[''])[0];"
+                "      LAST_SENT_ID=id; LAST_SENT_SEL=sel;"
                 "      parent.postMessage({t:'focus',scene:SCENE_NUM,id,sel,html:el.innerHTML,path:FOLDER_PATH},'*');"
                 "    });"
                 "    el.addEventListener('input',()=>{ parent.postMessage({t:'changed',id,html:el.innerHTML,path:FOLDER_PATH},'*'); });"
                 "  });"
                 "}"
                 "function trySeek(){"
+                "  if(!window.__TL && typeof __TL !== 'undefined') window.__TL = __TL;"
                 "  if(window.__timelines && window.__timelines['root']){"
                 "    try{"
                 "      const t = window.__TL ? window.__TL['s' + SCENE_NUM] : null;"
-                "      const PEAK = t ? (t.in + (t.out - t.in) * 0.8) : 5;"
-                "      window.__timelines['root'].seek(PEAK).pause();"
+                "      let seekTime = 1.5;"
+                "      if (t) {"
+                "        let t_in = parseFloat(t.in) || 0;"
+                "        let t_out = parseFloat(t.out) || 0;"
+                "        if (t_out < t_in) t_out = t_in + 5.0;"
+                "        const dur = t_out - t_in;"
+                "        if (dur <= 2.0) {"
+                "          seekTime = t_in + dur * 0.5;"
+                "        } else {"
+                "          seekTime = t_in + 1.5;"
+                "        }"
+                "      }"
+                "      if(window.gsap) window.gsap.globalTimeline.play();"
+                "      window.__timelines['root'].seek(seekTime).pause();"
                 "    }catch(e){}"
                 "    return true;"
                 "  } return false;"
@@ -1664,10 +2731,111 @@ class Handler(BaseHTTPRequestHandler):
                 "function init(){"
                 "  setupEdit();"
                 "  if(!trySeek()){ let n=0; const iv=setInterval(()=>{ if(trySeek()||++n>30) clearInterval(iv); },200); }"
+                "  document.addEventListener('selectionchange', () => {"
+                "    const sel = window.getSelection();"
+                "    if (sel && sel.rangeCount > 0) {"
+                "      const range = sel.getRangeAt(0);"
+                "      if (!range.collapsed && sel.toString().trim().length > 0) {"
+                "        LAST_RANGE = range.cloneRange();"
+                "      }"
+                "      try {"
+                "        let parent = range.commonAncestorContainer;"
+                "        if (parent.nodeType === 3) parent = parent.parentNode;"
+                "        let em = parent;"
+                "        while (em && em.tagName !== 'EM' && em.getAttribute && em.getAttribute('contenteditable') !== 'true') {"
+                "          em = em.parentNode;"
+                "        }"
+                "        const isWithinEm = (em && em.tagName === 'EM');"
+                "        let editable = parent;"
+                "        while (editable && editable.getAttribute && editable.getAttribute('contenteditable') !== 'true') {"
+                "          editable = editable.parentNode;"
+                "        }"
+                "        if (editable) {"
+                "          const baseSel = '.' + (editable.className.match(/\\bs\\d-[\\w-]+/)||[''])[0];"
+                "          let targetSel = baseSel;"
+                "          if (isWithinEm) {"
+                "            ACTIVE_EM = em;"
+                "            targetSel = baseSel + ' em';"
+                "          } else {"
+                "            ACTIVE_EM = null;"
+                "          }"
+                "          if (editable.id === LAST_SENT_ID && targetSel === LAST_SENT_SEL) return;"
+                "          LAST_SENT_ID = editable.id;"
+                "          LAST_SENT_SEL = targetSel;"
+                "          window.parent.postMessage({t:'focus',scene:SCENE_NUM,id:editable.id,sel:targetSel,html:editable.innerHTML,path:FOLDER_PATH},'*');"
+                "          return;"
+                "        }"
+                "      } catch(err){}"
+                "    }"
+                "    ACTIVE_EM = null;"
+                "  });"
+                "  window.addEventListener('keydown', e => {"
+                "    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {"
+                "      e.preventDefault();"
+                "      window.parent.postMessage({t: 'undo', path: FOLDER_PATH}, '*');"
+                "    }"
+                "  });"
                 "  window.addEventListener('message',e=>{"
                 "    const m=e.data||{};"
-                "    if(m.t==='set-style'){ document.querySelectorAll(m.sel).forEach(el=>el.style.setProperty(m.prop,m.val)); }"
+                "    if(m.t==='set-style'){"
+                "      if (m.sel.includes(' em') && ACTIVE_EM && document.body.contains(ACTIVE_EM)) {"
+                "        ACTIVE_EM.style.setProperty(m.prop, m.val);"
+                "        let pNode = ACTIVE_EM;"
+                "        while (pNode && pNode.getAttribute && pNode.getAttribute('contenteditable') !== 'true') {"
+                "          pNode = pNode.parentNode;"
+                "        }"
+                "        if (pNode) {"
+                "          window.parent.postMessage({t:'changed', id:pNode.id, html:pNode.innerHTML, path:FOLDER_PATH}, '*');"
+                "        }"
+                "      } else {"
+                "        document.querySelectorAll(m.sel).forEach(el=>el.style.setProperty(m.prop,m.val));"
+                "      }"
+                "    }"
                 "    else if(m.t==='set-text'){ const el=document.getElementById(m.id); if(el && document.activeElement!==el) el.innerHTML=m.html; }"
+                "    else if(m.t==='wrap-highlight'){"
+                "      let range = null;"
+                "      const sel = window.getSelection();"
+                "      if(sel && sel.rangeCount > 0 && !sel.getRangeAt(0).collapsed && sel.toString().trim().length > 0){"
+                "        range = sel.getRangeAt(0);"
+                "      } else if (LAST_RANGE) {"
+                "        range = LAST_RANGE;"
+                "      }"
+                "      if(range){"
+                "        const em = document.createElement('em');"
+                "        em.className = 'hl-custom temp-focus-target';"
+                "        try { range.surroundContents(em); } catch(err) {"
+                "          const frag = range.extractContents();"
+                "          em.appendChild(frag); range.insertNode(em);"
+                "        }"
+                "        LAST_RANGE = null;"
+                "        let editable = em.parentNode;"
+                "        while (editable && editable.getAttribute && editable.getAttribute('contenteditable') !== 'true') {"
+                "          editable = editable.parentNode;"
+                "        }"
+                "        if(editable){"
+                "          const activeId = editable.id;"
+                "          window.parent.postMessage({t:'changed',id:activeId,html:editable.innerHTML,path:FOLDER_PATH},'*');"
+                "          setTimeout(() => {"
+                "            const targetEm = editable.querySelector('.temp-focus-target');"
+                "            if (targetEm) {"
+                "              editable.focus();"
+                "              const newRange = document.createRange();"
+                "              newRange.selectNodeContents(targetEm);"
+                "              const newSel = window.getSelection();"
+                "              newSel.removeAllRanges();"
+                "              newSel.addRange(newRange);"
+                "              targetEm.classList.remove('temp-focus-target');"
+                "              ACTIVE_EM = targetEm;"
+                "              window.parent.postMessage({t:'changed',id:activeId,html:editable.innerHTML,path:FOLDER_PATH},'*');"
+                "            }"
+                "          }, 30);"
+                "        }"
+                "      }"
+                "    }"
+                "    else if(m.t==='trigger-focus'){"
+                "      const el=document.querySelector('#s' + SCENE_NUM + ' [contenteditable=\"true\"]') || document.querySelector('[contenteditable=\"true\"]');"
+                "      if(el){ el.focus(); try{ const r=document.createRange(); const s=window.getSelection(); r.selectNodeContents(el); r.collapse(false); s.removeAllRanges(); s.addRange(r); }catch(err){} }"
+                "    }"
                 "  });"
                 "  parent.postMessage({t:'ready',scene:SCENE_NUM},'*');"
                 "}"
@@ -1681,9 +2849,10 @@ class Handler(BaseHTTPRequestHandler):
                 html, flags=re.IGNORECASE
             )
             
+            # Vô hiệu hóa việc load file audio nặng trong các iframe preview để tránh nghẽn connection mạng của trình duyệt
             html = re.sub(
                 r'(<audio[^>]*\bsrc=")([^"]+)(")',
-                rf'\g<1>/workspace-file/\2?path={urllib.parse.quote(str(folder_path.resolve()))}\g<3>',
+                r'\g<1>#\g<3> preload="none"',
                 html, flags=re.IGNORECASE
             )
             
@@ -1708,12 +2877,31 @@ class Handler(BaseHTTPRequestHandler):
             folder_path = get_path_from_query(self.path)
             sync_latest_voice(folder_path)
             wav = _find_voice_wav(folder_path)
-            info = {"exists": False, "filename": "", "size": 0, "duration": 0}
+            
+            script_file = folder_path / "script.txt"
+            script_mtime = script_file.stat().st_mtime if script_file.exists() else 0
+            
+            info = {"exists": False, "filename": "", "size": 0, "duration": 0, "script_mtime": script_mtime}
             if wav and wav.exists():
-                info = {"exists": True, "filename": wav.name, "size": wav.stat().st_size, "duration": 0}
+                info = {
+                    "exists": True, 
+                    "filename": wav.name, 
+                    "size": wav.stat().st_size, 
+                    "duration": 0,
+                    "mtime": wav.stat().st_mtime,
+                    "script_mtime": script_mtime
+                }
                 try:
-                    out = subprocess.run(["ffprobe","-v","error","-show_entries","format=duration","-of","default=noprint_wrappers=1:nokey=1",str(wav)], capture_output=True, text=True, timeout=10).stdout.strip()
-                    info["duration"] = float(out) if out else 0
+                    # Đọc từ content.json trước
+                    co_file = folder_path / "content.json"
+                    co_dur = 0.0
+                    if co_file.exists():
+                        co = json.loads(co_file.read_text(encoding="utf-8"))
+                        co_dur = co.get("voice", {}).get("duration", 0.0)
+                    info["duration"] = co_dur
+                    if info["duration"] <= 0:
+                        out = subprocess.run(["ffprobe","-v","error","-show_entries","format=duration","-of","default=noprint_wrappers=1:nokey=1",str(wav)], capture_output=True, text=True, timeout=10).stdout.strip()
+                        info["duration"] = float(out) if out else 0
                 except Exception: pass
             self._send(200, "application/json", json.dumps(info))
         else:
@@ -1724,28 +2912,18 @@ class Handler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", "0"))
         raw_body = self.rfile.read(length) if length else b""
         body = raw_body.decode("utf-8", errors="replace") if raw_body else ""
+        
         if path == "/save":
             t0 = time.perf_counter()
+            folder_path = get_path_from_query(self.path)
             payload = json.loads(body)
             data = payload.get("data") or payload
             styles = payload.get("styles") or {}
             
-            # Hàm viết hoa thông minh cho title HTML (giữ nguyên tag <br>, <em>)
-            def uppercase_html(text):
-                if not text: return ""
-                parts = re.split(r'(<[^>]+>)', text)
-                for i in range(len(parts)):
-                    if not parts[i].startswith('<'):
-                        parts[i] = parts[i].upper()
-                res = "".join(parts)
-                # Restore all HTML entities (e.g., &NBSP;, &AMP;, &QUOT;) to lowercase to prevent rendering as raw text
-                res = re.sub(r'&[A-Z0-9]+;', lambda m: m.group(0).lower(), res)
-                return res
-            
-            # Tự động viết hoa title Scene 1 & 6
-            if "s1-title" in data:
+            # Tự động viết hoa title Scene 1 & 6 (dùng hàm uppercase_html toàn cục)
+            if "s1-title" in data and isinstance(data["s1-title"], str):
                 data["s1-title"] = uppercase_html(data["s1-title"])
-            if "s6-title" in data:
+            if "s6-title" in data and isinstance(data["s6-title"], str):
                 data["s6-title"] = uppercase_html(data["s6-title"])
                 
             # Ép mặc định line-height của title Scene 1 & 6 khít hơn để không bị giãn
@@ -1757,22 +2935,29 @@ class Handler(BaseHTTPRequestHandler):
             if "line-height" not in styles[".s6-title"] or styles[".s6-title"]["line-height"] == "1.65" or not styles[".s6-title"]["line-height"]:
                 styles[".s6-title"]["line-height"] = "1.25"
 
-            html = INDEX.read_text(encoding="utf-8")
+            index_file = folder_path / "index.html"
+            if not index_file.exists():
+                self._send(404, "application/json", json.dumps({"ok": False, "msg": f"Không tìm thấy index.html ở {folder_path.name}"}))
+                return
+                
+            html = index_file.read_text(encoding="utf-8")
             t1 = time.perf_counter()
             for elem_id, new_inner in data.items():
+                if not isinstance(new_inner, str) or elem_id == "styles":
+                    continue
                 html = set_inner(html, elem_id, clean_boom_boom(new_inner))
             t2 = time.perf_counter()
             for sel, props in styles.items():
                 for prop, value in props.items():
-                    if value and value.strip():
+                    if isinstance(value, str) and value.strip():
                         html = set_css(html, sel, prop, value.strip())
             t3 = time.perf_counter()
-            safe_write_file(INDEX, html)
+            safe_write_file(index_file, html)
             t4 = time.perf_counter()
             print(f"[USER] [save] read={t1-t0:.2f}s inner={t2-t1:.2f}s css={t3-t2:.2f}s write={t4-t3:.2f}s total={t4-t0:.2f}s")
             
             # --- CẬP NHẬT CONTENT.JSON ĐỒNG BỘ ---
-            co_file = WORK / "content.json"
+            co_file = folder_path / "content.json"
             if co_file.exists():
                 try:
                     co = json.loads(co_file.read_text(encoding="utf-8"))
@@ -1825,33 +3010,120 @@ class Handler(BaseHTTPRequestHandler):
                     
                     co["styles"] = styles
                     safe_write_file(co_file, json.dumps(co, ensure_ascii=False, indent=2))
-                    print(f"[SYSTEM] [save] Đồng bộ thành công content.json cho {WORK.name}")
+                    print(f"[SYSTEM] [save] Đồng bộ thành công content.json cho {folder_path.name}")
                 except Exception as e:
                     print(f"[SYSTEM] [save] Lỗi đồng bộ content.json: {e}")
             
+            # --- CẬP NHẬT TỰ ĐỘNG TRẠNG THÁI IS_VISUAL_APPROVED KHI SẾP BẤM SAVE ---
+            db_path = Path(r"E:\HuuDat\BrianD\TOOL_BrianD\FB-Tools\up-data\bsimple_content_data.json")
+            if db_path.exists():
+                try:
+                    db_items = json.loads(db_path.read_text(encoding="utf-8"))
+                    import re
+                    folder_name = folder_path.name
+                    match = re.match(r"^T\d{2}\.\d{2}_\d{2}h\d{2}_(.+)$", folder_name)
+                    slug = match.group(1) if match else folder_name
+                    slug = slug.strip().lower()
+                    
+                    db_changed = False
+                    for item in db_items:
+                        is_match = False
+                        url_val = item.get("url", "")
+                        if url_val:
+                            normalized_url = os.path.abspath(os.path.dirname(url_val) if url_val.lower().endswith(".mp4") else url_val).lower()
+                            normalized_folder = os.path.abspath(str(folder_path)).lower()
+                            if normalized_url == normalized_folder:
+                                is_match = True
+                        if not is_match:
+                            item_topic = item.get("topic", "")
+                            if item_topic:
+                                item_slug = slugify_vietnamese(item_topic)
+                                if item_slug == slug or item_slug in slug or slug in item_slug:
+                                    is_match = True
+                        if is_match:
+                            item["is_visual_approved"] = True
+                            db_changed = True
+                            print(f"[SYSTEM] [save] Tự động set is_visual_approved = True cho bài đăng ID {item.get('id')} ({folder_name})")
+                    
+                    if db_changed:
+                        with open(db_path, 'w', encoding='utf-8') as f:
+                            json.dump(db_items, f, ensure_ascii=False, indent=2)
+                            f.flush()
+                            os.fsync(f.fileno())
+                        print("[SYSTEM] [save] Đã ghi nhận Đã Duyệt vào database Bảng UP thưa Sếp!")
+                except Exception as e_db_save:
+                    print(f"[SYSTEM] [save] Lỗi tự động cập nhật database duyệt bài: {e_db_save}")
+
             self._send(200, "application/json", '{"ok":true}')
-        elif path == "/save-duration":
-            # P2.7 — Đổi voice.duration trong content.json (pipeline sẽ ép MP4 khớp số này)
+            
+        elif path == "/api/set-video-approval":
             try:
-                length = int(self.headers.get("Content-Length", 0))
-                body = self.rfile.read(length).decode("utf-8")
+                folder_path = get_path_from_query(self.path)
+                payload = json.loads(body)
+                approved = payload.get("approved") in (True, 1, "true")
+                
+                db_path = Path(r"E:\HuuDat\BrianD\TOOL_BrianD\FB-Tools\up-data\bsimple_content_data.json")
+                if db_path.exists():
+                    db_items = json.loads(db_path.read_text(encoding="utf-8"))
+                    import re
+                    folder_name = folder_path.name
+                    match = re.match(r"^T\d{2}\.\d{2}_\d{2}h\d{2}_(.+)$", folder_name)
+                    slug = match.group(1) if match else folder_name
+                    slug = slug.strip().lower()
+                    
+                    db_changed = False
+                    for item in db_items:
+                        is_match = False
+                        url_val = item.get("url", "")
+                        if url_val:
+                            normalized_url = os.path.abspath(os.path.dirname(url_val) if url_val.lower().endswith(".mp4") else url_val).lower()
+                            normalized_folder = os.path.abspath(str(folder_path)).lower()
+                            if normalized_url == normalized_folder:
+                                is_match = True
+                        if not is_match:
+                            item_topic = item.get("topic", "")
+                            if item_topic:
+                                item_slug = slugify_vietnamese(item_topic)
+                                if item_slug == slug or item_slug in slug or slug in item_slug:
+                                    is_match = True
+                        if is_match:
+                            item["is_video_approved"] = approved
+                            item["video_approved"] = approved
+                            db_changed = True
+                            print(f"[SYSTEM] [set-video-approval] Set is_video_approved = {approved} & video_approved = {approved} cho bài đăng ID {item.get('id')} ({folder_name})")
+                    
+                    if db_changed:
+                        with open(db_path, 'w', encoding='utf-8') as f:
+                            json.dump(db_items, f, ensure_ascii=False, indent=2)
+                            f.flush()
+                            os.fsync(f.fileno())
+                        print("[SYSTEM] [set-video-approval] Đã ghi nhận Duyệt Video vào database Bảng UP thưa Sếp!")
+                            
+                self._send(200, "application/json", '{"ok":true}')
+            except Exception as e:
+                self._send(500, "application/json", json.dumps({"ok": False, "msg": str(e)}))
+                
+        elif path == "/save-duration":
+            try:
+                folder_path = get_path_from_query(self.path)
                 payload = json.loads(body) if body else {}
                 new_dur = float(payload.get("duration", 0))
                 if new_dur < 1 or new_dur > 600:
                     self._send(400, "application/json", json.dumps({"ok": False, "error": "duration phải 1-600s"}))
                     return
-                co_file = WORK / "content.json"
+                co_file = folder_path / "content.json"
                 if not co_file.exists():
                     self._send(404, "application/json", json.dumps({"ok": False, "error": "content.json không tồn tại"}))
                     return
                 co = json.loads(co_file.read_text(encoding="utf-8"))
                 if "voice" not in co: co["voice"] = {}
                 co["voice"]["duration"] = round(new_dur, 2)
-                co_file.write_text(json.dumps(co, ensure_ascii=False, indent=2), encoding="utf-8")
-                print(f"[USER] [save-duration] {WORK.name} → voice.duration = {new_dur}s")
+                safe_write_file(co_file, json.dumps(co, ensure_ascii=False, indent=2))
+                print(f"[USER] [save-duration] {folder_path.name} → voice.duration = {new_dur}s")
                 self._send(200, "application/json", json.dumps({"ok": True, "duration": new_dur}))
             except Exception as e:
                 self._send(500, "application/json", json.dumps({"ok": False, "error": str(e)}))
+                
         elif path == "/save-to-template":
             try:
                 query = urllib.parse.urlparse(self.path).query
@@ -1909,18 +3181,20 @@ class Handler(BaseHTTPRequestHandler):
                 import traceback
                 traceback.print_exc()
                 self._send(500, "application/json", json.dumps({"ok": False, "msg": str(e)}))
+                
         elif path == "/render":
             if Handler.render_status["running"]:
                 self._send(409, "application/json", '{"ok":false,"msg":"already running"}')
                 return
             
+            folder_path = get_path_from_query(self.path)
             # Tự động dò tìm file voice gốc và đồng bộ cấu hình trong index.html + content.json (giữ nguyên tên file của Sếp)
             try:
-                wav_file = _find_voice_wav(WORK)
+                wav_file = _find_voice_wav(folder_path)
                 if wav_file and wav_file.exists():
                     vname = wav_file.name
                     # 1. Đồng bộ content.json
-                    co_file = WORK / "content.json"
+                    co_file = folder_path / "content.json"
                     if co_file.exists():
                         co = json.loads(co_file.read_text(encoding="utf-8"))
                         if co.get("voice", {}).get("file") != vname:
@@ -1930,8 +3204,9 @@ class Handler(BaseHTTPRequestHandler):
                             print(f"[SYSTEM] [render] Auto sync content.json voice.file = {vname}")
                     
                     # 2. Đồng bộ index.html tag <audio> src
-                    if INDEX.exists():
-                        html = INDEX.read_text(encoding="utf-8")
+                    index_file = folder_path / "index.html"
+                    if index_file.exists():
+                        html = index_file.read_text(encoding="utf-8")
                         # Tìm src hiện tại của audio tag narration
                         match_aud = re.search(r'(<audio[^>]*\bid="narration"[^>]*\bsrc=")([^"]+)(")', html)
                         if match_aud and match_aud.group(2) != vname:
@@ -1940,7 +3215,7 @@ class Handler(BaseHTTPRequestHandler):
                                 rf'\g<1>{vname}\g<3>',
                                 html
                             )
-                            safe_write_file(INDEX, html)
+                            safe_write_file(index_file, html)
                             print(f"[SYSTEM] [render] Auto sync index.html audio src = {vname}")
             except Exception as e:
                 print(f"[SYSTEM] [render] Auto sync voice file failed: {e}")
@@ -1949,23 +3224,23 @@ class Handler(BaseHTTPRequestHandler):
             globals()["RENDER_IS_RUNNING"] = lambda: Handler.render_status["running"]
             Handler.render_status["last_out"] = "Starting render…"
 
-            def do_render():
+            def do_render(proj_path):
                 import re
                 ts_part = time.strftime("T%m.%d_%Hh%M")
-                match = re.match(r"^T\d{2}\.\d{2}_\d{2}h\d{2}_(.+)$", WORK.name)
+                match = re.match(r"^T\d{2}\.\d{2}_\d{2}h\d{2}_(.+)$", proj_path.name)
                 if match:
                     slug_part = match.group(1)
                 else:
-                    slug_part = WORK.name
+                    slug_part = proj_path.name
                 
                 slug_clean = slugify_vietnamese(slug_part, max_len=60)
                 out_name = f"{slug_clean}_{ts_part}.mp4"
-                logging.info(f"RENDER START: out={out_name} cwd={WORK}")
+                logging.info(f"RENDER START: out={out_name} cwd={proj_path}")
                 t0 = time.time()
                 try:
                     proc = subprocess.run(
-                        f'npx -y -p hyperframes hyperframes render . --output {out_name} --fps 30 --quality draft --workers 2',
-                        cwd=str(WORK), capture_output=True, text=True,
+                        f'npx -y -p hyperframes hyperframes render . --output "{out_name}" --fps 30 --quality draft --workers 2',
+                        cwd=str(proj_path), capture_output=True, text=True,
                         encoding="utf-8", errors="replace",
                         shell=True,
                     )
@@ -1976,55 +3251,79 @@ class Handler(BaseHTTPRequestHandler):
                     logging.info(f"RENDER END: exit={proc.returncode} elapsed={elapsed:.1f}s out={out_name}")
                     if proc.returncode != 0:
                         logging.error(f"RENDER FAILED stderr tail:\n{(proc.stderr or '')[-2000:]}")
+                    
+                    # Khóa thời lượng khớp với content.json voice.duration nếu có
+                    out_mp4 = proj_path / out_name
+                    co_file = proj_path / "content.json"
+                    if co_file.exists() and out_mp4.exists():
+                        try:
+                            co_data = json.loads(co_file.read_text(encoding="utf-8"))
+                            voice_dur = float(co_data.get("voice", {}).get("duration", 0))
+                            if voice_dur > 0.5:
+                                locked = proj_path / f"{out_mp4.stem}_locked.mp4"
+                                lock_cmd = (
+                                    f'ffmpeg -y -i "{out_mp4.name}" -vf "tpad=stop_mode=clone:stop_duration={voice_dur}" '
+                                    f'-t {voice_dur} -c:v libx264 -preset ultrafast -crf 23 -c:a copy "{locked.name}"'
+                                )
+                                p_lock = subprocess.run(lock_cmd, shell=True, cwd=str(proj_path), capture_output=True, text=True, encoding="utf-8", errors="replace")
+                                if p_lock.returncode == 0 and locked.exists():
+                                    os.remove(out_mp4)
+                                    os.rename(locked, out_mp4)
+                                    print(f"[SYSTEM] [render] Khóa thời lượng thành công cho {proj_path.name} -> {out_name} ({voice_dur}s)")
+                        except Exception as e_dur:
+                            print(f"[SYSTEM] Lỗi khóa thời lượng: {e_dur}")
                 except Exception as e:
                     logging.exception(f"RENDER EXCEPTION: {e}")
                     Handler.render_status["last_out"] = f"ERROR: {e}"
                 finally:
                     Handler.render_status["running"] = False
 
-            threading.Thread(target=do_render, daemon=True).start()
+            threading.Thread(target=do_render, args=(folder_path,), daemon=True).start()
             self._send(202, "application/json", '{"ok":true,"msg":"render started"}')
+            
         elif path == "/shutdown":
             if Handler.render_status["running"]:
                 self._send(409, "application/json", '{"ok":false,"msg":"rendering"}')
                 return
             self._send(200, "application/json", '{"ok":true}')
             threading.Thread(target=lambda: (time.sleep(0.2), os._exit(0)), daemon=True).start()
+            
         elif path == "/open-folder":
             try:
-                # Dùng explorer.exe trực tiếp (os.startfile có thể fail trong HTTP thread context)
-                subprocess.Popen(["explorer.exe", str(WORK)], shell=False)
+                folder_path = get_path_from_query(self.path)
+                subprocess.Popen(["explorer.exe", str(folder_path)], shell=False)
                 self._send(200, "application/json", '{"ok":true}')
             except Exception as e:
-                # Fallback os.startfile
                 try:
-                    os.startfile(str(WORK))
+                    os.startfile(str(folder_path))
                     self._send(200, "application/json", '{"ok":true,"fallback":"startfile"}')
                 except Exception as e2:
                     self._send(500, "application/json", json.dumps({"ok": False, "msg": f"explorer: {e}; startfile: {e2}"}))
+                    
         elif path.startswith("/upload-voice"):
-            # Save raw .wav bytes to narration.wav and original name
             try:
                 if not raw_body:
-                    self._send(400, "application/json", '{"ok":false,"msg":"empty"}'); return
+                    self._send(400, "application/json", '{"ok":false,"msg":"empty"}')
+                    return
                 
+                folder_path = get_path_from_query(self.path)
                 query = urllib.parse.urlparse(self.path).query
                 params = urllib.parse.parse_qs(query)
                 orig_name = params.get("name", ["narration.wav"])[0]
                 orig_name = os.path.basename(orig_name)
                 
-                safe_write_file(WORK / orig_name, raw_body, is_binary=True)
-                safe_write_file(WORK / "narration.wav", raw_body, is_binary=True)
+                safe_write_file(folder_path / orig_name, raw_body, is_binary=True)
+                safe_write_file(folder_path / "narration.wav", raw_body, is_binary=True)
                 
                 # Probe new duration
                 dur = 0
                 try:
-                    out = subprocess.run(["ffprobe","-v","error","-show_entries","format=duration","-of","default=noprint_wrappers=1:nokey=1",str(WORK / orig_name)], capture_output=True, text=True, timeout=10).stdout.strip()
+                    out = subprocess.run(["ffprobe","-v","error","-show_entries","format=duration","-of","default=noprint_wrappers=1:nokey=1",str(folder_path / orig_name)], capture_output=True, text=True, timeout=10).stdout.strip()
                     dur = float(out) if out else 0
                 except Exception: pass
                 
                 # Cập nhật content.json
-                co_file = WORK / "content.json"
+                co_file = folder_path / "content.json"
                 old_wav_name = None
                 if co_file.exists():
                     try:
@@ -2039,14 +3338,15 @@ class Handler(BaseHTTPRequestHandler):
                         print(f"[SYSTEM] [upload-voice] Update content.json error: {e}")
                 
                 # Cập nhật index.html
-                if INDEX.exists():
+                index_file = folder_path / "index.html"
+                if index_file.exists():
                     try:
-                        html = INDEX.read_text(encoding="utf-8")
+                        html = index_file.read_text(encoding="utf-8")
                         if old_wav_name:
                             html = html.replace(f'src="{old_wav_name}"', f'src="{orig_name}"')
                         else:
                             html = re.sub(r'(<audio[^>]*\bsrc=")([^"]+)"', rf'\1{orig_name}"', html, count=1)
-                        safe_write_file(INDEX, html)
+                        safe_write_file(index_file, html)
                         print(f"[SYSTEM] [upload-voice] Updated index.html audio src to {orig_name}")
                     except Exception as e:
                         print(f"[upload-voice] Update index.html error: {e}")
@@ -2054,6 +3354,305 @@ class Handler(BaseHTTPRequestHandler):
                 self._send(200, "application/json", json.dumps({"ok": True, "duration": dur, "size": len(raw_body)}))
             except Exception as e:
                 self._send(500, "application/json", json.dumps({"ok": False, "msg": str(e)}))
+                
+        elif path == "/api/video-9x16/batch-run":
+            try:
+                payload = json.loads(body)
+                paths = payload.get("paths", [])
+                action = payload.get("action", "")
+                if not paths or not action:
+                    self._send(400, "application/json", json.dumps({"ok": False, "msg": "Thiếu paths hoặc action"}))
+                    return
+                
+                # Cập nhật status
+                BATCH_STATUS["total"] = len(paths)
+                BATCH_STATUS["current_index"] = 0
+                BATCH_STATUS["progress_pct"] = 0
+                BATCH_STATUS["log"] = [f"[SYSTEM] Bắt đầu hàng đợi {action.upper()} cho {len(paths)} thư mục."]
+                
+                for p in paths:
+                    BATCH_QUEUE.put((p, action))
+                    
+                self._send(200, "application/json", json.dumps({"ok": True, "msg": f"Đã đưa {len(paths)} thư mục vào hàng đợi {action}"}))
+            except Exception as e:
+                self._send(500, "application/json", json.dumps({"ok": False, "msg": str(e)}))
+                
+        elif path == "/api/fix-bug":
+            if Handler.render_status["running"]:
+                self._send(409, "application/json", '{"ok":false,"msg":"already running render"}')
+                return
+            
+            try:
+                import re
+                folder_path = get_path_from_query(self.path)
+                print(f"[USER] [fix-bug] Bắt đầu tự động chẩn đoán và fix bug cho {folder_path.name}")
+                
+                # 1. Chạy chẩn đoán và sửa content.json
+                ok, msg = diagnose_and_fix_timeline(folder_path)
+                if not ok:
+                    self._send(500, "application/json", json.dumps({"ok": False, "msg": msg}))
+                    return
+                
+                # 2. Gọi compose.py để dựng lại index.html
+                # Tìm voice mới nhất
+                wav_file = _find_voice_wav(folder_path)
+                voice_filename = wav_file.name if wav_file else "narration.wav"
+                
+                tpl_dir = TEMPLATES / "01_Text_ViCon"
+                workdir_in_tpl = tpl_dir / f"_pipeline_{folder_path.name}"
+                workdir_in_tpl.mkdir(exist_ok=True)
+                
+                content_json_src = folder_path / "content.json"
+                if content_json_src.exists():
+                    (workdir_in_tpl / "content.json").write_text(content_json_src.read_text(encoding="utf-8"), encoding="utf-8")
+                
+                if wav_file and wav_file.exists():
+                    shutil.copy(wav_file, workdir_in_tpl / voice_filename)
+                
+                compose_script = tpl_dir / "compose.py"
+                cmd_compose = [PY, str(compose_script), workdir_in_tpl.name]
+                p_compose = subprocess.run(cmd_compose, capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=str(tpl_dir))
+                if p_compose.returncode != 0:
+                    raise RuntimeError(f"compose.py fail: {p_compose.stderr}")
+                    
+                composed_html = workdir_in_tpl / "index.html"
+                if composed_html.exists():
+                    html_content = composed_html.read_text(encoding="utf-8")
+                    html_content = re.sub(r'src="narration\.wav"', f'src="{voice_filename}"', html_content)
+                    composed_html.write_text(html_content, encoding="utf-8")
+                    shutil.copy(composed_html, folder_path / "index.html")
+                
+                print(f"[SYSTEM] [fix-bug] Re-composed index.html successfully")
+            except Exception as e_comp:
+                import traceback
+                err_tb = traceback.format_exc()
+                print(f"[SYSTEM] [fix-bug] Lỗi thực thi: {err_tb}")
+                self._send(500, "application/json", json.dumps({"ok": False, "msg": f"Lỗi thực thi fix-bug: {str(e_comp)}\n{err_tb}"}))
+                return
+            
+            # 3. Kích hoạt render video
+            Handler.render_status["running"] = True
+            globals()["RENDER_IS_RUNNING"] = lambda: Handler.render_status["running"]
+            Handler.render_status["last_out"] = "Bug fixed! Starting re-render video..."
+            
+            def do_render(proj_path):
+                import re
+                ts_part = time.strftime("T%m.%d_%Hh%M")
+                match = re.match(r"^T\d{2}\.\d{2}_\d{2}h\d{2}_(.+)$", proj_path.name)
+                slug_part = match.group(1) if match else proj_path.name
+                slug_clean = slugify_vietnamese(slug_part, max_len=60)
+                out_name = f"{slug_clean}_{ts_part}.mp4"
+                logging.info(f"RENDER START (FIX BUG): out={out_name} cwd={proj_path}")
+                t0 = time.time()
+                try:
+                    proc = subprocess.run(
+                        f'npx -y -p hyperframes hyperframes render . --output "{out_name}" --fps 30 --quality draft --workers 2',
+                        cwd=str(proj_path), capture_output=True, text=True,
+                        encoding="utf-8", errors="replace",
+                        shell=True,
+                    )
+                    out = (proc.stdout or "") + (proc.stderr or "")
+                    tail = out[-1200:]
+                    elapsed = time.time() - t0
+                    Handler.render_status["last_out"] = f"Fix done ✓ Exit {proc.returncode}\n→ {out_name}\n{tail}"
+                    logging.info(f"RENDER END (FIX BUG): exit={proc.returncode} elapsed={elapsed:.1f}s out={out_name}")
+                    
+                    # Khóa thời lượng khớp với voice duration
+                    out_mp4 = proj_path / out_name
+                    co_file = proj_path / "content.json"
+                    if co_file.exists() and out_mp4.exists():
+                        try:
+                            co_data = json.loads(co_file.read_text(encoding="utf-8"))
+                            voice_dur = float(co_data.get("voice", {}).get("duration", 0))
+                            if voice_dur > 0.5:
+                                locked = proj_path / f"{out_mp4.stem}_locked.mp4"
+                                lock_cmd = (
+                                    f'ffmpeg -y -i "{out_mp4.name}" -vf "tpad=stop_mode=clone:stop_duration={voice_dur}" '
+                                    f'-t {voice_dur} -c:v libx264 -preset ultrafast -crf 23 -c:a copy "{locked.name}"'
+                                )
+                                p_lock = subprocess.run(lock_cmd, shell=True, cwd=str(proj_path), capture_output=True, text=True, encoding="utf-8", errors="replace")
+                                if p_lock.returncode == 0 and locked.exists():
+                                    os.remove(out_mp4)
+                                    os.rename(locked, out_mp4)
+                        except Exception as e_dur:
+                            print(f"[SYSTEM] Lỗi khóa thời lượng: {e_dur}")
+                except Exception as e:
+                    logging.exception(f"RENDER EXCEPTION (FIX BUG): {e}")
+                    Handler.render_status["last_out"] = f"ERROR: {e}"
+                finally:
+                    Handler.render_status["running"] = False
+
+            threading.Thread(target=do_render, args=(folder_path,), daemon=True).start()
+            self._send(202, "application/json", json.dumps({"ok": True, "msg": "Đã sửa xong bug timeline và đang tiến hành render lại video thưa Sếp!"}))
+
+        elif path == "/api/launch-workspace":
+            try:
+                payload = json.loads(body)
+                target_path_str = payload.get("path")
+                if not target_path_str:
+                    self._send(400, "application/json", '{"ok":false,"msg":"Missing path"}')
+                    return
+                
+                target_path = Path(target_path_str).resolve()
+                if not target_path.exists():
+                    self._send(404, "application/json", '{"ok":false,"msg":"Workspace path not found"}')
+                    return
+                
+                port_file = target_path / ".editor_port"
+                port = None
+                if port_file.exists():
+                    try:
+                        port = int(port_file.read_text(encoding="utf-8").strip())
+                    except Exception: pass
+                
+                import socket
+                def check_port(p):
+                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                        s.settimeout(0.5)
+                        return s.connect_ex(('127.0.0.1', p)) == 0
+                
+                if port and check_port(port):
+                    self._send(200, "application/json", json.dumps({"ok": True, "port": port}))
+                    return
+                
+                vbs_file = target_path / "MO_EDITOR.vbs"
+                if vbs_file.exists():
+                    print(f"[SYSTEM] Khởi chạy workspace mới qua VBS: {vbs_file}")
+                    subprocess.Popen(["wscript.exe", vbs_file.name], cwd=str(target_path), shell=False)
+                    
+                    time.sleep(1.0)
+                    for _ in range(10):
+                        if port_file.exists():
+                            try:
+                                port = int(port_file.read_text(encoding="utf-8").strip())
+                                if port and check_port(port):
+                                    self._send(200, "application/json", json.dumps({"ok": True, "port": port}))
+                                    return
+                            except Exception: pass
+                        time.sleep(0.3)
+                        
+                if not port:
+                    port = 5050
+                    while check_port(port):
+                        port += 1
+                
+                print(f"[SYSTEM] Khởi chạy workspace mới bằng python: {target_path} tại port {port}")
+                editor_py = __file__
+                subprocess.Popen([PY, editor_py, "--workspace", str(target_path)], shell=False)
+                
+                time.sleep(1.5)
+                self._send(200, "application/json", json.dumps({"ok": True, "port": port}))
+            except Exception as e:
+                self._send(500, "application/json", json.dumps({"ok": False, "msg": str(e)}))
+                
+        elif path == "/api/set-approval":
+            try:
+                folder_path = get_path_from_query(self.path)
+                payload = json.loads(body)
+                approved = payload.get("approved", False)
+                
+                db_path = Path(r"E:\HuuDat\BrianD\TOOL_BrianD\FB-Tools\up-data\bsimple_content_data.json")
+                db_changed = False
+                if db_path.exists():
+                    try:
+                        db_items = json.loads(db_path.read_text(encoding="utf-8"))
+                        import re
+                        folder_name = folder_path.name
+                        match = re.match(r"^T\d{2}\.\d{2}_\d{2}h\d{2}_(.+)$", folder_name)
+                        slug = match.group(1) if match else folder_name
+                        slug = slug.strip().lower()
+                        for item in db_items:
+                            is_match = False
+                            url_val = item.get("url", "")
+                            if url_val:
+                                normalized_url = os.path.abspath(os.path.dirname(url_val) if url_val.lower().endswith(".mp4") else url_val).lower()
+                                normalized_folder = os.path.abspath(str(folder_path)).lower()
+                                if normalized_url == normalized_folder:
+                                    is_match = True
+                            if not is_match:
+                                item_topic = item.get("topic", "")
+                                if item_topic:
+                                    item_slug = slugify_vietnamese(item_topic)
+                                    if item_slug == slug or item_slug in slug or slug in item_slug:
+                                        is_match = True
+                            if is_match:
+                                item["is_visual_approved"] = approved
+                                db_changed = True
+                        if db_changed:
+                            with open(db_path, 'w', encoding='utf-8') as f:
+                                json.dump(db_items, f, ensure_ascii=False, indent=2)
+                                f.flush()
+                                os.fsync(f.fileno())
+                    except Exception as e_db:
+                        self._send(500, "application/json", json.dumps({"ok": False, "msg": str(e_db)}))
+                        return
+                self._send(200, "application/json", '{"ok":true}')
+            except Exception as e:
+                self._send(500, "application/json", json.dumps({"ok": False, "msg": str(e)}))
+
+        elif path == "/gen-voice":
+            try:
+                folder_path = get_path_from_query(self.path)
+                script_txt = folder_path / "script.txt"
+                if not script_txt.exists():
+                    self._send(400, "application/json", json.dumps({"ok": False, "msg": "Không tìm thấy script.txt"}))
+                    return
+                
+                # Chạy Gemini TTS sinh giọng
+                voice_name = "TT_06"
+                profile = PAGE_PROFILES.get("vicon")
+                if profile and "default_voice" in profile:
+                    voice_name = profile["default_voice"]
+                    
+                timestamp = time.strftime("T%m.%d_%Hh%M")
+                voice_filename = f"TT_{timestamp}.wav"
+                out_wav = folder_path / voice_filename
+                
+                gen_voice_script = SCRIPT_DIR / "gen_voice.py"
+                cmd = [PY, str(gen_voice_script), "--script-file", str(script_txt), "--voice", voice_name, "--output", str(out_wav)]
+                p = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
+                if p.returncode != 0 or not out_wav.exists():
+                    self._send(500, "application/json", json.dumps({"ok": False, "msg": f"Lỗi Gemini TTS: {p.stderr}"}))
+                    return
+                    
+                sync_latest_voice(folder_path)
+                
+                # Chạy Whisper dịch timeline
+                tr_file = folder_path / "transcript.json"
+                if tr_file.exists():
+                    tr_file.unlink()
+                tr_result = transcribe(out_wav, tr_file)
+                if tr_result.returncode != 0 or not tr_file.exists():
+                    self._send(500, "application/json", json.dumps({"ok": False, "msg": f"Lỗi Whisper Transcribe: {tr_result.stderr}"}))
+                    return
+                    
+                # Cập nhật timeline
+                update_timeline_from_transcript(folder_path, voice_filename)
+                
+                # Copy và chạy compose.py để sinh lại HTML
+                tpl_dir = TEMPLATES / "01_Text_ViCon"
+                workdir_in_tpl = tpl_dir / f"_pipeline_{folder_path.name}"
+                workdir_in_tpl.mkdir(exist_ok=True)
+                
+                content_json_src = folder_path / "content.json"
+                if content_json_src.exists():
+                    (workdir_in_tpl / "content.json").write_text(content_json_src.read_text(encoding="utf-8"), encoding="utf-8")
+                shutil.copy(out_wav, workdir_in_tpl / voice_filename)
+                
+                compose_script = tpl_dir / "compose.py"
+                cmd_compose = [PY, str(compose_script), workdir_in_tpl.name]
+                p_compose = subprocess.run(cmd_compose, capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=str(tpl_dir))
+                
+                composed_html = workdir_in_tpl / "index.html"
+                if composed_html.exists():
+                    shutil.copy(composed_html, folder_path / "index.html")
+                    print(f"[SYSTEM] [gen-voice] Đồng bộ index.html về dự án thành công: {folder_path.name}")
+                
+                reset_video_approval(folder_path)
+                self._send(200, "application/json", json.dumps({"ok": True, "voice": voice_filename}))
+            except Exception as e:
+                self._send(500, "application/json", json.dumps({"ok": False, "msg": str(e)}))
+
         else:
             self._send(404, "text/plain", "Not found")
 
@@ -2088,8 +3687,9 @@ if __name__ == "__main__":
             if not run_line_match:
                 return
             run_line = run_line_match.group(1).strip()
-            # Loại bỏ hoàn toàn flag --open-browser
-            run_line = run_line.replace(" --open-browser", "")
+            # Đảm bảo có flag --open-browser trong VBS để khi Sếp click chủ động mở Editor trình duyệt tự động bật lên
+            if "--open-browser" not in run_line:
+                run_line += " --open-browser"
             # Đổi comment sang không dấu để tránh lỗi encoding trên Windows Script Host
             new_vbs = f"""' Mo Editor cho workspace nay
 Set objFSO = CreateObject("Scripting.FileSystemObject")
@@ -2120,7 +3720,7 @@ objShell.CurrentDirectory = strDir
                 info = json.loads(response.read().decode("utf-8"))
                 if Path(info.get("workspace")).resolve() == WORK.resolve():
                     print(f"[SYSTEM] Dự án này đã có server chạy ở cổng {target_port}. Tái sử dụng server cũ.")
-                    webbrowser.open(f"http://localhost:{target_port}/")
+                    # webbrowser.open() has been completely disabled to prevent duplicate tabs and profile mismatch
                     sys.exit(0)
         except Exception:
             pass
@@ -2148,8 +3748,9 @@ objShell.CurrentDirectory = strDir
         ThreadingHTTPServer.allow_reuse_address = True
         server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
         
-        # Tự động mở trình duyệt khi khởi chạy chủ động
-        webbrowser.open(f"http://localhost:{PORT}/")
+        # Tự động mở trình duyệt khi khởi chạy chủ động (đã vô hiệu hóa hoàn toàn)
+        # if _args.open_browser:
+        #     webbrowser.open(f"http://localhost:{PORT}/")
                 
         server.serve_forever()
     except KeyboardInterrupt:

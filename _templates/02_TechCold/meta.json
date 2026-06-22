@@ -1,0 +1,50 @@
+{
+  "name": "02_TechCold",
+  "title": "Tech Review 9:16 — Cold Navy & Cyan",
+  "version": "1.0.0",
+  "created": "2026-06-16",
+  "inspired_by": "Ente Photos privacy review video",
+  "description": "Template video dọc 1080x1920 tone LẠNH-TECH cho review sản phẩm/tool. Navy + cyan + gradient cyan→teal. Có frame brackets viewfinder, grid lines background, hỗ trợ device mockup + illustration.",
+  "when_to_use": [
+    "Review tool/sản phẩm tech (privacy, security, productivity, AI)",
+    "Marketing B.SIMPLE nội bộ về tool mới",
+    "So sánh nhiều options với card-grid-2 hoặc card-grid-4",
+    "Stat heavy content (10GB free, 1M users...)",
+    "Nội dung 60-90s, tone professional, hơi lạnh"
+  ],
+  "not_for": [
+    "Parenting/giáo dục ấm áp (dùng 01_Text)",
+    "Story narrative dài >120s",
+    "Nội dung không có data point cụ thể"
+  ],
+  "scene_structure_flexible": true,
+  "scene_blocks": [
+    { "id": "s1", "name": "Hook",                "blocks": ["eyebrow-cyan", "title-multicolor", "device-mockup"] },
+    { "id": "s2", "name": "Big Difference",      "blocks": ["eyebrow-cyan", "title-multicolor", "card-grid-2"] },
+    { "id": "s3", "name": "Features 4",          "blocks": ["eyebrow-cyan", "title-multicolor", "card-grid-4"] },
+    { "id": "s4", "name": "Platform",            "blocks": ["eyebrow-cyan", "title-multicolor", "device-mockup", "illustration"] },
+    { "id": "s5", "name": "Self-host / Stats",   "blocks": ["eyebrow-cyan", "title-multicolor", "bullet-list-colored", "stat-block"] },
+    { "id": "s6", "name": "Why Care / CTA",      "blocks": ["eyebrow-cyan", "title-multicolor", "card-grid-2"] }
+  ],
+  "global_chrome": ["background-tech", "frame-chrome"],
+  "palette": {
+    "bg_navy_top": "#0a1828",
+    "bg_navy_mid": "#051220",
+    "bg_navy_bottom": "#030a18",
+    "accent_cyan": "#5cb6ff",
+    "accent_teal": "#4dcccc",
+    "accent_orange": "#ffa726",
+    "highlight_gradient": "linear-gradient(90deg, #5cb6ff 0%, #7adcdc 100%)",
+    "text_white": "#ffffff",
+    "text_muted": "#a0c4c4",
+    "border_card": "rgba(58, 188, 188, 0.25)",
+    "grid_lines": "rgba(92, 182, 255, 0.05)"
+  },
+  "font_family": "Inter",
+  "footer_brand": "Configurable per video — vd 'ENTE / PRIVACY FIRST PHOTOS'",
+  "example": {
+    "topic": "Ente Photos privacy review",
+    "folder": "example_ente_privacy/",
+    "based_on_video": "Downloads/Ente là lựa chọn rất đáng chú ý...mp4"
+  }
+}

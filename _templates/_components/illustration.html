@@ -1,0 +1,60 @@
+<!--
+COMPONENT: illustration
+PURPOSE: Chèn ảnh 3D character / mascot / icon-illustration (vd Ente mascot + rocket)
+PROPS:
+  src:     đường dẫn ảnh (PNG transparent)
+  caption (optional)
+  sublabel (optional)
+NOTE:
+  - Có thể là 3D Blender export, Figma illustration, hoặc PIC_Br auto-gen
+  - Prompt PIC_Br gợi ý: "3D isometric character/mascot, vibrant colors, transparent background, friendly tech style"
+USAGE:
+  <div class="hf-illustration">
+    <img src="assets/mascot-rocket.png" alt="Mascot">
+    <div class="hf-illust-caption">Clients + Server</div>
+    <div class="hf-illust-sublabel">Linux, macOS, Windows</div>
+  </div>
+GSAP:
+  tl.from(".hf-illustration img", { scale: 0.7, opacity: 0, rotation: -8, duration: 1.1, ease: "back.out(1.5)" }, t);
+  tl.from(".hf-illust-caption", { y: 20, opacity: 0, duration: 0.6 }, t+0.5);
+-->
+<style>
+.hf-illustration {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 520px;
+  padding: 24px;
+  background: rgba(10, 24, 32, 0.45);
+  border: 1.5px solid rgba(58, 188, 188, 0.25);
+  border-radius: 18px;
+}
+.hf-illustration img {
+  width: 100%;
+  height: auto;
+  max-height: 320px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.4));
+}
+.hf-illust-caption {
+  font-family: "Inter", sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-top: 18px;
+  text-align: center;
+}
+.hf-illust-sublabel {
+  font-size: 16px;
+  color: #a0c4c4;
+  margin-top: 6px;
+  text-align: center;
+}
+</style>
+
+<div class="hf-illustration">
+  <img src="assets/illustration-placeholder.png" alt="[Illustration]">
+  <div class="hf-illust-caption">[Caption]</div>
+  <div class="hf-illust-sublabel">[Sublabel]</div>
+</div>

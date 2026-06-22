@@ -1,0 +1,71 @@
+<!--
+COMPONENT: device-mockup
+PURPOSE: Khu hiển thị ảnh device thật (phone + laptop + tablet ghép) — dùng trong scene Hook hoặc Platform
+PROPS:
+  src:    đường dẫn ảnh composite (PNG suốt nền nếu có)
+  alt:    text alt
+  caption (optional): label dưới
+NOTE:
+  - Ảnh nên là composite 3 thiết bị đã ghép sẵn, transparent BG
+  - PIC_Br có thể auto-gen với prompt: "phone + laptop + tablet showing <app> UI, isometric, dark navy background, clean tech product mockup"
+  - Hoặc Boss tự ghép bằng tay (Figma/Photoshop) → đặt vào folder assets/
+USAGE:
+  <div class="hf-device-mockup">
+    <img src="assets/ente-devices.png" alt="Ente Photos trên 3 thiết bị">
+    <div class="hf-device-caption">Web + Mobile + Desktop</div>
+    <div class="hf-device-sublabel">iOS, Android, Web</div>
+  </div>
+GSAP:
+  tl.from(".hf-device-mockup img", { scale: 0.85, opacity: 0, duration: 1.0, ease: "back.out(1.4)" }, t);
+  tl.from(".hf-device-caption", { y: 20, opacity: 0, duration: 0.6 }, t+0.5);
+-->
+<style>
+.hf-device-mockup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 520px;
+  padding: 24px;
+  background: rgba(10, 24, 32, 0.45);
+  border: 1.5px solid rgba(58, 188, 188, 0.25);
+  border-radius: 18px;
+}
+.hf-device-mockup img {
+  width: 100%;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.5));
+}
+.hf-device-caption {
+  font-family: "Inter", sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-top: 18px;
+  text-align: center;
+}
+.hf-device-sublabel {
+  font-size: 16px;
+  color: #a0c4c4;
+  margin-top: 6px;
+  text-align: center;
+}
+/* Placeholder khi chưa có ảnh */
+.hf-device-mockup img[src=""], .hf-device-mockup img:not([src]) {
+  width: 100%; aspect-ratio: 16/10;
+  background: linear-gradient(135deg, #1a3040 0%, #0f2030 100%);
+  border-radius: 12px;
+  display: block;
+}
+.hf-device-mockup img[src=""]::after {
+  content: "📱💻📱 device mockup";
+  color: #5cb6ff;
+  font-size: 18px;
+}
+</style>
+
+<div class="hf-device-mockup">
+  <img src="assets/devices-placeholder.png" alt="[Device composite]">
+  <div class="hf-device-caption">[Caption]</div>
+  <div class="hf-device-sublabel">[Sublabel]</div>
+</div>

@@ -18,6 +18,14 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# Templates (Sếp có thể comment lại nếu muốn track git)
-_templates/
+# Pipeline data (video, script, content — KHÔNG publish)
+_templates/01_Text_ViCon/_pipeline_*/
+_templates/01_Text_ViCon/example_*/
+_templates/01_Text_ViCon/content.json
+_templates/01_Text_ViCon/_editor_debug.log
+_templates/02_TechCold/example_*/
+_templates/03_DecisionTree/example_*/
+
+# Fonts folder (nặng, không cần publish)
+_templates/_fonts/
 

@@ -1,0 +1,78 @@
+{
+  "_comment": "Schema content cho template 02_TechCold (style Ente).",
+  "$schema": "02_TechCold-v1",
+  "required_scenes": ["s1", "s2", "s3", "s4", "s5", "s6"],
+  "global_fields": {
+    "topic":         { "type": "string", "required": true },
+    "footer_brand":  { "type": "string", "max_len": 50, "uppercase": true, "note": "Vd 'ENTE / PRIVACY FIRST PHOTOS'" }
+  },
+  "scenes": {
+    "s1": {
+      "name": "Hook + Device Mockup",
+      "fields": {
+        "eyebrow":      { "type": "string", "max_len": 30, "uppercase": true },
+        "title":        { "type": "html",   "max_len": 120, "allow_em": ["hl-cyan", "hl-teal", "hl-orange", "hl-gradient"] },
+        "device_image": { "type": "filename", "ext": "png", "note": "PNG transparent, để trong example/assets/" },
+        "device_alt":   { "type": "string" }
+      }
+    },
+    "s2": {
+      "name": "Big Difference + 2 Cards",
+      "fields": {
+        "eyebrow":   { "type": "string", "uppercase": true },
+        "title":     { "type": "html", "allow_em": true },
+        "cards":     { "type": "array", "length": 2,
+                       "item": { "heading": "string", "body": "string" } }
+      }
+    },
+    "s3": {
+      "name": "4 Features Card",
+      "fields": {
+        "eyebrow":   { "type": "string", "uppercase": true },
+        "title":     { "type": "html", "allow_em": true },
+        "cards":     { "type": "array", "length": 4,
+                       "item": { "heading": "string (1 từ)", "subtitle": "string UPPERCASE", "body": "string" } }
+      }
+    },
+    "s4": {
+      "name": "Platform — Device + Illustration",
+      "fields": {
+        "eyebrow":      { "type": "string", "uppercase": true },
+        "title":        { "type": "html", "allow_em": true },
+        "left_image":   { "type": "filename", "ext": "png" },
+        "left_caption": { "type": "string" },
+        "left_sublabel":{ "type": "string" },
+        "right_image":  { "type": "filename", "ext": "png" },
+        "right_caption":{ "type": "string" },
+        "right_sublabel":{ "type": "string" }
+      }
+    },
+    "s5": {
+      "name": "Self-host — Bullet List + Stat",
+      "fields": {
+        "eyebrow":   { "type": "string", "uppercase": true },
+        "title":     { "type": "html", "allow_em": true },
+        "bullets":   { "type": "array", "length": 4, "item": "string" },
+        "stat":      { "type": "object",
+                       "fields": { "number": "string", "label": "string UPPERCASE", "body": "string" } }
+      }
+    },
+    "s6": {
+      "name": "Why Care / CTA",
+      "fields": {
+        "eyebrow":   { "type": "string", "uppercase": true },
+        "title":     { "type": "html", "allow_em": ["hl-gradient", "hl-cyan"] },
+        "cards":     { "type": "array", "length": 2,
+                       "item": { "heading": "string", "body": "string" } }
+      }
+    }
+  },
+  "voice": {
+    "file":     { "type": "path" },
+    "duration": { "type": "number" }
+  },
+  "timeline": {
+    "_comment": "Each scene { in: seconds, out: seconds }. AI auto-gen từ transcript hoặc fix manually.",
+    "scenes": { "s1": { "in": 0, "out": 14 }, "s2": { "in": 14, "out": 28 }, "...": "..." }
+  }
+}

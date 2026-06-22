@@ -1,0 +1,46 @@
+{
+  "_comment": "Design tokens cho template 02_TechCold (style Ente). Override CSS rules vào output index.html khi compose.",
+  "tokens": {
+    "color": {
+      "bg_navy_top":      "#0a1828",
+      "bg_navy_mid":      "#051220",
+      "bg_navy_bottom":   "#030a18",
+      "accent_cyan":      "#5cb6ff",
+      "accent_teal":      "#4dcccc",
+      "accent_teal_2":    "#7adcdc",
+      "accent_orange":    "#ffa726",
+      "text_white":       "#ffffff",
+      "text_muted":       "#a0c4c4",
+      "text_muted_2":     "#6b8a9e",
+      "border_card":      "rgba(58, 188, 188, 0.25)",
+      "card_bg":          "rgba(10, 24, 32, 0.45)",
+      "grid_lines":       "rgba(92, 182, 255, 0.05)"
+    },
+    "font": {
+      "family":           "Inter, sans-serif",
+      "weight_900":       900,
+      "weight_800":       800,
+      "weight_700":       700,
+      "weight_600":       600,
+      "weight_500":       500
+    },
+    "rules": {
+      ".hf-eyebrow":          { "font-size": "18px",  "letter-spacing": "6px", "color": "#5cb6ff" },
+      ".hf-title":            { "font-size": "78px",  "line-height": "1.5",   "letter-spacing": "-1px", "color": "#ffffff", "text-shadow": "0 0 30px rgba(92, 182, 255, 0.35)" },
+      ".hf-title em.hl-cyan": { "color": "#5cb6ff",   "text-shadow": "0 0 25px rgba(92, 182, 255, 0.6)" },
+      ".hf-title em.hl-teal": { "color": "#4dcccc",   "text-shadow": "0 0 25px rgba(77, 204, 204, 0.6)" },
+      ".hf-title em.hl-orange": { "color": "#ffa726", "text-shadow": "0 0 25px rgba(255, 167, 38, 0.6)" },
+      ".hf-card":             { "background": "rgba(10, 24, 32, 0.55)", "border": "1.5px solid rgba(58, 188, 188, 0.35)" },
+      ".hf-card-heading":     { "font-size": "32px", "color": "#ffffff" },
+      ".hf-card-body":        { "font-size": "22px", "color": "#a0c4c4", "line-height": "1.5" },
+      ".hf-card-sm .hf-card-heading-accent": { "color": "#5cb6ff", "font-size": "30px" },
+      ".hf-bullet-list":      { "background": "rgba(10, 24, 32, 0.55)" },
+      ".hf-bullet-list li":   { "font-size": "22px", "color": "#ffffff" },
+      ".hf-stat-number":      { "font-size": "96px", "color": "#5cb6ff", "text-shadow": "0 0 30px rgba(92, 182, 255, 0.55)" },
+      ".hf-stat-label":       { "color": "#6b8a9e" },
+      ".hf-device-caption":   { "color": "#ffffff" },
+      ".hf-device-sublabel":  { "color": "#a0c4c4" },
+      ".hf-footer-label":     { "color": "rgba(255, 255, 255, 0.45)", "letter-spacing": "4px" }
+    }
+  }
+}

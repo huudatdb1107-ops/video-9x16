@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>BG warm</title>
+<style>
+body { margin: 0; background: #000; }
+#root { position: relative; width: 1080px; height: 1920px; transform-origin: top left; }
+@media (max-width: 1080px) { #root { transform: scale(0.4); width: 100vw; height: auto; aspect-ratio: 9/16; } }
+</style></head><body>
+<div id="root">
+<!--
+COMPONENT: background-warm
+PURPOSE: Background warm cho template 01_Text — navy base + teal glow + warm orange hint + 5 color blobs drift + 55 particles twinkle
+USAGE: Đặt SAU <body>, trước scene content. Cần GSAP để animate blobs + particles drift.
+PALETTE: warm-teal (01_Text default)
+-->
+<style>
+#bg-warm-root::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(circle at 85% 75%, rgba(58, 188, 188, 0.45) 0%, transparent 50%),
+    radial-gradient(circle at 12% 18%, rgba(58, 188, 188, 0.28) 0%, transparent 42%),
+    radial-gradient(circle at 92% 8%, rgba(255, 138, 58, 0.22) 0%, transparent 30%),
+    linear-gradient(180deg, #0a1a26 0%, #0a1820 50%, #061018 100%);
+}
+.bg-warm-blob {
+  position: absolute; border-radius: 50%;
+  filter: blur(90px); mix-blend-mode: screen;
+  pointer-events: none; z-index: 0;
+}
+.bg-warm-particle { position: absolute; border-radius: 50%; opacity: 0.3; }
+#bg-warm-particles { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+</style>
+
+<div id="bg-warm-root" style="position:absolute;inset:0;z-index:0;pointer-events:none;">
+  <div class="bg-warm-blob" style="width:520px;height:520px;left:8%;top:5%;background:radial-gradient(circle,rgba(58,188,188,0.55) 0%,transparent 70%);"></div>
+  <div class="bg-warm-blob" style="width:560px;height:560px;right:5%;top:18%;background:radial-gradient(circle,rgba(120,90,200,0.45) 0%,transparent 70%);"></div>
+  <div class="bg-warm-blob" style="width:600px;height:600px;left:15%;top:45%;background:radial-gradient(circle,rgba(255,138,58,0.32) 0%,transparent 70%);"></div>
+  <div class="bg-warm-blob" style="width:540px;height:540px;right:10%;bottom:18%;background:radial-gradient(circle,rgba(58,188,188,0.5) 0%,transparent 70%);"></div>
+  <div class="bg-warm-blob" style="width:480px;height:480px;left:35%;bottom:5%;background:radial-gradient(circle,rgba(90,170,220,0.4) 0%,transparent 70%);"></div>
+  <div id="bg-warm-particles"></div>
+</div>
+
+<script>
+(function(){
+  const layer = document.getElementById('bg-warm-particles');
+  if (!layer) return;
+  let s = 42;
+  const r = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+  const colors = ['#ffffff', '#ffd9a8', '#7adcdc', '#ff9a4a'];
+  for (let i = 0; i < 55; i++) {
+    const p = document.createElement('div');
+    p.className = 'bg-warm-particle';
+    const size = 1.2 + r() * 2.2;
+    const col = colors[Math.floor(r() * 4)];
+    p.style.left = (r() * 100) + '%'; p.style.top = (r() * 100) + '%';
+    p.style.width = size + 'px'; p.style.height = size + 'px';
+    p.style.background = col;
+    p.style.boxShadow = '0 0 ' + (6 + size * 3) + 'px ' + col;
+    p.style.opacity = 0.15 + r() * 0.4;
+    layer.appendChild(p);
+  }
+})();
+</script>
+
+<div style="position:absolute;bottom:80px;left:50%;transform:translateX(-50%);z-index:50;color:#fff;font-family:Inter,sans-serif;font-size:42px;font-weight:700;text-shadow:0 0 20px rgba(0,0,0,0.8)">
+Sample text on background
+</div>
+</div></body></html>

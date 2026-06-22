@@ -104,6 +104,44 @@ def gen(text: str, voice: str, output: pathlib.Path, params: dict = None):
             return None
 
 
+def clean_voice_text(text: str) -> str:
+    # 0. Thay thế các từ chuyên môn/viết tắt tiếng Anh bằng từ ngữ thuần Việt gần gũi khi thu voice
+    acronyms_map = {
+        r"\bADHD\b": "tăng động giảm chú ý",
+        r"\bADHDs\b": "tăng động giảm chú ý",
+        r"\bAI\b": "ai i",
+    }
+    for pattern, replacement in acronyms_map.items():
+        text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
+
+    lines = text.split("\n")
+    cleaned_lines = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        
+        # 1. Loại bỏ các dòng chú thích/ghi chú ngoài lề (ví dụ: *(Lưu ý: ...)*)
+        lower_line = stripped.lower()
+        # Sử dụng regex nhận diện chính xác các dòng ghi chú/chú thích bắt đầu bằng từ khoá để tránh loại bỏ nhầm từ "giảm chú ý" trong kịch bản ADHD
+        if re.search(r"^\s*\(?\s*(lưu ý|ghi chú|chú ý|note)\s*[:\-]", lower_line) or "trùng chủ đề" in lower_line:
+            print(f"[SYSTEM] [clean-voice] Loại bỏ dòng chú thích/ghi chú: {stripped}")
+            continue
+            
+        # 2. Loại bỏ dấu * hoặc ** định dạng Markdown
+        clean_line = stripped.replace("*", "")
+        
+        # 3. Loại bỏ dấu ngoặc đơn bao bọc cả câu (nếu có)
+        if clean_line.startswith("(") and clean_line.endswith(")"):
+            clean_line = clean_line[1:-1].strip()
+            
+        # 4. Loại bỏ các khoảng trắng thừa
+        clean_line = clean_line.strip()
+        if clean_line:
+            cleaned_lines.append(clean_line)
+            
+    return "\n".join(cleaned_lines)
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     src = ap.add_mutually_exclusive_group(required=True)
@@ -114,6 +152,7 @@ if __name__ == "__main__":
     args = ap.parse_args()
 
     text = pathlib.Path(args.script_file).read_text(encoding="utf-8").strip() if args.script_file else args.script
+    cleaned_text = clean_voice_text(text)
     out  = pathlib.Path(args.output).resolve()
-    result = gen(text, args.voice, out)
+    result = gen(cleaned_text, args.voice, out)
     sys.exit(0 if result else 1)

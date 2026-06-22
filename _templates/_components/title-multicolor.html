@@ -1,0 +1,50 @@
+<!--
+COMPONENT: title-multicolor
+PURPOSE: Heading lớn 2-4 dòng, có thể tô màu KEYWORD bằng <em class="hl-cyan|teal|orange|gradient">
+PROPS:
+  size:   hero (130px) | big (80px) | mid (64px) — default hero
+  align:  center | left  — default center
+USAGE:
+  <h1 class="hf-title" data-size="hero">
+    Muốn kiểu <em class="hl-cyan">Google Photos</em> nhưng
+    ảnh của bạn vẫn <em class="hl-teal">mã hóa đầu cuối</em>?
+  </h1>
+GSAP:
+  tl.from(".hf-title", { y: 60, opacity: 0, duration: 1.0, ease: "power3.out" }, t);
+  tl.fromTo(".hf-title em", { color: "#fff" }, { color: "<accent>", duration: 0.5 }, t+0.8);
+-->
+<style>
+.hf-title {
+  font-family: "Inter", sans-serif;
+  font-weight: 900;
+  color: #ffffff;
+  text-align: center;
+  margin: 0;
+  letter-spacing: -1px;
+  max-width: 960px;
+  text-shadow:
+    0 0 30px rgba(255, 122, 42, 0.6),
+    0 0 70px rgba(255, 122, 42, 0.35),
+    0 0 120px rgba(255, 255, 255, 0.22);
+}
+.hf-title[data-size="hero"] { font-size: 130px; line-height: 1.6; text-transform: uppercase; }
+.hf-title[data-size="big"]  { font-size: 80px;  line-height: 1.5; }
+.hf-title[data-size="mid"]  { font-size: 64px;  line-height: 1.5; }
+.hf-title[data-align="left"] { text-align: left; }
+
+.hf-title em            { font-style: normal; font-weight: 900; display: inline-block; }
+.hf-title em.hl-orange  { color: #ff7a2a; text-shadow: 0 0 25px rgba(255,122,42,0.7), 0 0 50px rgba(255,122,42,0.4); }
+.hf-title em.hl-teal    { color: #4dcccc; text-shadow: 0 0 25px rgba(77,204,204,0.7), 0 0 50px rgba(77,204,204,0.4); }
+.hf-title em.hl-cyan    { color: #5cb6ff; text-shadow: 0 0 25px rgba(92,182,255,0.7), 0 0 50px rgba(92,182,255,0.4); }
+.hf-title em.hl-gradient {
+  background: linear-gradient(90deg, #5cb6ff 0%, #7adcdc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+</style>
+
+<h1 class="hf-title" data-size="hero">
+  [TITLE LINE 1] <em class="hl-orange">[KEYWORD 1]</em>
+  [LINE 2] <em class="hl-teal">[KEYWORD 2]</em>?
+</h1>

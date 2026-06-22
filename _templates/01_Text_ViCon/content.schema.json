@@ -1,0 +1,63 @@
+{
+  "_comment": "Schema content cho template 01_Text. AI hoặc Boss fill file content.json theo schema này → compose.py ráp với skeleton.html + style-tokens.json → output HTML render-ready.",
+  "$schema": "01_Text-v1",
+  "required_scenes": ["s1", "s2", "s3", "s4", "s5", "s6"],
+  "scenes": {
+    "s1": {
+      "name": "Hook",
+      "fields": {
+        "eyebrow":  { "type": "string", "max_len": 30, "uppercase": true },
+        "title":    { "type": "html",   "max_len": 80, "allow_em": ["hl-orange", "hl-teal"] },
+        "byline":   { "type": "string", "max_len": 50 }
+      }
+    },
+    "s2": {
+      "name": "Khái niệm / Stat",
+      "fields": {
+        "big_text": { "type": "string", "max_len": 8,  "note": "Có thể là số (1/36) hoặc text ngắn (ADHD)" },
+        "label":    { "type": "string", "max_len": 60 },
+        "note":     { "type": "string", "max_len": 100 }
+      }
+    },
+    "s3": {
+      "name": "List 3 cards có số",
+      "fields": {
+        "heading":  { "type": "string", "max_len": 30 },
+        "cards":    { "type": "array",  "length": 3,
+                      "item": { "num": "string", "text": "html (allow_em)" } }
+      }
+    },
+    "s4": {
+      "name": "Quote",
+      "fields": {
+        "quote_mark": { "type": "string", "max_len": 2, "default": "✦" },
+        "quote_html": { "type": "html", "max_len": 200, "allow_em": true, "allow_br": true }
+      }
+    },
+    "s5": {
+      "name": "List 3 actions có dot",
+      "fields": {
+        "heading":  { "type": "string", "max_len": 30 },
+        "items":    { "type": "array",  "length": 3,
+                      "item": { "text": "html (allow_em)" } }
+      }
+    },
+    "s6": {
+      "name": "CTA / Closing",
+      "fields": {
+        "title":    { "type": "html",   "max_len": 80, "allow_em": ["hl-orange"] },
+        "sub":      { "type": "string", "max_len": 120 },
+        "hashtag":  { "type": "string", "max_len": 30, "starts_with": "#" }
+      }
+    }
+  },
+  "voice": {
+    "file":     { "type": "path", "format": "wav" },
+    "duration": { "type": "number", "unit": "seconds" }
+  },
+  "timeline": {
+    "_comment": "AI tính peak/transition times dựa trên voice transcript segments. Format: {s1: {in, out}, s2: {in, out}, ...}",
+    "auto_generated": true,
+    "from": "transcript.json"
+  }
+}

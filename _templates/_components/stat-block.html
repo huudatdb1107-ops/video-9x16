@@ -1,0 +1,61 @@
+<!--
+COMPONENT: stat-block
+PURPOSE: Highlight 1 con số/text lớn + label uppercase + body ngắn (vd "10GB / FREE STORAGE / Ente cho mười GB miễn phí")
+PROPS:
+  number:   string (vd "10GB", "ADHD", "1/36")
+  label:    string (UPPERCASE letter-spacing rộng)
+  body:     string (2-3 dòng mô tả)
+USAGE:
+  <div class="hf-stat-block">
+    <div class="hf-stat-number">10GB</div>
+    <div class="hf-stat-label">FREE STORAGE</div>
+    <div class="hf-stat-body">README nêu Ente Photos là dịch vụ trả phí, nhưng có mười GB lưu trữ miễn phí để bắt đầu.</div>
+  </div>
+GSAP:
+  tl.from(".hf-stat-number", { scale: 0.5, opacity: 0, duration: 0.9, ease: "back.out(1.5)" }, t);
+  tl.from(".hf-stat-label",  { y: 20, opacity: 0, duration: 0.6 }, t+0.5);
+  tl.from(".hf-stat-body",   { y: 20, opacity: 0, duration: 0.6 }, t+0.8);
+-->
+<style>
+.hf-stat-block {
+  background: rgba(10, 24, 32, 0.55);
+  border: 1.5px solid rgba(58, 188, 188, 0.35);
+  border-radius: 16px;
+  padding: 32px 36px;
+  max-width: 460px;
+  text-align: left;
+}
+.hf-stat-number {
+  font-family: "Inter", sans-serif;
+  font-size: 96px;
+  font-weight: 900;
+  color: #ff7a2a;
+  line-height: 1;
+  letter-spacing: -3px;
+  text-shadow: 0 0 30px rgba(255, 122, 42, 0.55);
+}
+.hf-stat-number[data-color="teal"] { color: #4dcccc; text-shadow: 0 0 30px rgba(77, 204, 204, 0.55); }
+.hf-stat-number[data-color="cyan"] { color: #5cb6ff; text-shadow: 0 0 30px rgba(92, 182, 255, 0.55); }
+
+.hf-stat-label {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #6db8b8;
+  margin-top: 8px;
+  margin-bottom: 20px;
+}
+.hf-stat-body {
+  font-size: 20px;
+  color: #a0c4c4;
+  line-height: 1.5;
+  font-weight: 500;
+}
+</style>
+
+<div class="hf-stat-block">
+  <div class="hf-stat-number">[BIG NUM]</div>
+  <div class="hf-stat-label">[UPPERCASE LABEL]</div>
+  <div class="hf-stat-body">[Body 2-3 dòng — mô tả ý nghĩa của con số]</div>
+</div>

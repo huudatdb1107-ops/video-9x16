@@ -1,0 +1,58 @@
+<!--
+COMPONENT: bullet-list-colored
+PURPOSE: List 3-5 bullets có dấu chấm tròn màu khác nhau (vd Ente self-host video)
+PROPS:
+  items: array of {text, dot_color}  — dot_color: teal | orange | cyan | white
+USAGE:
+  <ul class="hf-bullet-list">
+    <li data-dot="teal">Dùng service sẵn của Ente nếu muốn nhanh</li>
+    <li data-dot="orange">Tự triển khai nếu muốn kiểm soát nhiều hơn</li>
+    <li data-dot="cyan">Phù hợp cho cả cá nhân lẫn người dùng nâng cao</li>
+    <li data-dot="orange">Không bị buộc vào một mô hình cloud duy nhất</li>
+  </ul>
+GSAP:
+  tl.from(".hf-bullet-list li", { x: -40, opacity: 0, duration: 0.5, stagger: 0.15, ease: "power3.out" }, t);
+-->
+<style>
+.hf-bullet-list {
+  list-style: none;
+  padding: 28px 36px;
+  margin: 0;
+  background: rgba(10, 24, 32, 0.55);
+  border: 1.5px solid rgba(58, 188, 188, 0.35);
+  border-radius: 16px;
+  max-width: 500px;
+}
+.hf-bullet-list li {
+  position: relative;
+  padding-left: 36px;
+  margin-bottom: 18px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.45;
+}
+.hf-bullet-list li:last-child { margin-bottom: 0; }
+.hf-bullet-list li::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 12px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #4dcccc;
+  box-shadow: 0 0 16px rgba(77, 204, 204, 0.7);
+}
+.hf-bullet-list li[data-dot="teal"]::before   { background: #4dcccc; box-shadow: 0 0 16px rgba(77, 204, 204, 0.7); }
+.hf-bullet-list li[data-dot="orange"]::before { background: #ff7a2a; box-shadow: 0 0 16px rgba(255, 122, 42, 0.7); }
+.hf-bullet-list li[data-dot="cyan"]::before   { background: #5cb6ff; box-shadow: 0 0 16px rgba(92, 182, 255, 0.7); }
+.hf-bullet-list li[data-dot="white"]::before  { background: #ffffff; box-shadow: 0 0 16px rgba(255, 255, 255, 0.5); }
+</style>
+
+<ul class="hf-bullet-list">
+  <li data-dot="teal">[Bullet 1 text]</li>
+  <li data-dot="orange">[Bullet 2 text]</li>
+  <li data-dot="cyan">[Bullet 3 text]</li>
+  <li data-dot="orange">[Bullet 4 text]</li>
+</ul>

@@ -1,0 +1,47 @@
+{
+  "name": "01_Text_ViCon",
+  "title": "Text-driven 9:16 — Warm Teal",
+  "version": "1.0.0",
+  "created": "2026-06-16",
+  "description": "Template video dọc 1080x1920 thuần text, tone ấm áp navy + teal + cam. 6 scene chuẩn: Hook → Khái niệm → 3-card list → Quote → 3-action list → CTA.",
+  "when_to_use": [
+    "Chủ đề giáo dục/parenting (con cái, kiến thức nuôi dạy)",
+    "Câu chuyện cảnh báo nhẹ nhàng (sức khỏe, tâm lý, lối sống)",
+    "Nội dung 60-100s, voice 1 narrator, không cần ảnh/illustration"
+  ],
+  "not_for": [
+    "Review sản phẩm tech (cần mockup device)",
+    "So sánh nhiều options (cần 4-card grid)",
+    "Stats/data heavy (cần stat-block)"
+  ],
+  "scene_structure": [
+    {"id": "s1", "name": "Hook",        "purpose": "Mở câu hỏi/tuyên bố", "duration": "~10s"},
+    {"id": "s2", "name": "Khái niệm",   "purpose": "Định nghĩa/big text", "duration": "~10s"},
+    {"id": "s3", "name": "3 dấu hiệu",  "purpose": "List 3 items có số",  "duration": "~20s"},
+    {"id": "s4", "name": "Quote",       "purpose": "Trích dẫn ngắn",      "duration": "~7s"},
+    {"id": "s5", "name": "3 hành động", "purpose": "List 3 items có dot", "duration": "~13s"},
+    {"id": "s6", "name": "CTA",         "purpose": "Kết + hashtag",       "duration": "~5s"}
+  ],
+  "palette": {
+    "bg_deep": "#0a1820",
+    "accent_orange": "#ff7a2a",
+    "accent_teal": "#4dcccc",
+    "text_white": "#ffffff",
+    "text_muted": "#a0c4c4",
+    "byline": "#6db8b8"
+  },
+  "font_family": "Inter",
+  "vietnamese_rules": {
+    "min_line_height_heading": 1.6,
+    "min_line_height_body": 1.4,
+    "no_acronym_caps": true,
+    "no_arabic_numerals": true,
+    "max_words_per_sentence_no_comma": 20
+  },
+  "example": {
+    "topic": "Trẻ em hiếu động vs tăng động (ADHD)",
+    "folder": "example_tre_em_tang_dong/",
+    "voice": "OMNI TT_06",
+    "voice_duration": "97.75s"
+  }
+}

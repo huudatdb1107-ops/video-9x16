@@ -1,0 +1,75 @@
+<!--
+COMPONENT: card-grid-4
+PURPOSE: 4 card thu nhỏ trên 1 hàng — dùng cho list 4 features/items (vd: Face/Search/Share/Upload)
+PROPS:
+  cards: array of {heading, subtitle, body} × 4
+USAGE:
+  <div class="hf-card-grid hf-grid-4">
+    <div class="hf-card hf-card-sm">
+      <div class="hf-card-heading-accent">Face</div>
+      <div class="hf-card-subtitle">DETECTION</div>
+      <div class="hf-card-body">README nêu rõ face detection ngay trong Ente Photos.</div>
+    </div>
+    ...
+  </div>
+GSAP:
+  tl.from(".hf-grid-4 .hf-card", { y: 30, opacity: 0, duration: 0.5, stagger: 0.1, ease: "power3.out" }, t);
+-->
+<style>
+.hf-card-grid.hf-grid-4 { grid-template-columns: repeat(4, 1fr); gap: 14px; max-width: 1000px; }
+
+.hf-card-sm {
+  background: rgba(10, 24, 32, 0.55);
+  border: 1.5px solid rgba(58, 188, 188, 0.35);
+  border-radius: 14px;
+  padding: 22px 20px;
+  box-shadow: 0 0 24px rgba(77, 204, 204, 0.15), inset 0 0 16px rgba(58, 188, 188, 0.05);
+}
+.hf-card-heading-accent {
+  font-family: "Inter", sans-serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: #5cb6ff;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+.hf-card-heading-accent[data-color="teal"]   { color: #4dcccc; }
+.hf-card-heading-accent[data-color="orange"] { color: #ff7a2a; }
+.hf-card-sm .hf-card-subtitle {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #6db8b8;
+  margin-bottom: 10px;
+}
+.hf-card-sm .hf-card-body {
+  font-size: 16px;
+  color: #a0c4c4;
+  line-height: 1.45;
+  font-weight: 500;
+}
+</style>
+
+<div class="hf-card-grid hf-grid-4">
+  <div class="hf-card-sm">
+    <div class="hf-card-heading-accent">[H1]</div>
+    <div class="hf-card-subtitle">[SUB 1]</div>
+    <div class="hf-card-body">[Body 1 — 2-3 dòng ngắn]</div>
+  </div>
+  <div class="hf-card-sm">
+    <div class="hf-card-heading-accent">[H2]</div>
+    <div class="hf-card-subtitle">[SUB 2]</div>
+    <div class="hf-card-body">[Body 2]</div>
+  </div>
+  <div class="hf-card-sm">
+    <div class="hf-card-heading-accent">[H3]</div>
+    <div class="hf-card-subtitle">[SUB 3]</div>
+    <div class="hf-card-body">[Body 3]</div>
+  </div>
+  <div class="hf-card-sm">
+    <div class="hf-card-heading-accent">[H4]</div>
+    <div class="hf-card-subtitle">[SUB 4]</div>
+    <div class="hf-card-body">[Body 4]</div>
+  </div>
+</div>

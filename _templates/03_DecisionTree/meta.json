@@ -1,0 +1,51 @@
+{
+  "name": "03_DecisionTree",
+  "title": "Sticky-Note Decision Tree 9:16 — Warm Cream",
+  "version": "1.0.0",
+  "created": "2026-06-18",
+  "description": "Template video dọc 1080x1920 dạng sơ đồ quyết định sticky-note (ported từ html-video frame-decision-tree). Background dot-grid cream + 6 sticky note pastel + SVG connectors stroke-draw. 6 scene: Hook → Root question → 2 branches → Quote → 3 leaves → CTA + Cursor 'Bạn'.",
+  "when_to_use": [
+    "Tình huống có lựa chọn / phân nhánh (vd: khi con tantrum thì làm gì)",
+    "Hướng dẫn xử lý theo flow (nếu A thì X, nếu B thì Y)",
+    "Bài 'phải làm gì khi...' parenting / sức khỏe / tâm lý"
+  ],
+  "not_for": [
+    "Video listing thuần (dùng 01_Text_ViCon)",
+    "Tech review (dùng 02_TechCold)",
+    "Topic không có nhánh quyết định"
+  ],
+  "scene_structure": [
+    {"id": "s1", "name": "Hook",        "purpose": "Câu hỏi mở / tình huống",  "duration": "~10s"},
+    {"id": "s2", "name": "Root question","purpose": "Sticky note big câu hỏi", "duration": "~8s"},
+    {"id": "s3", "name": "2 branches",  "purpose": "Phân nhánh 2 lựa chọn",    "duration": "~14s"},
+    {"id": "s4", "name": "Quote",       "purpose": "Trích dẫn",                "duration": "~7s"},
+    {"id": "s5", "name": "3 leaves",    "purpose": "3 hành động / hậu quả",    "duration": "~15s"},
+    {"id": "s6", "name": "CTA",         "purpose": "Kết + cursor 'Bạn'",       "duration": "~6s"}
+  ],
+  "palette": {
+    "bg_cream": "#f8f7f2",
+    "bg_dot": "#d8d4cc",
+    "sticky_yellow":   "#e8d44d",
+    "sticky_green":    "#c2e8a0",
+    "sticky_peach":    "#f5c5a3",
+    "sticky_lavender": "#d4c5f9",
+    "sticky_blue":     "#a8d8f0",
+    "sticky_pink":     "#f8b4c8",
+    "text_dark":       "#2b2b2b",
+    "text_muted":      "#6d6660",
+    "accent_brand":    "#c8501a",
+    "cursor_purple":   "#9747ff"
+  },
+  "font_family": "Inter",
+  "vietnamese_rules": {
+    "min_line_height_heading": 1.6,
+    "min_line_height_body": 1.4,
+    "no_acronym_caps": true,
+    "no_arabic_numerals": true,
+    "max_words_per_sentence_no_comma": 20
+  },
+  "provenance": {
+    "origin": "html-video/templates/frame-decision-tree (nexu-io, Apache-2.0)",
+    "adaptation": "Ported to 9:16 portrait 1080x1920 + 6-scene Vietnamese pipeline + element_times voice-first sync"
+  }
+}

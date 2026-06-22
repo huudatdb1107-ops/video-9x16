@@ -1,0 +1,21 @@
+<!--
+COMPONENT: background-minimal
+PURPOSE: Background đơn giản — chỉ 1 gradient flat + 1 spotlight glow, không blobs không particles
+USAGE: Đặt đầu body, z-index 0
+PALETTE: minimal-dark
+-->
+<style>
+#bg-minimal-root {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: linear-gradient(180deg, #1a1a24 0%, #0a0a12 100%);
+}
+#bg-minimal-root::after {
+  content: ""; position: absolute;
+  top: -200px; left: 50%; transform: translateX(-50%);
+  width: 1000px; height: 1000px;
+  background: radial-gradient(circle, rgba(255, 122, 42, 0.12) 0%, transparent 60%);
+  filter: blur(40px);
+}
+</style>
+
+<div id="bg-minimal-root"></div>

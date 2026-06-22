@@ -1,0 +1,54 @@
+<!--
+  P3.10 — Radial node graph SVG (ported từ html-video frame-takram-organic)
+
+  Cách dùng:
+    1. Paste khối <svg id="radial-nodes"> vào skeleton scene mong muốn (vd S5)
+    2. Đặt id="radial-NN" cho mỗi <circle>/<text> để GSAP target
+    3. Trong GSAP timeline: stroke-dashoffset của <path class="link"> draw từng curved link
+       + scale node 0→1 với back.out(1.6)
+
+  Layout: 8 nodes xoay quanh tâm (540,960) bán kính 380px, mỗi 45°.
+  Cho video "8 nguyên tắc Stoic" / "8 thói quen cha mẹ tinh tế" / khái niệm hub-spoke.
+-->
+<svg id="radial-nodes" width="1080" height="1080" viewBox="0 0 1080 1080"
+     style="position:absolute; left:0; top:420px; pointer-events:none;">
+
+  <!-- Curved links từ tâm ra 8 nodes (cong nhẹ qua control point) -->
+  <g class="links" stroke="#c8501a" stroke-width="3" fill="none" opacity="0.6">
+    <path class="link" id="link-1" d="M 540 540 Q 580 460 920 540"      stroke-dasharray="400" stroke-dashoffset="400"/>
+    <path class="link" id="link-2" d="M 540 540 Q 720 540 808 808"      stroke-dasharray="400" stroke-dashoffset="400"/>
+    <path class="link" id="link-3" d="M 540 540 Q 540 720 540 920"      stroke-dasharray="400" stroke-dashoffset="400"/>
+    <path class="link" id="link-4" d="M 540 540 Q 360 540 272 808"      stroke-dasharray="400" stroke-dashoffset="400"/>
+    <path class="link" id="link-5" d="M 540 540 Q 280 540 160 540"      stroke-dasharray="400" stroke-dashoffset="400"/>
+    <path class="link" id="link-6" d="M 540 540 Q 360 540 272 272"      stroke-dasharray="400" stroke-dashoffset="400"/>
+    <path class="link" id="link-7" d="M 540 540 Q 540 360 540 160"      stroke-dasharray="400" stroke-dashoffset="400"/>
+    <path class="link" id="link-8" d="M 540 540 Q 720 540 808 272"      stroke-dasharray="400" stroke-dashoffset="400"/>
+  </g>
+
+  <!-- Center hub (tâm) -->
+  <circle cx="540" cy="540" r="80" fill="#e8d44d" stroke="#c8501a" stroke-width="4" />
+  <text x="540" y="552" text-anchor="middle" font-size="32" font-weight="800" fill="#2b2b2b">TÂM</text>
+
+  <!-- 8 leaf nodes — circle + label -->
+  <g class="nodes">
+    <circle id="rn-1" cx="920" cy="540" r="56" fill="#c2e8a0" stroke="#2b2b2b" stroke-width="3" style="transform-origin:920px 540px; transform:scale(0);"/>
+    <circle id="rn-2" cx="808" cy="808" r="56" fill="#a8d8f0" stroke="#2b2b2b" stroke-width="3" style="transform-origin:808px 808px; transform:scale(0);"/>
+    <circle id="rn-3" cx="540" cy="920" r="56" fill="#f8b4c8" stroke="#2b2b2b" stroke-width="3" style="transform-origin:540px 920px; transform:scale(0);"/>
+    <circle id="rn-4" cx="272" cy="808" r="56" fill="#d4c5f9" stroke="#2b2b2b" stroke-width="3" style="transform-origin:272px 808px; transform:scale(0);"/>
+    <circle id="rn-5" cx="160" cy="540" r="56" fill="#f5c5a3" stroke="#2b2b2b" stroke-width="3" style="transform-origin:160px 540px; transform:scale(0);"/>
+    <circle id="rn-6" cx="272" cy="272" r="56" fill="#c2e8a0" stroke="#2b2b2b" stroke-width="3" style="transform-origin:272px 272px; transform:scale(0);"/>
+    <circle id="rn-7" cx="540" cy="160" r="56" fill="#a8d8f0" stroke="#2b2b2b" stroke-width="3" style="transform-origin:540px 160px; transform:scale(0);"/>
+    <circle id="rn-8" cx="808" cy="272" r="56" fill="#f8b4c8" stroke="#2b2b2b" stroke-width="3" style="transform-origin:808px 272px; transform:scale(0);"/>
+  </g>
+</svg>
+
+<!--
+  GSAP wire mẫu (paste vào timeline scene S5 chẳng hạn):
+
+    const radialIn = s5.in + 0.6;
+    for (let i = 1; i <= 8; i++) {
+      tl.to("#link-" + i, { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" }, radialIn + (i-1)*0.18);
+      tl.to("#rn-" + i,   { scale: 1, duration: 0.45, ease: "back.out(1.6)" },
+            radialIn + (i-1)*0.18 + 0.25);
+    }
+-->

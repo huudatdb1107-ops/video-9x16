@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>{{ topic }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script>
+/* Font-freeze trick (P1.1 — ported from html-video PR #22): pause all animations
+   until fonts load, then unfreeze. Fixes Vietnamese diacritics flash at frame 0. */
+(function () {
+  var style = document.createElement('style');
+  style.id = '__hv_freeze';
+  style.textContent =
+    '*, *::before, *::after { animation-play-state: paused !important;' +
+    ' -webkit-animation-play-state: paused !important; }';
+  var attach = function () { (document.head || document.documentElement).appendChild(style); };
+  if (document.head || document.documentElement) attach();
+  else document.addEventListener('DOMContentLoaded', attach, { once: true });
+  function unfreeze() { var el = document.getElementById('__hv_freeze'); if (el) el.remove(); }
+  function waitFonts() {
+    var fonts = document.fonts;
+    if (!fonts || typeof fonts.ready?.then !== 'function') { unfreeze(); return; }
+    var cap = setTimeout(unfreeze, 8000);
+    var links = Array.prototype.slice.call(document.querySelectorAll('link[rel="stylesheet"]'));
+    var linkPromises = links.map(function (link) {
+      try { if (link.sheet && link.sheet.cssRules) return Promise.resolve(); } catch (e) {}
+      return new Promise(function (r) {
+        var done = function () { r(); };
+        link.addEventListener('load', done, { once: true });
+        link.addEventListener('error', done, { once: true });
+        setTimeout(done, 6000);
+      });
+    });
+    Promise.all(linkPromises).then(function () {
+      var loads = [];
+      fonts.forEach(function (face) {
+        try { loads.push(face.load().catch(function () {})); } catch (e) {}
+      });
+      return Promise.all(loads);
+    }).then(function () { return fonts.ready; }).then(function () {
+      clearTimeout(cap);
+      requestAnimationFrame(function () { requestAnimationFrame(function () { unfreeze(); }); });
+    }).catch(function () { clearTimeout(cap); unfreeze(); });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', waitFonts, { once: true });
+  } else { waitFonts(); }
+})();
+</script>
+<style>
+body { margin: 0; background: #f8f7f2; font-family: "Inter", sans-serif; }
+
+#root {
+  position: relative;
+  width: 1080px;
+  height: 1920px;
+  background: #f8f7f2;
+  background-image: radial-gradient(#d8d4cc 1.5px, transparent 1.5px);
+  background-size: 28px 28px;
+  overflow: hidden;
+  font-family: "Inter", sans-serif;
+  color: #2b2b2b;
+}
+
+/* P1.3 word-stagger reveal — mỗi từ inline-block */
+.word { display: inline-block; }
+
+/* P2.5 curtain wipe transition */
+.curtain-wipe {
+  position: absolute; top: 0; left: 0;
+  width: 1080px; height: 1920px;
+  z-index: 90; pointer-events: none;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, #c8501a 0%, #c8501a 50%, #e8d44d 50%, #e8d44d 100%);
+  background-size: 200% 100%;
+}
+
+/* Brand watermark */
+.brand-watermark {
+  position: absolute;
+  top: 50px;
+  right: 50px;
+  z-index: 100;
+  font-family: 'Inter', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #8B5A2B;
+  padding: 12px 26px;
+  background: rgba(232, 212, 77, 0.18);
+  border: 2px solid rgba(139, 90, 43, 0.55);
+  border-radius: 999px;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.tagline-footer {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  font-family: "Inter", sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  color: #6d6660;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ===== Scene container ===== */
+.scene {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 130px 80px;
+  opacity: 0;
+}
+
+/* ===== Sticky note base ===== */
+.sticky {
+  position: absolute;
+  padding: 36px 48px;
+  border-radius: 16px;
+  font-size: 36px;
+  font-weight: 600;
+  color: #2b2b2b;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+  text-align: center;
+  line-height: 1.35;
+  letter-spacing: -0.3px;
+  transform: translate(-50%, -50%) scale(0);
+}
+
+.sticky.yellow   { background-color: #e8d44d; }
+.sticky.green    { background-color: #c2e8a0; }
+.sticky.peach    { background-color: #f5c5a3; }
+.sticky.lavender { background-color: #d4c5f9; }
+.sticky.blue     { background-color: #a8d8f0; }
+.sticky.pink     { background-color: #f8b4c8; }
+
+/* ===== SVG connector layer ===== */
+.connectors-svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 1080px; height: 1920px;
+  z-index: 5;
+  pointer-events: none;
+}
+.connectors-svg path {
+  stroke-dasharray: 800;
+  stroke-dashoffset: 800;
+}
+
+/* ===== S1 hook ===== */
+#s1 { z-index: 10; }
+.s1-tag {
+  position: absolute; top: 260px; left: 50%; transform: translateX(-50%);
+  font-size: 28px; font-weight: 700; letter-spacing: 5px;
+  color: #8B5A2B; text-transform: uppercase; opacity: 0;
+}
+.s1-title {
+  position: absolute; top: 540px; left: 50%; transform: translateX(-50%);
+  width: 920px;
+  font-size: 108px; font-weight: 900; line-height: 1.05;
+  color: #2b2b2b; text-align: center; letter-spacing: -2px;
+  opacity: 0;
+}
+.s1-title em { color: #c8501a; font-style: normal; }
+.s1-byline {
+  position: absolute; top: 1100px; left: 50%; transform: translateX(-50%);
+  width: 820px;
+  font-size: 32px; font-weight: 500; line-height: 1.5;
+  color: #6d6660; text-align: center; opacity: 0;
+}
+
+/* ===== S2 root question ===== */
+#s2 { z-index: 10; }
+.s2-eyebrow {
+  position: absolute; top: 280px; left: 50%; transform: translateX(-50%);
+  font-size: 26px; font-weight: 700; letter-spacing: 4px;
+  color: #8B5A2B; text-transform: uppercase; opacity: 0;
+}
+.s2-root {
+  left: 540px; top: 900px;
+  width: 720px;
+  font-size: 56px; font-weight: 800;
+  padding: 56px 64px;
+  border-radius: 22px;
+}
+.s2-note {
+  position: absolute; bottom: 280px; left: 50%; transform: translateX(-50%);
+  width: 820px;
+  font-size: 30px; font-weight: 500; line-height: 1.5;
+  color: #6d6660; text-align: center; opacity: 0;
+}
+
+/* ===== S3 branches (2 choices) ===== */
+#s3 { z-index: 10; }
+.s3-heading {
+  position: absolute; top: 220px; left: 50%; transform: translateX(-50%);
+  width: 920px;
+  font-size: 64px; font-weight: 800; line-height: 1.15;
+  color: #2b2b2b; text-align: center; opacity: 0;
+}
+.s3-root-mini {
+  left: 540px; top: 530px;
+  width: 480px;
+  font-size: 32px;
+  padding: 22px 30px;
+}
+.s3-branch-left  { left: 290px; top: 1000px; width: 380px; }
+.s3-branch-right { left: 790px; top: 1000px; width: 380px; }
+.s3-label-left {
+  position: absolute; left: 415px; top: 780px;
+  font-size: 22px; font-weight: 700;
+  background: #fff; padding: 6px 14px; border-radius: 8px;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+}
+.s3-label-right {
+  position: absolute; left: 665px; top: 780px;
+  font-size: 22px; font-weight: 700;
+  background: #fff; padding: 6px 14px; border-radius: 8px;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+}
+
+/* ===== S4 quote ===== */
+#s4 { z-index: 10; }
+.s4-quote-mark {
+  position: absolute; top: 460px; left: 50%; transform: translateX(-50%);
+  font-size: 220px; line-height: 1; color: #e8d44d; opacity: 0;
+  font-family: Georgia, serif;
+}
+.s4-quote {
+  position: absolute; top: 760px; left: 50%; transform: translateX(-50%);
+  width: 860px;
+  font-size: 56px; font-weight: 600; line-height: 1.3;
+  color: #2b2b2b; text-align: center; font-style: italic;
+  opacity: 0;
+}
+.s4-quote em { color: #c8501a; font-style: italic; font-weight: 700; }
+
+/* ===== S5 leaves (3 options) ===== */
+#s5 { z-index: 10; }
+.s5-heading {
+  position: absolute; top: 220px; left: 50%; transform: translateX(-50%);
+  width: 920px;
+  font-size: 60px; font-weight: 800; line-height: 1.15;
+  color: #2b2b2b; text-align: center; opacity: 0;
+}
+.s5-leaf-1 { left: 540px; top: 660px;  width: 760px; padding: 32px 40px; font-size: 32px; }
+.s5-leaf-2 { left: 540px; top: 980px;  width: 760px; padding: 32px 40px; font-size: 32px; }
+.s5-leaf-3 { left: 540px; top: 1300px; width: 760px; padding: 32px 40px; font-size: 32px; }
+.s5-leaf-num {
+  display: inline-block;
+  background: rgba(0,0,0,0.10);
+  color: #2b2b2b;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  text-align: center; line-height: 44px;
+  font-weight: 800; font-size: 24px;
+  margin-right: 14px;
+}
+
+/* ===== S6 CTA ===== */
+#s6 { z-index: 10; }
+.s6-title {
+  position: absolute; top: 720px; left: 50%; transform: translateX(-50%);
+  width: 880px;
+  font-size: 88px; font-weight: 900; line-height: 1.1;
+  color: #2b2b2b; text-align: center; letter-spacing: -1.5px;
+  opacity: 0;
+}
+.s6-title em { color: #c8501a; font-style: normal; }
+.s6-sub {
+  position: absolute; top: 1020px; left: 50%; transform: translateX(-50%);
+  font-size: 30px; font-weight: 500; line-height: 1.5;
+  color: #6d6660; text-align: center; opacity: 0;
+}
+.s6-hashtag {
+  position: absolute; top: 1180px; left: 50%; transform: translateX(-50%);
+  font-size: 36px; font-weight: 800; letter-spacing: 1.5px;
+  color: #c8501a; opacity: 0;
+}
+/* Cursor "You" tag (P2.4 decision-tree signature) */
+.cursor-you {
+  position: absolute; right: 180px; bottom: 380px;
+  display: flex; align-items: flex-start;
+  opacity: 0; z-index: 60;
+  transform: scale(0.9);
+}
+.cursor-you svg { width: 32px; height: 32px; }
+.cursor-tag {
+  background: #9747ff; color: #fff;
+  padding: 4px 12px; border-radius: 6px;
+  font-size: 16px; font-weight: 700;
+  margin-left: 4px; margin-top: 14px;
+}
+</style>
+</head>
+<body>
+
+<div id="root" data-composition-id="root" data-duration="60" data-width="1080" data-height="1920">
+
+  <div class="brand-watermark">{{ brand_watermark }}</div>
+  <div class="tagline-footer">{{ tagline_footer }}</div>
+
+  <!-- ============ S1 HOOK ============ -->
+  <div id="s1" class="scene">
+    <div class="s1-tag" id="s1-tag">{{ s1.eyebrow }}</div>
+    <h1 class="s1-title" id="s1-title" data-wrap-words="1">{{ s1.title }}</h1>
+    <div class="s1-byline" id="s1-byline">{{ s1.byline }}</div>
+  </div>
+
+  <!-- ============ S2 ROOT QUESTION ============ -->
+  <div id="s2" class="scene">
+    <div class="s2-eyebrow" id="s2-eyebrow">{{ s2.eyebrow }}</div>
+    <div class="sticky yellow s2-root" id="s2-root">{{ s2.root_question }}</div>
+    <div class="s2-note" id="s2-note">{{ s2.note }}</div>
+  </div>
+
+  <!-- ============ S3 BRANCHES ============ -->
+  <div id="s3" class="scene">
+    <h2 class="s3-heading" id="s3-heading">{{ s3.heading }}</h2>
+    <div class="sticky yellow s3-root-mini" id="s3-root-mini">{{ s3.root_label }}</div>
+    <svg class="connectors-svg" id="s3-svg" viewBox="0 0 1080 1920">
+      <path d="M 540 580 L 540 700 L 290 700 L 290 880" fill="none" stroke="#8B5A2B" stroke-width="4"/>
+      <path d="M 540 580 L 540 700 L 790 700 L 790 880" fill="none" stroke="#8B5A2B" stroke-width="4"/>
+    </svg>
+    <div class="s3-label-left"  id="s3-label-left">{{ s3.label_left }}</div>
+    <div class="s3-label-right" id="s3-label-right">{{ s3.label_right }}</div>
+    <div class="sticky green s3-branch-left"  id="s3-branch-left">{{ s3.branch_left }}</div>
+    <div class="sticky peach s3-branch-right" id="s3-branch-right">{{ s3.branch_right }}</div>
+  </div>
+
+  <!-- ============ S4 QUOTE ============ -->
+  <div id="s4" class="scene">
+    <div class="s4-quote-mark" id="s4-mark">"</div>
+    <div class="s4-quote" id="s4-quote">{{ s4.quote_html }}</div>
+  </div>
+
+  <!-- ============ S5 LEAVES (3 OPTIONS) ============ -->
+  <div id="s5" class="scene">
+    <h2 class="s5-heading" id="s5-heading">{{ s5.heading }}</h2>
+    <div class="sticky lavender s5-leaf-1 s5-i1" id="s5-leaf-1"><span class="s5-leaf-num">1</span>{{ s5.items.0.text }}</div>
+    <div class="sticky blue s5-leaf-2 s5-i2" id="s5-leaf-2"><span class="s5-leaf-num">2</span>{{ s5.items.1.text }}</div>
+    <div class="sticky pink s5-leaf-3 s5-i3" id="s5-leaf-3"><span class="s5-leaf-num">3</span>{{ s5.items.2.text }}</div>
+  </div>
+
+  <!-- ============ S6 CTA ============ -->
+  <div id="s6" class="scene">
+    <h2 class="s6-title" id="s6-title">{{ s6.title_html }}</h2>
+    <div class="s6-sub" id="s6-sub">{{ s6.sub }}</div>
+    <div class="s6-hashtag" id="s6-hashtag">{{ s6.hashtag }}</div>
+    <div class="cursor-you" id="s6-cursor">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M5.65 12.37H5.46L5.32 12.50L0.5 16.88L0.5 1.20L11.78 12.37H5.65Z" fill="#fff" stroke="#000" stroke-width="1.5"/>
+      </svg>
+      <div class="cursor-tag">Bạn</div>
+    </div>
+  </div>
+
+  <audio id="narration" data-duration="60" preload="auto">
+    <source src="{{ voice.file }}" type="audio/wav">
+  </audio>
+
+  <!-- P2.5 Curtain wipe layer -->
+  <div class="curtain-wipe" id="curtain-wipe"></div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script>
+window.__timelines = window.__timelines || {};
+const tl = gsap.timeline({ paused: true });
+const __TL = {{ timeline_json }};
+const __DUR = {{ voice_duration }};
+
+/* Show only the active scene at any time */
+function showScene(sid) {
+  ["s1","s2","s3","s4","s5","s6"].forEach((k) => {
+    const el = document.getElementById(k);
+    if (!el) return;
+    el.style.opacity = (k === sid) ? "1" : "0";
+  });
+}
+
+/* Drive scene visibility through __TL[sid].in/out */
+Object.entries(__TL).forEach(([sid, t]) => {
+  if (!t || typeof t.in !== "number") return;
+  tl.call(() => showScene(sid), null, t.in);
+});
+
+/* ===== S1 hook ===== */
+const s1 = __TL.s1;
+if (s1) {
+  tl.from("#s1-tag", { y: -28, opacity: 0, duration: 0.6, ease: "power3.out" }, s1.in + 0.1);
+  if (document.querySelectorAll("#s1-title .word").length > 0) {
+    tl.from("#s1-title .word", { y: 28, opacity: 0, duration: 0.45, ease: "power2.out", stagger: 0.08 }, s1.in + 0.4);
+  } else {
+    tl.from("#s1-title", { y: 60, opacity: 0, duration: 1.0, ease: "power3.out" }, s1.in + 0.4);
+  }
+  tl.from("#s1-byline", { y: 20, opacity: 0, duration: 0.7 }, s1.in + 1.6);
+}
+
+/* ===== S2 root question ===== */
+const s2 = __TL.s2;
+if (s2) {
+  tl.from("#s2-eyebrow", { y: -20, opacity: 0, duration: 0.5 }, s2.in + 0.1);
+  tl.to("#s2-root", { scale: 1, duration: 0.55, ease: "back.out(1.7)" }, s2.in + 0.5);
+  tl.from("#s2-note", { y: 20, opacity: 0, duration: 0.7 }, s2.in + 1.4);
+}
+
+/* ===== S3 branches ===== */
+const s3 = __TL.s3;
+if (s3) {
+  const s3dur = s3.out - s3.in;
+  const et3 = s3.element_times || {};
+  const c1t = et3.c1 != null ? et3.c1 : s3.in + s3dur * 0.30;
+  const c2t = et3.c2 != null ? et3.c2 : s3.in + s3dur * 0.55;
+  tl.from("#s3-heading", { y: 40, opacity: 0, duration: 0.8, ease: "power3.out" }, s3.in + 0.2);
+  tl.to("#s3-root-mini", { scale: 1, duration: 0.45, ease: "back.out(1.6)" }, s3.in + 1.0);
+  // Connector lines draw from root to branches
+  tl.to("#s3-svg path", { strokeDashoffset: 0, duration: 0.55, ease: "none" }, s3.in + 1.4);
+  tl.to(["#s3-label-left", "#s3-label-right"], { opacity: 1, duration: 0.25 }, s3.in + 1.75);
+  // Branches scale in
+  tl.to("#s3-branch-left",  { scale: 1, duration: 0.5, ease: "back.out(1.7)" }, c1t);
+  tl.to("#s3-branch-right", { scale: 1, duration: 0.5, ease: "back.out(1.7)" }, c2t);
+}
+
+/* ===== S4 quote ===== */
+const s4 = __TL.s4;
+if (s4) {
+  tl.from("#s4-mark", { scale: 0.4, opacity: 0, duration: 0.9, ease: "back.out(1.6)" }, s4.in + 0.3);
+  tl.from("#s4-quote", { y: 50, opacity: 0, duration: 1.0, ease: "power3.out" }, s4.in + 0.5);
+}
+
+/* ===== S5 leaves ===== */
+const s5 = __TL.s5;
+if (s5) {
+  const s5dur = s5.out - s5.in;
+  const et5 = s5.element_times || {};
+  const i1t = et5.i1 != null ? et5.i1 : s5.in + s5dur * 0.22;
+  const i2t = et5.i2 != null ? et5.i2 : s5.in + s5dur * 0.45;
+  const i3t = et5.i3 != null ? et5.i3 : s5.in + s5dur * 0.68;
+  tl.from("#s5-heading", { y: 40, opacity: 0, duration: 0.8, ease: "power3.out" }, s5.in + 0.2);
+  tl.to("#s5-leaf-1", { scale: 1, duration: 0.5, ease: "back.out(1.6)" }, i1t);
+  tl.to("#s5-leaf-2", { scale: 1, duration: 0.5, ease: "back.out(1.6)" }, i2t);
+  tl.to("#s5-leaf-3", { scale: 1, duration: 0.5, ease: "back.out(1.6)" }, i3t);
+}
+
+/* ===== S6 CTA + cursor "Bạn" ===== */
+const s6 = __TL.s6;
+if (s6) {
+  tl.from("#s6-title", { y: 50, opacity: 0, duration: 1.0, ease: "power3.out" }, s6.in + 0.4);
+  tl.from("#s6-sub", { y: 30, opacity: 0, duration: 0.7 }, s6.in + 1.6);
+  tl.from("#s6-hashtag", { y: 20, opacity: 0, duration: 0.6 }, s6.in + 2.2);
+  tl.to("#s6-cursor", { opacity: 1, scale: 1, duration: 0.6, ease: "power2.out" }, s6.in + 2.6);
+}
+
+/* P2.5 Curtain wipe at scene boundaries (s2→s6) */
+["s2","s3","s4","s5","s6"].forEach((sid) => {
+  const t = __TL[sid];
+  if (!t || typeof t.in !== "number") return;
+  const startAt = Math.max(0, t.in - 0.25);
+  tl.set("#curtain-wipe", { xPercent: -100, x: 0 }, startAt);
+  tl.to("#curtain-wipe",  { xPercent: 100, duration: 0.5, ease: "power2.inOut" }, startAt);
+});
+
+window.__timelines["root"] = tl;
+</script>
+
+</body>
+</html>

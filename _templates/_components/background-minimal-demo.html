@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>BG minimal</title>
+<style>
+body { margin: 0; background: #000; }
+#root { position: relative; width: 1080px; height: 1920px; transform-origin: top left; }
+@media (max-width: 1080px) { #root { transform: scale(0.4); width: 100vw; height: auto; aspect-ratio: 9/16; } }
+</style></head><body>
+<div id="root">
+<!--
+COMPONENT: background-minimal
+PURPOSE: Background đơn giản — chỉ 1 gradient flat + 1 spotlight glow, không blobs không particles
+USAGE: Đặt đầu body, z-index 0
+PALETTE: minimal-dark
+-->
+<style>
+#bg-minimal-root {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: linear-gradient(180deg, #1a1a24 0%, #0a0a12 100%);
+}
+#bg-minimal-root::after {
+  content: ""; position: absolute;
+  top: -200px; left: 50%; transform: translateX(-50%);
+  width: 1000px; height: 1000px;
+  background: radial-gradient(circle, rgba(255, 122, 42, 0.12) 0%, transparent 60%);
+  filter: blur(40px);
+}
+</style>
+
+<div id="bg-minimal-root"></div>
+
+<div style="position:absolute;bottom:80px;left:50%;transform:translateX(-50%);z-index:50;color:#fff;font-family:Inter,sans-serif;font-size:42px;font-weight:700;text-shadow:0 0 20px rgba(0,0,0,0.8)">
+Sample text on background
+</div>
+</div></body></html>
