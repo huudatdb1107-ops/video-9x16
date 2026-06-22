@@ -2418,10 +2418,21 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = urllib.parse.urlparse(self.path).path
         if path == "/":
-            if IS_SINGLE_MODE and EDITOR_SINGLE_HTML:
-                self._send(200, "text/html; charset=utf-8", EDITOR_SINGLE_HTML)
-            else:
-                self._send(200, "text/html; charset=utf-8", EDITOR_HTML)
+            if IS_SINGLE_MODE:
+                # Đọc động từ đĩa mỗi request — Sếp chỉ cần F5 là thấy thay đổi ngay
+                _spath = Path(__file__).parent / "single_editor.html"
+                if _spath.exists():
+                    try:
+                        _html = _spath.read_text(encoding="utf-8")
+                        self._send(200, "text/html; charset=utf-8", _html)
+                        return
+                    except Exception:
+                        pass
+                # fallback sang cache nếu đọc đĩa lỗi
+                if EDITOR_SINGLE_HTML:
+                    self._send(200, "text/html; charset=utf-8", EDITOR_SINGLE_HTML)
+                    return
+            self._send(200, "text/html; charset=utf-8", EDITOR_HTML)
         elif path == "/api/projects":
             try:
                 projects = list_projects()
