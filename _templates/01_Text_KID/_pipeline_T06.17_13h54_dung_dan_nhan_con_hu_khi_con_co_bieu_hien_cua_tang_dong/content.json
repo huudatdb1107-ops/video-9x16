@@ -1,0 +1,216 @@
+{
+  "scenes": {
+    "s1": {
+      "eyebrow": "PHỤ HUYNH CẦN BIẾT",
+      "title": "CON <br>KHÓ BẢO,<br><em style=\"color: rgb(255, 122, 42);\">HAY TĂNG ĐỘNG</em>?",
+      "byline": ""
+    },
+    "s2": {
+      "big_text": "ADHD",
+      "label": "Não bộ khác biệt, <br>cần thấu hiểu",
+      "note": "Hành vi KHÔNG phải cố ý chống đối."
+    },
+    "s3": {
+      "heading": "Ba điều cần<br><em>thấu hiểu</em> con",
+      "cards": [
+        {
+          "num": "MỘT",
+          "text": "Con chạy nhảy vì hệ <em class=\"hl-teal\">thần kinh</em> cần <em class=\"hl-orange\">kích thích vận động</em> để tự điều hòa."
+        },
+        {
+          "num": "HAI",
+          "text": "Con dễ phân tâm <em class=\"hl-teal\">do não</em> ADHD <em class=\"hl-orange\">liên tục quét môi trường</em> xung quanh."
+        },
+        {
+          "num": "BA",
+          "text": "Con nổi cáu bộc phát vì vùng <em class=\"hl-teal\">điều tiết cảm xúc</em> chưa <em class=\"hl-orange\">phát triển</em> đủ."
+        }
+      ],
+      "element_times": {
+        "c1": 32.5,
+        "c2": 40.5,
+        "c3": 47.5
+      }
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Đứa trẻ nào cũng<br>muốn làm đúng —<br>nếu <em class=\"hl-teal\">con biết</em> cách.<br><em class=\"hl-orange\">Cha mẹ là chìa khóa</em>."
+    },
+    "s5": {
+      "heading": "Thay đổi cách<br><em>tiếp cận</em> con",
+      "items": [
+        {
+          "text": "Thay câu 'con hư' <em class=\"hl-teal\">bằng 'con</em> đang <em class=\"hl-orange\">cần giúp đỡ</em>'."
+        },
+        {
+          "text": "Dán nhãn tích <em class=\"hl-teal\">cực, xây</em> dựng <em class=\"hl-orange\">sự tự tin</em> cho con."
+        },
+        {
+          "text": "<em class=\"hl-teal\">Kiên nhẫn</em> đồng hành, <em class=\"hl-orange\">kết nối</em> với con mỗi ngày."
+        }
+      ],
+      "element_times": {
+        "i1": 69.28,
+        "i2": 70.59,
+        "i3": 71.89
+      }
+    },
+    "s6": {
+      "title": "ĐỒNG HÀNH CÙNG CON,<br><em style=\"color: rgb(255, 122, 42);\">YÊU THƯƠNG</em> VÀ <em class=\"hl-custom temp-focus-target\">KIÊN NHẪN</em>",
+      "sub": "Theo dõi kênh để không đi một mình — hàng ngàn cha mẹ đang đồng hành cùng con trên hành trình này.",
+      "hashtag": "#mevabe"
+    }
+  },
+  "voice": {
+    "file": "TT_T06.22_06h48.wav",
+    "duration": 72.88
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 22.53
+    },
+    "s2": {
+      "in": 22.53,
+      "out": 25.37
+    },
+    "s3": {
+      "in": 25.37,
+      "out": 49.1
+    },
+    "s4": {
+      "in": 49.1,
+      "out": 67.97
+    },
+    "s5": {
+      "in": 67.97,
+      "out": 73.2
+    },
+    "s6": {
+      "in": 72.88,
+      "out": 72.88
+    }
+  },
+  "styles": {
+    ".s1-tag": {
+      "font-size": "24px",
+      "line-height": "",
+      "letter-spacing": "3px",
+      "color": "#ff7a2a"
+    },
+    ".s1-title": {
+      "font-size": "130px",
+      "line-height": "1.50",
+      "letter-spacing": "-1px",
+      "color": "#ffffff"
+    },
+    ".s1-title em": {
+      "font-size": "",
+      "line-height": "",
+      "letter-spacing": "",
+      "color": "#ff7a2a"
+    },
+    ".s1-byline": {
+      "font-size": "22px",
+      "line-height": "",
+      "letter-spacing": "2px",
+      "color": "#6db8b8"
+    },
+    ".s2-big": {
+      "font-size": "200px",
+      "line-height": "1.2",
+      "letter-spacing": "-8px",
+      "color": "#ff7a2a"
+    },
+    ".s2-label": {
+      "font-size": "58px",
+      "line-height": "1.50",
+      "letter-spacing": "",
+      "color": "#ffffff"
+    },
+    ".s2-note": {
+      "font-size": "30px",
+      "line-height": "1.5",
+      "letter-spacing": "",
+      "color": "#a0c4c4"
+    },
+    ".s3-heading": {
+      "font-size": "80px",
+      "line-height": "1.50",
+      "letter-spacing": "-1px",
+      "color": "#ff7a2a"
+    },
+    ".s3-card-text": {
+      "font-size": "38px",
+      "line-height": "1.6",
+      "letter-spacing": "",
+      "color": "#ffffff"
+    },
+    "em.hl-teal": {
+      "font-size": "",
+      "line-height": "",
+      "letter-spacing": "",
+      "color": "#4dcccc"
+    },
+    "em.hl-orange": {
+      "font-size": "",
+      "line-height": "",
+      "letter-spacing": "",
+      "color": "#ffffff"
+    },
+    ".s3-card-num": {
+      "font-size": "80px",
+      "line-height": "1.2",
+      "letter-spacing": "",
+      "color": "#ff7a2a"
+    },
+    ".s4-quote": {
+      "font-size": "",
+      "line-height": "",
+      "letter-spacing": "",
+      "color": ""
+    },
+    ".s4-quote em": {
+      "font-size": "",
+      "line-height": "",
+      "letter-spacing": "",
+      "color": "#4dcccc"
+    },
+    ".s5-heading": {
+      "font-size": "80px",
+      "line-height": "1.50",
+      "letter-spacing": "-1px",
+      "color": "#ffa726"
+    },
+    ".s5-text": {
+      "font-size": "38px",
+      "line-height": "1.6",
+      "letter-spacing": "",
+      "color": "#ffffff"
+    },
+    ".s6-title": {
+      "font-size": "130px",
+      "line-height": "1.25",
+      "letter-spacing": "-1px",
+      "color": "#ffffff"
+    },
+    ".s6-title em": {
+      "font-size": "",
+      "line-height": "",
+      "letter-spacing": "",
+      "color": "#ff7a2a"
+    },
+    ".s6-sub": {
+      "font-size": "36px",
+      "line-height": "1.5",
+      "letter-spacing": "",
+      "color": "#a0c4c4"
+    },
+    ".s6-hashtag": {
+      "font-size": "34px",
+      "line-height": "",
+      "letter-spacing": "3px",
+      "color": "#4dcccc"
+    }
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "_comment": "Content example mô phỏng video Ente Privacy Review. Voice + assets PNG cần Boss đưa vào sau.",
+  "topic": "Ente Photos — Privacy First",
+  "footer_brand": "ENTE / PRIVACY FIRST PHOTOS",
+  "scenes": {
+    "s1": {
+      "eyebrow":      "Private Google Photos?",
+      "title":        "Muốn kiểu <em class=\"hl-cyan\">Google Photos</em> nhưng ảnh của bạn vẫn <em class=\"hl-teal\">mã hóa đầu cuối</em>?",
+      "device_image": "devices-ente.png",
+      "device_alt":   "Ente Photos trên phone + laptop + tablet"
+    },
+    "s2": {
+      "eyebrow": "The Big Difference",
+      "title":   "Ente bán một lời hứa khá rõ: dữ liệu của bạn vẫn lên cloud, nhưng <em class=\"hl-cyan\">provider không xem được ảnh</em>",
+      "cards": [
+        { "heading": "End-to-end encrypted", "body": "ảnh và video được mã hóa đầu cuối thay vì chỉ mã hóa khi lưu trên server." },
+        { "heading": "Trust model khác hẳn",  "body": "bạn không phải mặc định tin rằng nhà cung cấp sẽ luôn xử lý dữ liệu đúng cách." }
+      ]
+    },
+    "s3": {
+      "eyebrow": "Not Just Private",
+      "title":   "Nó vẫn cố giữ những thứ người dùng thật sự muốn ở một app ảnh hiện đại",
+      "cards": [
+        { "heading": "Face",   "subtitle": "Detection",   "body": "README nêu rõ face detection ngay trong Ente Photos." },
+        { "heading": "Search", "subtitle": "Semantic",    "body": "tìm kiếm thông minh thay vì chỉ lướt album thủ công." },
+        { "heading": "Share",  "subtitle": "Private",     "body": "private sharing và collaborative albums cho gia đình hoặc nhóm nhỏ." },
+        { "heading": "Upload", "subtitle": "Background",  "body": "ảnh vẫn được backup tự động như người dùng cloud app mong đợi." }
+      ]
+    },
+    "s4": {
+      "eyebrow":       "Full Platform",
+      "title":         "Điểm mạnh tiếp theo là đây không phải app đơn lẻ. Nó là cả một <em class=\"hl-orange\">monorepo đa nền tảng</em>",
+      "left_image":    "devices-trio.png",
+      "left_alt":      "phone + laptop + tablet với Ente UI",
+      "left_caption":  "Web + Mobile + Desktop",
+      "left_sublabel": "iOS, Android, Web",
+      "right_image":   "mascot-rocket.png",
+      "right_alt":     "Ente mascot ducks với rocket launch",
+      "right_caption": "Clients + Server",
+      "right_sublabel":"Linux, macOS, Windows"
+    },
+    "s5": {
+      "eyebrow":  "Self Host Option",
+      "title":    "Theo README, bạn cũng có thể <em class=\"hl-cyan\">clone repo và self-host</em> nếu muốn tự kiểm soát hạ tầng",
+      "bullets": [
+        "Dùng service sẵn của Ente nếu muốn nhanh",
+        "Tự triển khai nếu muốn kiểm soát nhiều hơn",
+        "Phù hợp cho cả cá nhân lẫn người dùng nâng cao",
+        "Không bị buộc vào một mô hình cloud duy nhất"
+      ],
+      "stat": {
+        "number": "10GB",
+        "label":  "FREE STORAGE",
+        "body":   "README nêu Ente Photos là dịch vụ trả phí, nhưng có mười GB lưu trữ miễn phí để bắt đầu."
+      }
+    },
+    "s6": {
+      "eyebrow": "Why People Care",
+      "title":   "Đây là kiểu sản phẩm cố giữ được <em class=\"hl-gradient\">tiện dụng kiểu Google Photos</em> nhưng đi theo triết lý privacy first",
+      "cards": [
+        { "heading": "Cho người dùng cá nhân",       "body": "đây là một trong những lựa chọn mạnh nhất nếu bạn muốn ảnh đồng bộ đẹp nhưng không đánh đổi riêng tư quá nhiều." },
+        { "heading": "Cho doanh nghiệp hoặc power user", "body": "self-host và code mở khiến nó đáng cân nhắc hơn các dịch vụ ảnh đóng." }
+      ]
+    }
+  },
+  "voice": {
+    "file": "narration.wav",
+    "duration": 86
+  },
+  "timeline": {
+    "s1": { "in": 0,    "out": 14 },
+    "s2": { "in": 14,   "out": 28 },
+    "s3": { "in": 28,   "out": 44 },
+    "s4": { "in": 44,   "out": 58 },
+    "s5": { "in": 58,   "out": 76 },
+    "s6": { "in": 76,   "out": 86 }
+  }
+}

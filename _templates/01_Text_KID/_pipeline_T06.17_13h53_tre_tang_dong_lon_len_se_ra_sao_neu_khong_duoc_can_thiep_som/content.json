@@ -1,0 +1,88 @@
+{
+  "scenes": {
+    "s1": {
+      "eyebrow": "THẬN TRỌNG",
+      "title": "Con chỉ<br><em>hiếu động</em> hay <em>tăng động</em>?",
+      "byline": "Hành trình thấu hiểu con"
+    },
+    "s2": {
+      "big_text": "SÁU MƯƠI",
+      "label": "Phần trăm trẻ ADHD<br>mang triệu chứng đến tuổi trưởng thành.",
+      "note": "Nếu không được hỗ trợ đúng cách, triệu chứng sẽ thay đổi hình dạng."
+    },
+    "s3": {
+      "heading": "Ba nguy cơ<br>nếu ADHD không được can thiệp",
+      "cards": [
+        {
+          "num": "Một",
+          "text": "<em class=\"hl-teal\">Học tập và công việc</em>:<br>Khó hoàn thành nhiệm vụ, dễ bỏ cuộc, ảnh hưởng <em class=\"hl-orange\">công việc/học</em> tập."
+        },
+        {
+          "num": "Hai",
+          "text": "<em class=\"hl-teal\">Cảm xúc và quan hệ</em>:<br>Xung đột, cô đơn, không được <em class=\"hl-orange\">thấu hiểu</em>."
+        },
+        {
+          "num": "Ba",
+          "text": "<em class=\"hl-teal\">Sức khỏe tâm thần</em>:<br>Trầm cảm, lo âu do nhiều năm <em class=\"hl-orange\">bị hiểu</em> lầm."
+        }
+      ],
+      "element_times": {
+        "c1": 26.1,
+        "c2": 37.6
+      }
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Can thiệp sớm không thay đổi não bộ<br>mà <em class=\"hl-teal\">trang bị công cụ</em><br>để con <em class=\"hl-orange\">sống tốt</em><br>với chính mình."
+    },
+    "s5": {
+      "heading": "Cùng con<br>trên hành trình này",
+      "items": [
+        {
+          "text": "<em class=\"hl-teal\">Thấu hiểu</em> những khó khăn <em class=\"hl-orange\">con gặp</em> phải."
+        },
+        {
+          "text": "<em class=\"hl-teal\">Kiên nhẫn</em> và <em class=\"hl-orange\">đồng hành</em><br>cùng con từng bước."
+        },
+        {
+          "text": "<em class=\"hl-teal\">Kết nối</em> và xây dựng mối quan <em class=\"hl-orange\">hệ tích</em> cực."
+        }
+      ]
+    },
+    "s6": {
+      "title": "Đồng hành cùng con,<br><em>yêu thương</em> và <em>thấu hiểu</em>",
+      "sub": "Bạn không đi một mình. Hàng ngàn cha mẹ đang cùng bạn trên hành trình này.",
+      "hashtag": "#ADHD #PhátTriểnCon"
+    }
+  },
+  "voice": {
+    "file": "TT_T06.22_06h47.wav",
+    "duration": 73.35
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 2.27
+    },
+    "s2": {
+      "in": 2.27,
+      "out": 19.63
+    },
+    "s3": {
+      "in": 19.63,
+      "out": 38.43
+    },
+    "s4": {
+      "in": 38.43,
+      "out": 65.83
+    },
+    "s5": {
+      "in": 65.83,
+      "out": 73.6
+    },
+    "s6": {
+      "in": 73.6,
+      "out": 73.35
+    }
+  }
+}

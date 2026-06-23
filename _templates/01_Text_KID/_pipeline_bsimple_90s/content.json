@@ -1,0 +1,86 @@
+{
+  "topic": "B.SIMPLE — Vạn sự Auto cho người sáng tạo Việt",
+  "language": "vi",
+  "scenes": {
+    "s1": {
+      "eyebrow": "Vạn sự Auto",
+      "title": "Cho người <em class=\"hl-orange\">sáng tạo</em> Việt",
+      "byline": "Auto phần nặng — Giữ tay sáng tạo"
+    },
+    "s2": {
+      "big_text": "B.SIMPLE",
+      "label": "Hệ sinh thái sáu công cụ phối hợp cho video",
+      "note": "Không phải nút bấm tự động — bạn vẫn duyệt giữa các bước."
+    },
+    "s3": {
+      "heading": "Ba điều giải quyết",
+      "cards": [
+        {
+          "num": "01",
+          "text": "Máy lo phần <em class=\"hl-orange\">lặp lại</em> — bạn lo phần <em class=\"hl-teal\">ý tưởng</em>"
+        },
+        {
+          "num": "02",
+          "text": "<em class=\"hl-orange\">Chất lượng</em> đồng đều — không phụ thuộc <em class=\"hl-teal\">cảm hứng</em>"
+        },
+        {
+          "num": "03",
+          "text": "<em class=\"hl-orange\">Mở rộng</em> nhiều kênh — không <em class=\"hl-teal\">kiệt sức</em>"
+        }
+      ]
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Auto phần <em>nặng</em>.<br>Giữ tay người <em>sáng tạo</em>."
+    },
+    "s5": {
+      "heading": "Quy trình sáu bước",
+      "items": [
+        {
+          "text": "Nhân bản <em class=\"hl-teal\">DNA kênh</em> — sinh <em class=\"hl-orange\">kịch bản</em> theo DNA"
+        },
+        {
+          "text": "Cắt cảnh — dựng <em class=\"hl-orange\">prompt video</em>"
+        },
+        {
+          "text": "Lồng <em class=\"hl-teal\">giọng đọc</em> Việt — ghép <em class=\"hl-orange\">phụ đề</em> khớp giây"
+        }
+      ]
+    },
+    "s6": {
+      "title": "Vạn sự — <em>Auto</em>.",
+      "sub": "Cộng đồng người sáng tạo Việt — chọn cách làm nhanh mà giữ tay nghề.",
+      "hashtag": "#VanSuAuto"
+    }
+  },
+  "voice": {
+    "file": "narration.wav",
+    "duration": 95.8
+  },
+  "timeline": {
+    "s1": {
+      "in": 0,
+      "out": 16
+    },
+    "s2": {
+      "in": 16,
+      "out": 28
+    },
+    "s3": {
+      "in": 28,
+      "out": 54
+    },
+    "s4": {
+      "in": 54,
+      "out": 68
+    },
+    "s5": {
+      "in": 68,
+      "out": 88
+    },
+    "s6": {
+      "in": 88,
+      "out": 95.8
+    }
+  }
+}

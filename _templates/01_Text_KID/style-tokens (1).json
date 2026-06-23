@@ -1,0 +1,55 @@
+{
+  "_comment": "Design tokens for template 01_Text. Sửa file này → tất cả video gen từ template sẽ apply giá trị mới. Boss edit qua editor → server ghi vào đây (sau khi P1 refactor).",
+  "tokens": {
+    "color": {
+      "bg_deep_top":     "#0a1a26",
+      "bg_deep_mid":     "#0a1820",
+      "bg_deep_bottom":  "#061018",
+      "glow_teal":       "rgba(58, 188, 188, 0.45)",
+      "glow_teal_soft":  "rgba(58, 188, 188, 0.28)",
+      "glow_orange":     "rgba(255, 138, 58, 0.22)",
+      "accent_orange":   "#ff7a2a",
+      "accent_orange_2": "#ff9a4a",
+      "accent_teal":     "#4dcccc",
+      "accent_teal_2":   "#7adcdc",
+      "text_white":      "#ffffff",
+      "text_muted":      "#a0c4c4",
+      "text_muted_2":    "#cfd9d9",
+      "text_byline":     "#6db8b8",
+      "border_card":     "rgba(58, 188, 188, 0.35)",
+      "card_bg":         "rgba(10, 24, 32, 0.55)"
+    },
+    "font": {
+      "family":        "Inter, sans-serif",
+      "weight_900":    900,
+      "weight_800":    800,
+      "weight_700":    700,
+      "weight_600":    600,
+      "weight_500":    500
+    },
+    "rules": {
+      ".s1-tag":         { "font-size": "24px",  "letter-spacing": "3px" },
+      ".s1-title":       { "font-size": "130px", "line-height": "1.7",  "letter-spacing": "-1px", "color": "#ffffff", "text-transform": "uppercase" },
+      ".s1-title em":    { "color": "#ff7a2a" },
+      ".s1-byline":      { "font-size": "22px",  "letter-spacing": "2px", "color": "#6db8b8" },
+      ".s2-big":         { "font-size": "360px", "line-height": "0.9",  "letter-spacing": "-8px", "color": "#ff7a2a" },
+      ".s2-label":       { "font-size": "58px",  "line-height": "1.5",  "color": "#ffffff" },
+      ".s2-note":        { "font-size": "30px",  "line-height": "1.5",  "color": "#a0c4c4" },
+      ".s3-heading":     { "font-size": "72px",  "line-height": "1.1",  "letter-spacing": "-1px", "color": "#ff7a2a" },
+      ".s3-card":        { "padding": "36px 44px", "border-radius": "20px" },
+      ".s3-card-num":    { "font-size": "80px",  "color": "#ff7a2a" },
+      ".s3-card-text":   { "font-size": "40px",  "line-height": "1.25", "color": "#ffffff" },
+      ".s4-quote-mark":  { "font-size": "180px", "color": "#ff7a2a" },
+      ".s4-quote":       { "font-size": "64px",  "line-height": "1.55", "color": "#ffffff" },
+      ".s4-quote em":    { "color": "#4dcccc" },
+      ".s5-heading":     { "font-size": "68px",  "line-height": "1.1",  "color": "#ff7a2a" },
+      ".s5-item":        { "padding": "32px 40px", "border-radius": "16px" },
+      ".s5-dot":         { "background": "#4dcccc" },
+      ".s5-text":        { "font-size": "40px",  "line-height": "1.25", "color": "#ffffff" },
+      ".s6-title":       { "font-size": "130px", "line-height": "1.65", "letter-spacing": "-1px", "color": "#ffffff", "text-transform": "uppercase" },
+      ".s6-title em":    { "color": "#ff7a2a" },
+      ".s6-sub":         { "font-size": "38px",  "line-height": "1.4",  "color": "#cfd9d9" },
+      ".s6-hashtag":     { "font-size": "30px",  "letter-spacing": "2px", "color": "#ff7a2a" }
+    }
+  }
+}

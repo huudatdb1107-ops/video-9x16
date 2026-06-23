@@ -1,0 +1,93 @@
+{
+  "scenes": {
+    "s1": {
+      "eyebrow": "BÍ QUYẾT NUÔI DẠY CON",
+      "title": "Trẻ <em class=\"hl-orange\">tăng động</em> khi lớn học thế nào?",
+      "byline": "Hành trình kiên trì cùng con vượt khó"
+    },
+    "s2": {
+      "big_text": "KHÁC BIỆT",
+      "label": "Trẻ tăng động có một siêu năng lực",
+      "note": "Chúng có khả năng siêu tập trung vào những chủ đề mình thực sự đam mê."
+    },
+    "s3": {
+      "heading": "3 ĐẶC ĐIỂM HỌC TẬP",
+      "cards": [
+        {
+          "num": "Một",
+          "text": "<em class=\"hl-teal\">Tư duy hình ảnh</em> cực kỳ nhanh nhạy."
+        },
+        {
+          "num": "Hai",
+          "text": "<em class=\"hl-orange\">Học qua vận động</em> thay vì ngồi yên một chỗ."
+        },
+        {
+          "num": "Ba",
+          "text": "Nhạy cảm cao với <em class=\"hl-teal\">áp lực từ môi trường</em> học."
+        }
+      ],
+      "element_times": {
+        "c2": 27.92,
+        "c3": 32.54
+      }
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Đừng ép một <em class=\"hl-orange\">con cá phải leo cây</em>.<br>Trẻ tăng động cần một <em class=\"hl-teal\">phương pháp học động</em>, không phải sự gò bó."
+    },
+    "s5": {
+      "heading": "3 GIẢI PHÁP CHO CHA MẸ",
+      "items": [
+        {
+          "text": "Chia nhỏ bài học thành <em class=\"hl-teal\">nhiều phần ngắn</em>."
+        },
+        {
+          "text": "Khuyến khích con <em class=\"hl-orange\">vận động nhẹ</em> giữa giờ học."
+        },
+        {
+          "text": "Tạo góc học tập <em class=\"hl-teal\">tối giản</em>, không gây xao nhãng."
+        }
+      ],
+      "element_times": {
+        "i1": 52.1,
+        "i2": 57.1,
+        "i3": 60.34
+      }
+    },
+    "s6": {
+      "title": "Đồng hành cùng <em class=\"hl-orange\">con bứt phá</em>",
+      "sub": "Hãy kiên nhẫn thấu hiểu và tin tưởng con đường đi riêng của con.",
+      "hashtag": "#NuoiDayCon"
+    }
+  },
+  "voice": {
+    "file": "TT_20260616_162519.wav",
+    "duration": 74.82
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 12.27
+    },
+    "s2": {
+      "in": 12.27,
+      "out": 24.53
+    },
+    "s3": {
+      "in": 24.53,
+      "out": 36.8
+    },
+    "s4": {
+      "in": 36.8,
+      "out": 50.93
+    },
+    "s5": {
+      "in": 50.93,
+      "out": 65.06
+    },
+    "s6": {
+      "in": 65.06,
+      "out": 74.82
+    }
+  }
+}

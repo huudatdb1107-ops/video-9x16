@@ -1,9 +1,9 @@
-"""auto_batch_render.py — Tự động quét và render hàng loạt video cho các dự án.
+﻿"""auto_batch_render.py — Tự động quét và render hàng loạt video cho các dự án.
 Hỗ trợ cả dự án mới tinh chưa có video và dự án đã sửa đổi nhưng chưa render lại.
 
 Usage:
   python auto_batch_render.py --page vicon
-  python auto_batch_render.py --dir E:/HuuDat/VIDEO/FACEBOOK/01__Vi_Con
+  python auto_batch_render.py --dir E:/HuuDat/VIDEO/03_KID
   python auto_batch_render.py --page vicon --dry-run (chỉ quét xem danh sách, không render thật)
 """
 import sys, argparse, pathlib, json, time, subprocess, re
@@ -16,17 +16,17 @@ TEMPLATES  = ROOT / ".agent" / "skills" / "video-9x16" / "_templates"
 PY = r"C:\Users\Admin\AppData\Local\Programs\Python\Python311\python.exe"
 
 PAGE_PROFILES = {
-    "vicon": {
+    "kid": {
         "name": "👶 Vì Con không thể đợi",
-        "output_dir": r"E:\HuuDat\VIDEO\FACEBOOK\01__Vi_Con",
+        "output_dir": r"E:\HuuDat\VIDEO\03_KID",
     },
-    "gocnho": {
+    "book": {
         "name": "📚 Góc nhỏ - Sách & Đời",
-        "output_dir": r"E:\HuuDat\VIDEO\FACEBOOK\02_Goc_Nho",
+        "output_dir": r"E:\HuuDat\VIDEO\02_BOOK",
     },
     "bsimple": {
         "name": "🚀 B.Simple",
-        "output_dir": r"E:\HuuDat\VIDEO\FACEBOOK\03_B_Simple",
+        "output_dir": r"E:\HuuDat\VIDEO\01_B.Simple",
     }
 }
 
@@ -102,10 +102,10 @@ def render_project(project_dir: pathlib.Path):
     # 1. Đọc tên template và thông tin topic từ content.json
     try:
         co_data = json.loads(content_file.read_text(encoding="utf-8"))
-        template = co_data.get("template", "01_Text_ViCon")
+        template = co_data.get("template", "01_Text_KID")
         topic = co_data.get("topic", project_dir.name)
     except Exception as e:
-        template = "01_Text_ViCon"
+        template = "01_Text_KID"
         topic = project_dir.name
         print(f"  ⚠ Không đọc được template từ content.json, dùng mặc định: {template}")
 

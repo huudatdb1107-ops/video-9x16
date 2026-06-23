@@ -1,0 +1,106 @@
+{
+  "_comment": "Schema content cho template 01_Text. AI hoặc Boss fill file content.json theo schema này → compose.py ráp với skeleton.html + style-tokens.json → output HTML render-ready.",
+  "$schema": "01_Text-v1",
+  "required_scenes": [
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5",
+    "s6"
+  ],
+  "scenes": {
+    "s1": {
+      "name": "Hook",
+      "fields": {
+        "eyebrow": "AI PHÂN TÍCH",
+        "title": "Con <em>hiếu động</em><br>hay <em>tăng động</em>?",
+        "byline": "Phân tích hành vi trẻ theo chuyên gia"
+      }
+    },
+    "s2": {
+      "name": "Khái niệm / Stat",
+      "fields": {
+        "big_text": "KHÁC",
+        "label": "Não bộ trẻ tăng động hoạt động khác biệt, không kém hơn.",
+        "note": "Trạng thái 'hyperfocus' khi tập trung vào đam mê."
+      }
+    },
+    "s3": {
+      "name": "List 3 cards có số",
+      "fields": {
+        "heading": "Ba điều cần<br><em>thấu hiểu</em>",
+        "cards": [
+          {
+            "num": "01",
+            "text": "Học qua <em class=\"hl-teal\">hình ảnh</em> và <em class=\"hl-orange\">vận động</em> tốt hơn tiếp nhận thụ động."
+          },
+          {
+            "num": "02",
+            "text": "Cần khoảng nghỉ <em class=\"hl-teal\">có cấu trúc</em>. Não hoạt động theo chu kỳ <em class=\"hl-orange\">tập trung</em> ngắn."
+          },
+          {
+            "num": "03",
+            "text": "Môi trường học tập <em class=\"hl-teal\">ảnh hưởng trực tiếp</em> hiệu suất. Giảm <em class=\"hl-orange\">thiểu nhiễu</em> loạn."
+          }
+        ]
+      }
+    },
+    "s4": {
+      "name": "Quote",
+      "fields": {
+        "quote_mark": "✦",
+        "quote_html": "Đừng ép một con cá<br>leo cây—rồi kết luận<br>rằng con kém.<br>Hãy tìm đúng <em class=\"hl-teal\">cây của</em> con."
+      }
+    },
+    "s5": {
+      "name": "List 3 actions có dot",
+      "fields": {
+        "heading": "Đồng hành cùng con<br><em>yêu thương</em>",
+        "items": [
+          "Tìm đúng phương pháp học tập phù hợp với con.",
+          "Tạo môi trường học tập <em>thoải mái</em> và ít xao nhãng.",
+          "Kiên nhẫn và <em>thấu hiểu</em> sự khác biệt của con."
+        ]
+      }
+    },
+    "s6": {
+      "name": "CTA / Closing",
+      "fields": {
+        "title": "Hành trình <em>kiên nhẫn</em><br>và <em>thấu hiểu</em>",
+        "sub": "Một phương pháp đúng có thể thay đổi cả hành trình học tập của con.",
+        "hashtag": "#ConTuKyBOOMBOOM"
+      }
+    }
+  },
+  "voice": {
+    "file": "TT_T06.22_06h44.wav",
+    "duration": 73.01
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 12.17
+    },
+    "s2": {
+      "in": 12.17,
+      "out": 24.33
+    },
+    "s3": {
+      "in": 24.33,
+      "out": 36.5
+    },
+    "s4": {
+      "in": 36.5,
+      "out": 48.67
+    },
+    "s5": {
+      "in": 48.67,
+      "out": 60.83
+    },
+    "s6": {
+      "in": 60.83,
+      "out": 73.01
+    }
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "topic": "Trẻ em chậm phát triển — Quan tâm con hơn",
+  "language": "vi",
+  "scenes": {
+    "s1": {
+      "eyebrow": "Quan tâm con hơn",
+      "title": "Mỗi đứa trẻ có một <em class=\"hl-orange\">nhịp riêng</em>",
+      "byline": "Chậm không phải lỗi — chậm là tín hiệu"
+    },
+    "s2": {
+      "big_text": "CHẬM",
+      "label": "Phát triển chậm không phải bệnh, không phải lỗi",
+      "note": "Là tín hiệu để cha mẹ chú ý — không phải để mắng hay so sánh."
+    },
+    "s3": {
+      "heading": "Ba dấu hiệu cần để ý",
+      "cards": [
+        {
+          "num": "01",
+          "text": "Con đạt mốc <em class=\"hl-orange\">phát triển</em> muộn rõ — chưa nói, chưa <em class=\"hl-teal\">đi</em> đúng tuổi"
+        },
+        {
+          "num": "02",
+          "text": "Con khó <em class=\"hl-orange\">tập trung</em> — né <em class=\"hl-teal\">ánh mắt</em>, ít phản ứng"
+        },
+        {
+          "num": "03",
+          "text": "Con khó <em class=\"hl-orange\">hòa nhập</em> — chơi một mình, <em class=\"hl-teal\">lặp lại</em> hành động"
+        }
+      ],
+      "element_times": {
+        "c1": 29.12,
+        "c2": 37.8,
+        "c3": 45.16
+      }
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Điều quan trọng nhất<br>cha mẹ có thể làm là <em>ba việc giản dị</em>."
+    },
+    "s5": {
+      "heading": "Cha mẹ cần làm gì",
+      "items": [
+        {
+          "text": "<em class=\"hl-teal\">Quan sát</em> con hằng ngày — ghi lại điều <em class=\"hl-orange\">bất thường</em>"
+        },
+        {
+          "text": "<em class=\"hl-orange\">Kiên nhẫn</em> nói chuyện và chơi cùng — không thúc ép"
+        },
+        {
+          "text": "Gặp <em class=\"hl-teal\">chuyên gia tâm lý nhi</em> khi nghi ngờ — can thiệp sớm"
+        }
+      ],
+      "element_times": {
+        "i1": 56.84,
+        "i2": 61.76,
+        "i3": 66.8
+      }
+    },
+    "s6": {
+      "title": "Quan tâm con hơn — <em>đồng hành đúng nhịp</em>.",
+      "sub": "Chờ con tự bắt kịp không phải là tình thương đúng cách.",
+      "hashtag": "#DongHanhDungNhip"
+    }
+  },
+  "voice": {
+    "file": "narration.wav",
+    "duration": 86.81
+  },
+  "timeline": {
+    "s1": {
+      "in": 0,
+      "out": 17.0
+    },
+    "s2": {
+      "in": 17.0,
+      "out": 26.0
+    },
+    "s3": {
+      "in": 26.0,
+      "out": 52.0
+    },
+    "s4": {
+      "in": 52.0,
+      "out": 57.0
+    },
+    "s5": {
+      "in": 57.0,
+      "out": 75.0
+    },
+    "s6": {
+      "in": 75.0,
+      "out": 86.81
+    }
+  }
+}

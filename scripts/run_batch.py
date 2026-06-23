@@ -1,4 +1,4 @@
-"""run_batch.py — Script chạy batch sản xuất video ngắn hàng loạt cho skill video-9x16.
+﻿"""run_batch.py — Script chạy batch sản xuất video ngắn hàng loạt cho skill video-9x16.
 
 Chế độ hoạt động:
   1. --mode generate: Sinh danh sách kịch bản tự động bằng Gemini, tránh trùng các chủ đề cũ.
@@ -33,11 +33,11 @@ except Exception as _e:
 # Fallback
 if not PAGE_PROFILES:
     PAGE_PROFILES = {
-        "vicon": {
+        "kid": {
             "name": "👶 Vì Con không thể đợi",
-            "output_dir": r"E:\HuuDat\VIDEO\FACEBOOK\01__Vi_Con",
+            "output_dir": r"E:\HuuDat\VIDEO\03_KID",
             "default_voice": "TT_06",
-            "default_template": "01_Text_ViCon"
+            "default_template": "01_Text_KID"
         }
     }
 
@@ -263,7 +263,7 @@ def mode_run(args, out_dir: pathlib.Path, history_file: pathlib.Path, batch_file
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--mode", required=True, choices=["generate", "run"], help="generate (sinh kịch bản) hoặc run (chạy pipeline)")
-    ap.add_argument("--page", default="vicon", help="Kênh đăng để áp cấu hình mặc định (vicon)")
+    ap.add_argument("--page", default="kid", help="Kênh đăng để áp cấu hình mặc định (vicon)")
     ap.add_argument("--count", type=int, default=35, help="Số lượng kịch bản cần sinh (mặc định 35)")
     args = ap.parse_args()
     

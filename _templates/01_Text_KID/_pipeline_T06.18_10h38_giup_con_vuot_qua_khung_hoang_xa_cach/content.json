@@ -1,0 +1,89 @@
+{
+  "scenes": {
+    "s1": {
+      "eyebrow": "HÀNH TRÌNH LÀM MẸ",
+      "title": "Con gào khóc,<br><em>mẹ lo lắng</em>",
+      "byline": "Đừng vội nghĩ con hư"
+    },
+    "s2": {
+      "big_text": "MỘT GIAI ĐOẠN",
+      "label": "Khủng hoảng xa cách: Dấu hiệu gắn kết an toàn",
+      "note": "Xuất hiện khi con nhận ra mẹ là người tách biệt, có thể rời đi."
+    },
+    "s3": {
+      "heading": "3 biểu hiện điển hình",
+      "cards": [
+        {
+          "num": "1",
+          "text": "<em class=\"hl-teal\">Bám chặt</em> mẹ, từ chối người khác dù quen biết. Đây là cơ chế sinh tồn, <em class=\"hl-orange\">không phải con hư</em>."
+        },
+        {
+          "num": "2",
+          "text": "Giật mình tỉnh giấc, khóc đòi mẹ. <em class=\"hl-teal\">Não con</em> đang <em class=\"hl-orange\">xử lý cảm xúc ban ngày</em> hiệu quả."
+        },
+        {
+          "num": "3",
+          "text": "Lo âu khi thấy mẹ chuẩn bị đi (túi, <em class=\"hl-teal\">giày). Con</em> đã <em class=\"hl-orange\">học được các tín hiệu chia ly</em>."
+        }
+      ],
+      "element_times": {
+        "c1": 34.68,
+        "c2": 45.36,
+        "c3": 31.36
+      }
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Gắn kết an toàn<br>không phải là không<br>bao giờ xa nhau —<br>mà là con biết <em class=\"hl-teal\">mẹ luôn</em><br><em class=\"hl-orange\">quay về</em>."
+    },
+    "s5": {
+      "heading": "3 điều mẹ nên làm",
+      "items": [
+        {
+          "text": "Chào tạm biệt ngắn gọn, vui vẻ; <em class=\"hl-teal\">không kéo</em> dài, <em class=\"hl-orange\">không lén đi</em>."
+        },
+        {
+          "text": "Tập con quen với xa <em class=\"hl-teal\">cách ngắn,</em> rồi <em class=\"hl-orange\">tăng dần thời gian</em>."
+        },
+        {
+          "text": "Luôn giữ lời hứa 'mẹ sẽ về'. Con học <em class=\"hl-teal\">được chia</em> ly <em class=\"hl-orange\">không phải mãi mãi</em>."
+        }
+      ]
+    },
+    "s6": {
+      "title": "Đồng hành cùng con,<br><em>yêu thương</em> và <em>kiên nhẫn</em>",
+      "sub": "Theo dõi kênh để không đi một mình — hàng ngàn cha mẹ đang cùng con trên hành trình này.",
+      "hashtag": "#lamme"
+    }
+  },
+  "voice": {
+    "file": "TT_T06.22_06h51.wav",
+    "duration": 91.16
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 1.53
+    },
+    "s2": {
+      "in": 1.53,
+      "out": 19.03
+    },
+    "s3": {
+      "in": 19.03,
+      "out": 79.57
+    },
+    "s4": {
+      "in": 79.57,
+      "out": 84.37
+    },
+    "s5": {
+      "in": 84.37,
+      "out": 85.8
+    },
+    "s6": {
+      "in": 85.8,
+      "out": 91.16
+    }
+  }
+}

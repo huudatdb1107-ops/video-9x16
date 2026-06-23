@@ -1,0 +1,88 @@
+{
+  "scenes": {
+    "s1": {
+      "eyebrow": "CHẨN ĐOÁN TỰ KỶ",
+      "title": "Dấu hiệu sớm con<br><em>khác biệt</em>?",
+      "byline": "Phân tích từ chuyên gia"
+    },
+    "s2": {
+      "big_text": "BA",
+      "label": "Dấu hiệu cảnh báo sớm tự kỷ",
+      "note": "Nhận biết trước 2 tuổi"
+    },
+    "s3": {
+      "heading": "Dấu hiệu cần lưu tâm",
+      "cards": [
+        {
+          "num": "Một",
+          "text": "Không <em class=\"hl-teal\">giao tiếp bằng mắt</em> khi bú hoặc được cha mẹ nói <em class=\"hl-orange\">chuyện trực</em> tiếp."
+        },
+        {
+          "num": "Hai",
+          "text": "18 tháng không <em class=\"hl-teal\">dùng ngón trỏ để chỉ</em> đồ vật muốn lấy/<em class=\"hl-orange\">chia sẻ</em>."
+        },
+        {
+          "num": "Ba",
+          "text": "Không phản ứng <em class=\"hl-teal\">tên gọi,</em> nhưng <em class=\"hl-orange\">nhạy cảm với âm nhạc</em>/tivi."
+        }
+      ],
+      "element_times": {
+        "c1": 22.0,
+        "c3": 17.0
+      }
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Phát hiện sớm<br>không thay đổi<br>con là ai.<br><em class=\"hl-teal\">Chỉ mở</em> thêm <em class=\"hl-orange\">cánh cửa</em>."
+    },
+    "s5": {
+      "heading": "Cha mẹ cần...",
+      "items": [
+        {
+          "text": "Quan <em class=\"hl-teal\">sát kỹ</em> các <em class=\"hl-orange\">tín hiệu tương tác</em>."
+        },
+        {
+          "text": "Tham <em class=\"hl-teal\">vấn chuyên</em> gia<br><em class=\"hl-orange\">khi có lo ngại</em>."
+        },
+        {
+          "text": "<em class=\"hl-teal\">Đồng hành</em> cùng con<br>với <em class=\"hl-orange\">sự thấu hiểu</em>."
+        }
+      ]
+    },
+    "s6": {
+      "title": "Cùng con<br><em>vượt qua</em>",
+      "sub": "Theo dõi kênh để không đi một mình — hàng ngàn cha mẹ đang đồng hành cùng con trên hành trình này.",
+      "hashtag": "#TuthuyetChuan"
+    }
+  },
+  "voice": {
+    "file": "TT_T06.22_06h53.wav",
+    "duration": 82.26
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 11.47
+    },
+    "s2": {
+      "in": 11.47,
+      "out": 11.5
+    },
+    "s3": {
+      "in": 11.5,
+      "out": 36.13
+    },
+    "s4": {
+      "in": 36.13,
+      "out": 73.2
+    },
+    "s5": {
+      "in": 73.2,
+      "out": 82.77
+    },
+    "s6": {
+      "in": 82.77,
+      "out": 82.26
+    }
+  }
+}

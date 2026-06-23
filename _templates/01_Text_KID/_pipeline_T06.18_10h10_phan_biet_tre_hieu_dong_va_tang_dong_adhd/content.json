@@ -1,0 +1,215 @@
+{
+  "scenes": {
+    "s1": {
+      "eyebrow": "CHUYỆN NUÔI CON",
+      "title": "CON CHỈ<br><em>HIẾU ĐỘNG</em> HAY <em>TĂNG ĐỘNG</em>?",
+      "byline": ""
+    },
+    "s2": {
+      "big_text": "KHÁC BIỆT",
+      "label": "Trẻ h<em class=\"hl-custom temp-focus-target\">i<em class=\"hl-custom\">ếu</em><em class=\"hl-custom\"><em class=\"hl-custom temp-focus-target\"> đ</em></em><em class=\"hl-custom temp-focus-target\"><em class=\"hl-custom temp-focus-target\"><em class=\"hl-custom temp-focus-target\">ộng kh</em>ác</em></em></em><em class=\"hl-custom temp-focus-target\"><em class=\"hl-custom temp-focus-target\"> trẻ</em> </em>tăng động như thế nào?",
+      "note": "Phân biệt rõ ràng hai trạng thái để có phương pháp hỗ trợ phù hợp."
+    },
+    "s3": {
+      "heading": "Ba dấu hiệu phân biệt",
+      "cards": [
+        {
+          "num": "01",
+          "text": "Trẻ hiếu động ngồi yên khi chơi món đồ <em class=\"hl-teal\">yêu thích</em>.<br>Trẻ tăng động khó <em class=\"hl-orange\">tập trung</em> dù chỉ vài phút."
+        },
+        {
+          "num": "02",
+          "text": "Trẻ hiếu động biết <em class=\"hl-teal\">lắng nghe</em> và <em class=\"hl-orange\">tuân thủ</em>.<br>Trẻ tăng động khó kiểm soát cảm xúc và hành vi."
+        },
+        {
+          "num": "03",
+          "text": "Trẻ hiếu động tự nhận thức <em class=\"hl-teal\">nguy hiểm</em>.<br>Trẻ tăng động hành động <em class=\"hl-orange\">bộc phát</em>, không nghĩ hậu quả."
+        }
+      ],
+      "element_times": {
+        "c1": 20.34,
+        "c2": 28.76,
+        "c3": 36.46
+      }
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Sự thấu hiểu và quan sát tinh tế<br>của cha mẹ chính là<br>chìa khóa vàng giúp con<br><em class=\"hl-teal\">phát triển</em> đúng hướng và <em class=\"hl-orange\">hạnh phúc</em>."
+    },
+    "s5": {
+      "heading": "Ba giải pháp hỗ trợ con",
+      "items": [
+        {
+          "text": "Thiết lập thời biểu sinh hoạt <em class=\"hl-teal\">cố định</em> và <em class=\"hl-orange\">rõ ràng</em> mỗi ngày."
+        },
+        {
+          "text": "Cùng con tham gia các trò chơi vận động có <em class=\"hl-teal\">mục tiêu</em> và <em class=\"hl-orange\">kết nối</em>."
+        },
+        {
+          "text": "<em class=\"hl-teal\">Kiên nhẫn</em> lắng nghe, hạn chế <em class=\"hl-orange\">quát mắng</em>."
+        }
+      ],
+      "element_times": {
+        "i2": 27.96
+      }
+    },
+    "s6": {
+      "title": "ĐỒNG HÀNH CÙNG CON,<br><em>YÊU THƯƠNG</em> VÀ <em>KIÊN NHẪN</em>",
+      "sub": "Nhấn theo dõi kênh để nhận thêm nhiều kiến thức nuôi dạy con bổ ích.",
+      "hashtag": "#NuoiDayCon"
+    }
+  },
+  "voice": {
+    "file": "TT_T06.22_06h49.wav",
+    "duration": 70.27
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 11.9
+    },
+    "s2": {
+      "in": 11.9,
+      "out": 17.33
+    },
+    "s3": {
+      "in": 17.33,
+      "out": 17.77
+    },
+    "s4": {
+      "in": 17.77,
+      "out": 17.93
+    },
+    "s5": {
+      "in": 17.93,
+      "out": 31.43
+    },
+    "s6": {
+      "in": 31.43,
+      "out": 70.27
+    }
+  },
+  "brand_watermark": "PK NHI BOOM BOOM",
+  "styles": {
+    ".s1-tag": {
+      "font-size": "24px",
+      "line-height": "",
+      "letter-spacing": "3px",
+      "color": "#ff7a2a"
+    },
+    ".s1-title": {
+      "font-size": "130px",
+      "line-height": "1.50",
+      "letter-spacing": "-1px",
+      "color": "#ffffff"
+    },
+    ".s1-title em": {
+      "font-size": "",
+      "line-height": "",
+      "letter-spacing": "",
+      "color": "#ff7a2a"
+    },
+    ".s1-byline": {
+      "font-size": "22px",
+      "line-height": "",
+      "letter-spacing": "2px",
+      "color": "#6db8b8"
+    },
+    ".s2-big": {
+      "font-size": "172px",
+      "line-height": "1.2",
+      "letter-spacing": "-8px",
+      "color": "#ff7a2a"
+    },
+    ".s2-label": {
+      "font-size": "58px",
+      "line-height": "2",
+      "letter-spacing": "",
+      "color": "#ffffff"
+    },
+    ".s2-note": {
+      "font-size": "30px",
+      "line-height": "1.5",
+      "letter-spacing": "",
+      "color": "#a0c4c4"
+    },
+    ".s3-heading": {
+      "font-size": "80px",
+      "line-height": "1.50",
+      "letter-spacing": "-1px",
+      "color": "#ff7a2a"
+    },
+    ".s3-card-text": {
+      "font-size": "38px",
+      "line-height": "1.6",
+      "letter-spacing": "",
+      "color": "#ffffff"
+    },
+    "em.hl-teal": {
+      "font-size": "",
+      "line-height": "",
+      "letter-spacing": "",
+      "color": "#4dcccc"
+    },
+    "em.hl-orange": {
+      "font-size": "",
+      "line-height": "",
+      "letter-spacing": "",
+      "color": "#ff7a2a"
+    },
+    ".s3-card-num": {
+      "font-size": "80px",
+      "line-height": "1",
+      "letter-spacing": "",
+      "color": "#ff7a2a"
+    },
+    ".s4-quote": {
+      "font-size": "56px",
+      "line-height": "1.8",
+      "letter-spacing": "-0.3px",
+      "color": "#ffebd2"
+    },
+    ".s4-quote em": {
+      "font-size": "",
+      "line-height": "",
+      "letter-spacing": "",
+      "color": "#4dcccc"
+    },
+    ".s5-heading": {
+      "font-size": "80px",
+      "line-height": "1.50",
+      "letter-spacing": "-1px",
+      "color": "#ffa726"
+    },
+    ".s5-text": {
+      "font-size": "38px",
+      "line-height": "1.6",
+      "letter-spacing": "",
+      "color": "#ffffff"
+    },
+    ".s6-title": {
+      "font-size": "130px",
+      "line-height": "1.25",
+      "letter-spacing": "-1px",
+      "color": "#4dcccc"
+    },
+    ".s6-title em": {
+      "font-size": "",
+      "line-height": "",
+      "letter-spacing": "",
+      "color": "#ff7a2a"
+    },
+    ".s6-sub": {
+      "font-size": "36px",
+      "line-height": "1.5",
+      "letter-spacing": "",
+      "color": "#a0c4c4"
+    },
+    ".s6-hashtag": {
+      "font-size": "34px",
+      "line-height": "",
+      "letter-spacing": "3px",
+      "color": "#4dcccc"
+    }
+  }
+}

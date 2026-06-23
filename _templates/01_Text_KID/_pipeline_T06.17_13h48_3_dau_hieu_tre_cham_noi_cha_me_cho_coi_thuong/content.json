@@ -1,0 +1,88 @@
+{
+  "scenes": {
+    "s1": {
+      "eyebrow": "CHẬM NÓI",
+      "title": "Con 18 tháng chưa gọi «ba»? <em>Đừng chủ quan</em>",
+      "byline": "Cùng hiểu đúng và hành động kịp thời"
+    },
+    "s2": {
+      "big_text": "3",
+      "label": "Dấu hiệu chậm nói",
+      "note": "Cha mẹ tuyệt đối không nên xem thường!"
+    },
+    "s3": {
+      "heading": "Ba dấu hiệu<br>cần chú ý",
+      "cards": [
+        {
+          "num": "MỘT",
+          "text": "Con 12 tháng không phản ứng khi gọi tên, dù thính lực bình thường. Đây là dấu hiệu về xử lý thần kinh xã hội, không đơn giản là «con <em class=\"hl-teal\">chưa chú</em> ý»."
+        },
+        {
+          "num": "HAI",
+          "text": "Con 18 tháng chưa nói được từ đơn nào, hoặc chỉ lặp lại máy móc lời người khác mà không hiểu nghĩa — hiện tượng này gọi là echolalia, cần được đánh <em class=\"hl-teal\">giá chuyên</em> môn."
+        },
+        {
+          "num": "BA",
+          "text": "Con 2 tuổi vốn từ cực kỳ hạn chế, dưới 10 từ có nghĩa. Mốc chuẩn ở độ tuổi này là 50 từ trở lên và bắt <em class=\"hl-teal\">đầu ghép</em> câu."
+        }
+      ],
+      "element_times": {
+        "c2": 21.44,
+        "c3": 17.36
+      }
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Ngôn ngữ là cánh cửa đầu tiên con<br>bước vào thế giới.<br>Hãy giúp <em class=\"hl-teal\">con mở</em> nó<br><em class=\"hl-orange\">đúng lúc</em>."
+    },
+    "s5": {
+      "heading": "Cha mẹ có thể<br>làm gì tại nhà?",
+      "items": [
+        {
+          "text": "Nói chuyện với con trong mọi hoạt động — tắm, <em class=\"hl-teal\">ăn, đi</em> dạo."
+        },
+        {
+          "text": "Không để màn hình thay thế tương tác <em class=\"hl-teal\">người —</em> người."
+        },
+        {
+          "text": "Đừng chờ thêm nếu đã có dấu hiệu rõ ràng, <em class=\"hl-teal\">hãy hành</em> động <em class=\"hl-orange\">kịp thời</em>."
+        }
+      ]
+    },
+    "s6": {
+      "title": "Theo dõi kênh để<br><em>không đi một mình</em>",
+      "sub": "Hàng ngàn cha mẹ đang đồng hành cùng con trên hành trình này.",
+      "hashtag": "#chamnoi"
+    }
+  },
+  "voice": {
+    "file": "TT_T06.22_06h45.wav",
+    "duration": 67.35
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 24.27
+    },
+    "s2": {
+      "in": 24.27,
+      "out": 9.93
+    },
+    "s3": {
+      "in": 9.93,
+      "out": 40.63
+    },
+    "s4": {
+      "in": 40.63,
+      "out": 61.4
+    },
+    "s5": {
+      "in": 61.4,
+      "out": 63.67
+    },
+    "s6": {
+      "in": 63.67,
+      "out": 67.35
+    }
+  }
+}

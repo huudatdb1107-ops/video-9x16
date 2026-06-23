@@ -1,0 +1,97 @@
+{
+  "topic": "Tuổi vàng can thiệp sớm cho trẻ chậm phát triển",
+  "language": "vi",
+  "scenes": {
+    "s1": {
+      "eyebrow": "Tuổi vàng can thiệp",
+      "title": "Có một khoảng <em class=\"hl-orange\">tuổi vàng</em> để can thiệp sớm",
+      "byline": "Bỏ lỡ — cơ hội phục hồi giảm rõ rệt"
+    },
+    "s2": {
+      "big_text": "0-6",
+      "label": "Tuổi vàng là từ sơ sinh đến sáu tuổi",
+      "note": "Ba năm đầu đời — não bộ phát triển và linh hoạt nhất."
+    },
+    "s3": {
+      "heading": "Ba mốc cần ghi nhớ",
+      "cards": [
+        {
+          "num": "01",
+          "text": "<em class=\"hl-orange\">Mười tám tháng</em> — chưa nói từ đơn, chưa <em class=\"hl-teal\">phản ứng tên</em>"
+        },
+        {
+          "num": "02",
+          "text": "<em class=\"hl-orange\">Hai đến ba tuổi</em> — chưa câu hai từ, hành vi <em class=\"hl-teal\">lặp lại</em>"
+        },
+        {
+          "num": "03",
+          "text": "<em class=\"hl-orange\">Bốn đến sáu tuổi</em> — khó hòa nhập, <em class=\"hl-teal\">tự phục vụ</em> chậm"
+        }
+      ],
+      "element_times": {
+        "c1": 24.96,
+        "c2": 35.76,
+        "c3": 44.0
+      }
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Vậy cha mẹ cần làm gì<br>trong <em>giai đoạn tuổi vàng</em> này."
+    },
+    "s5": {
+      "heading": "Cha mẹ cần làm gì",
+      "items": [
+        {
+          "text": "<em class=\"hl-teal\">Theo dõi</em> mốc phát triển hằng tháng — ghi điều <em class=\"hl-orange\">bất thường</em>"
+        },
+        {
+          "text": "<em class=\"hl-orange\">Hỏi chuyên gia</em> tâm lý nhi khi có <em class=\"hl-teal\">nghi ngờ rõ</em>"
+        },
+        {
+          "text": "<em class=\"hl-orange\">Kiên trì</em> với can thiệp đặc biệt — không <em class=\"hl-teal\">bỏ giữa chừng</em>"
+        }
+      ],
+      "element_times": {
+        "i1": 56.92,
+        "i2": 62.16,
+        "i3": 68.04
+      }
+    },
+    "s6": {
+      "title": "Tuổi vàng — <em>không bao giờ trở lại</em>.",
+      "sub": "Can thiệp sớm là món quà lớn nhất cha mẹ trao cho con.",
+      "hashtag": "#TuoiVangCanThiepSom"
+    }
+  },
+  "voice": {
+    "file": "narration.wav",
+    "duration": 81.63
+  },
+  "timeline": {
+    "s1": {
+      "in": 0,
+      "out": 9.28
+    },
+    "s2": {
+      "in": 9.28,
+      "out": 24.56
+    },
+    "s3": {
+      "in": 24.56,
+      "out": 53.12
+    },
+    "s4": {
+      "in": 53.12,
+      "out": 56.92
+    },
+    "s5": {
+      "in": 56.92,
+      "out": 74.4
+    },
+    "s6": {
+      "in": 74.4,
+      "out": 81.63
+    }
+  },
+  "brand_watermark": "PK NHI BOOM BOOM"
+}

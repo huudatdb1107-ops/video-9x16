@@ -1,0 +1,93 @@
+{
+  "topic": "Dấu hiệu phát hiện sớm trẻ chậm phát triển",
+  "language": "vi",
+  "brand_watermark": "PK NHI BOOM BOOM",
+  "scenes": {
+    "s1": {
+      "eyebrow": "Phát hiện sớm",
+      "title": "Dấu hiệu <em class=\"hl-orange\">chậm phát triển</em> ở trẻ",
+      "byline": "Nhận ra sớm — can thiệp sớm — thay đổi tương lai con"
+    },
+    "s2": {
+      "big_text": "1/10",
+      "label": "Trẻ cần được chú ý đặc biệt",
+      "note": "Theo thống kê — phát hiện càng sớm, cơ hội phục hồi càng lớn."
+    },
+    "s3": {
+      "heading": "Ba dấu hiệu cha mẹ cần nhớ",
+      "cards": [
+        {
+          "num": "01",
+          "text": "<em class=\"hl-orange\">12 đến 18 tháng</em> — chưa bập bẹ, không phản ứng khi <em class=\"hl-teal\">gọi tên</em>"
+        },
+        {
+          "num": "02",
+          "text": "<em class=\"hl-orange\">2 đến 3 tuổi</em> — chưa câu hai từ, ít <em class=\"hl-teal\">giao tiếp mắt</em>"
+        },
+        {
+          "num": "03",
+          "text": "<em class=\"hl-orange\">3 đến 5 tuổi</em> — khó hòa nhập, <em class=\"hl-teal\">tự phục vụ</em> chậm"
+        }
+      ],
+      "element_times": {
+        "c1": 25.0,
+        "c2": 33.0,
+        "c3": 41.0
+      }
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Khi nghi ngờ, điều quan trọng nhất là <em>đừng chờ đợi</em>."
+    },
+    "s5": {
+      "heading": "Cha mẹ cần làm gì",
+      "element_times": { "i1": 56.0, "i2": 61.0, "i3": 66.0 },
+      "items": [
+        {
+          "text": "Đưa con đến <em class=\"hl-teal\">chuyên gia tâm lý nhi</em> để đánh giá đúng"
+        },
+        {
+          "text": "<em class=\"hl-orange\">Kiên trì</em> đồng hành qua từng buổi can thiệp"
+        },
+        {
+          "text": "<em class=\"hl-orange\">Ghi nhật ký</em> phát triển mỗi tháng để theo dõi"
+        }
+      ]
+    },
+    "s6": {
+      "title": "Phát hiện sớm — <em>món quà lớn nhất</em>.",
+      "sub": "Đừng bỏ lỡ những năm tháng vàng của con.",
+      "hashtag": "#PhatHienSomChoCon"
+    }
+  },
+  "voice": {
+    "file": "narration.wav",
+    "duration": 78.86
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 12.0
+    },
+    "s2": {
+      "in": 12.0,
+      "out": 18.0
+    },
+    "s3": {
+      "in": 18.0,
+      "out": 49.0
+    },
+    "s4": {
+      "in": 49.0,
+      "out": 56.0
+    },
+    "s5": {
+      "in": 56.0,
+      "out": 72.0
+    },
+    "s6": {
+      "in": 72.0,
+      "out": 78.86
+    }
+  }
+}

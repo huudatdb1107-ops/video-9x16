@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Ente Photos — Privacy First</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+body { margin: 0; background: #000; font-family: "Inter", sans-serif; }
+#root {
+  position: relative; width: 1080px; height: 1920px;
+  background: #030a18; overflow: hidden;
+  font-family: "Inter", sans-serif; color: #ffffff;
+}
+
+/* ===== background-tech ===== */
+.hf-bg-tech {
+  position: absolute; inset: 0; z-index: 0;
+  background: linear-gradient(180deg, #0a1828 0%, #051220 50%, #030a18 100%);
+}
+.hf-bg-tech::before {
+  content: ""; position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(92,182,255,0.05) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(92,182,255,0.05) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+.hf-bg-tech::after {
+  content: ""; position: absolute; top: -200px; left: -100px;
+  width: 800px; height: 800px;
+  background: radial-gradient(circle, rgba(92,182,255,0.18) 0%, rgba(92,182,255,0) 60%);
+  filter: blur(20px);
+}
+
+/* ===== frame-chrome ===== */
+.hf-frame { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
+.hf-bracket { position: absolute; width: 60px; height: 60px; border-color: rgba(255,255,255,0.5); border-style: solid; border-width: 0; }
+.hf-bracket.tl { top: 30px; left: 30px; border-top-width: 2px; border-left-width: 2px; }
+.hf-bracket.tr { top: 30px; right: 30px; border-top-width: 2px; border-right-width: 2px; }
+.hf-bracket.bl { bottom: 30px; left: 30px; border-bottom-width: 2px; border-left-width: 2px; }
+.hf-bracket.br { bottom: 30px; right: 30px; border-bottom-width: 2px; border-right-width: 2px; }
+.hf-footer-label { position: absolute; bottom: 50px; right: 80px; font-size: 13px; font-weight: 500; letter-spacing: 4px; text-transform: uppercase; color: rgba(255,255,255,0.45); }
+
+/* ===== scenes ===== */
+.scene {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 120px 80px; box-sizing: border-box; opacity: 0; z-index: 2;
+}
+
+/* ===== eyebrow-tag ===== */
+.hf-eyebrow { font-size: 18px; font-weight: 600; letter-spacing: 6px; text-transform: uppercase; text-align: center; margin-bottom: 24px; color: #5cb6ff; }
+
+/* ===== title-multicolor ===== */
+.hf-title { font-family: "Inter", sans-serif; font-weight: 800; color: #ffffff; text-align: center; margin: 0; letter-spacing: -1px; max-width: 920px; font-size: 78px; line-height: 1.5; text-shadow: 0 0 30px rgba(92,182,255,0.35); }
+.hf-title em { font-style: normal; font-weight: 800; display: inline-block; }
+.hf-title em.hl-cyan   { color: #5cb6ff; text-shadow: 0 0 25px rgba(92,182,255,0.6); }
+.hf-title em.hl-teal   { color: #4dcccc; text-shadow: 0 0 25px rgba(77,204,204,0.6); }
+.hf-title em.hl-orange { color: #ffa726; text-shadow: 0 0 25px rgba(255,167,38,0.6); }
+.hf-title em.hl-gradient { background: linear-gradient(90deg, #5cb6ff 0%, #7adcdc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+/* ===== card-grid ===== */
+.hf-card-grid { display: grid; gap: 18px; width: 100%; max-width: 920px; margin: 40px auto 0; }
+.hf-card-grid.hf-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.hf-card-grid.hf-grid-4 { grid-template-columns: repeat(4, 1fr); gap: 14px; max-width: 1000px; }
+.hf-card, .hf-card-sm {
+  background: rgba(10,24,32,0.55); border: 1.5px solid rgba(58,188,188,0.35);
+  border-radius: 16px; padding: 28px 32px;
+  box-shadow: 0 0 32px rgba(77,204,204,0.18), inset 0 0 20px rgba(58,188,188,0.06);
+}
+.hf-card-sm { padding: 22px 20px; border-radius: 14px; }
+.hf-card-heading { font-size: 32px; font-weight: 700; color: #ffffff; line-height: 1.3; margin-bottom: 8px; }
+.hf-card-heading-accent { font-size: 30px; font-weight: 700; color: #5cb6ff; line-height: 1.2; margin-bottom: 4px; }
+.hf-card-subtitle { font-size: 11px; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase; color: #6b8a9e; margin-bottom: 10px; }
+.hf-card-body { font-size: 20px; color: #a0c4c4; line-height: 1.5; font-weight: 500; }
+.hf-card-sm .hf-card-body { font-size: 16px; line-height: 1.45; }
+
+/* ===== bullet-list-colored ===== */
+.hf-bullet-list { list-style: none; padding: 28px 36px; margin: 0; background: rgba(10,24,32,0.55); border: 1.5px solid rgba(58,188,188,0.35); border-radius: 16px; max-width: 480px; }
+.hf-bullet-list li { position: relative; padding-left: 36px; margin-bottom: 18px; font-size: 22px; font-weight: 600; color: #ffffff; line-height: 1.45; }
+.hf-bullet-list li:last-child { margin-bottom: 0; }
+.hf-bullet-list li::before { content: ""; position: absolute; left: 4px; top: 12px; width: 14px; height: 14px; border-radius: 50%; background: #4dcccc; box-shadow: 0 0 16px rgba(77,204,204,0.7); }
+.hf-bullet-list li[data-dot="teal"]::before   { background: #4dcccc; box-shadow: 0 0 16px rgba(77,204,204,0.7); }
+.hf-bullet-list li[data-dot="orange"]::before { background: #ffa726; box-shadow: 0 0 16px rgba(255,167,38,0.7); }
+.hf-bullet-list li[data-dot="cyan"]::before   { background: #5cb6ff; box-shadow: 0 0 16px rgba(92,182,255,0.7); }
+
+/* ===== stat-block ===== */
+.hf-stat-block { background: rgba(10,24,32,0.55); border: 1.5px solid rgba(58,188,188,0.35); border-radius: 16px; padding: 32px 36px; max-width: 460px; text-align: left; }
+.hf-stat-number { font-size: 96px; font-weight: 900; color: #5cb6ff; line-height: 1; letter-spacing: -3px; text-shadow: 0 0 30px rgba(92,182,255,0.55); }
+.hf-stat-label { font-size: 14px; font-weight: 600; letter-spacing: 4px; text-transform: uppercase; color: #6b8a9e; margin-top: 8px; margin-bottom: 20px; }
+.hf-stat-body { font-size: 20px; color: #a0c4c4; line-height: 1.5; font-weight: 500; }
+
+/* ===== device-mockup + illustration ===== */
+.hf-device-mockup, .hf-illustration { display: flex; flex-direction: column; align-items: center; max-width: 480px; padding: 24px; background: rgba(10,24,32,0.45); border: 1.5px solid rgba(58,188,188,0.25); border-radius: 18px; margin: 30px auto 0; }
+.hf-device-mockup img, .hf-illustration img { width: 100%; height: auto; max-height: 320px; object-fit: contain; display: block; filter: drop-shadow(0 12px 30px rgba(0,0,0,0.4)); }
+.hf-device-caption, .hf-illust-caption { font-size: 22px; font-weight: 700; color: #ffffff; margin-top: 18px; text-align: center; }
+.hf-device-sublabel, .hf-illust-sublabel { font-size: 15px; color: #a0c4c4; margin-top: 6px; text-align: center; }
+
+/* Two-col layout cho scene có ảnh */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; width: 100%; max-width: 920px; margin: 40px auto 0; }
+.two-col .hf-device-mockup, .two-col .hf-illustration { margin: 0; max-width: 100%; }
+</style>
+<style id="_tokens_override">
+.hf-eyebrow { font-size: 18px; letter-spacing: 6px; color: #5cb6ff; }
+.hf-title { font-size: 78px; line-height: 1.5; letter-spacing: -1px; color: #ffffff; text-shadow: 0 0 30px rgba(92, 182, 255, 0.35); }
+.hf-title em.hl-cyan { color: #5cb6ff; text-shadow: 0 0 25px rgba(92, 182, 255, 0.6); }
+.hf-title em.hl-teal { color: #4dcccc; text-shadow: 0 0 25px rgba(77, 204, 204, 0.6); }
+.hf-title em.hl-orange { color: #ffa726; text-shadow: 0 0 25px rgba(255, 167, 38, 0.6); }
+.hf-card { background: rgba(10, 24, 32, 0.55); border: 1.5px solid rgba(58, 188, 188, 0.35); }
+.hf-card-heading { font-size: 32px; color: #ffffff; }
+.hf-card-body { font-size: 22px; color: #a0c4c4; line-height: 1.5; }
+.hf-card-sm .hf-card-heading-accent { color: #5cb6ff; font-size: 30px; }
+.hf-bullet-list { background: rgba(10, 24, 32, 0.55); }
+.hf-bullet-list li { font-size: 22px; color: #ffffff; }
+.hf-stat-number { font-size: 96px; color: #5cb6ff; text-shadow: 0 0 30px rgba(92, 182, 255, 0.55); }
+.hf-stat-label { color: #6b8a9e; }
+.hf-device-caption { color: #ffffff; }
+.hf-device-sublabel { color: #a0c4c4; }
+.hf-footer-label { color: rgba(255, 255, 255, 0.45); letter-spacing: 4px; }
+</style>
+</head>
+<body>
+
+<div id="root" data-composition-id="root" data-start="0" data-duration="86" data-width="1080" data-height="1920">
+
+  <audio id="narration" data-start="0" data-duration="86" data-track-index="2" src="narration.wav" data-volume="1"></audio>
+
+  <!-- Background tech layer -->
+  <div class="hf-bg-tech"></div>
+
+  <!-- Chrome frame brackets + footer -->
+  <div class="hf-frame">
+    <div class="hf-bracket tl"></div>
+    <div class="hf-bracket tr"></div>
+    <div class="hf-bracket bl"></div>
+    <div class="hf-bracket br"></div>
+    <div class="hf-footer-label">ENTE / PRIVACY FIRST PHOTOS</div>
+  </div>
+
+  <!-- Scene 1: Hook + Device Mockup -->
+  <div class="scene" id="s1">
+    <div class="hf-eyebrow">Private Google Photos?</div>
+    <h1 class="hf-title" id="s1-title">Muốn kiểu <em class="hl-cyan">Google Photos</em> nhưng ảnh của bạn vẫn <em class="hl-teal">mã hóa đầu cuối</em>?</h1>
+    <div class="hf-device-mockup">
+      <img src="assets/devices-ente.png" alt="Ente Photos trên phone + laptop + tablet">
+    </div>
+  </div>
+
+  <!-- Scene 2: Big Difference + 2 cards -->
+  <div class="scene" id="s2">
+    <div class="hf-eyebrow">The Big Difference</div>
+    <h1 class="hf-title" id="s2-title">Ente bán một lời hứa khá rõ: dữ liệu của bạn vẫn lên cloud, nhưng <em class="hl-cyan">provider không xem được ảnh</em></h1>
+    <div class="hf-card-grid hf-grid-2">
+      <div class="hf-card">
+        <div class="hf-card-heading" id="s2-c1-h">End-to-end encrypted</div>
+        <div class="hf-card-body" id="s2-c1-b">ảnh và video được mã hóa đầu cuối thay vì chỉ mã hóa khi lưu trên server.</div>
+      </div>
+      <div class="hf-card">
+        <div class="hf-card-heading" id="s2-c2-h">Trust model khác hẳn</div>
+        <div class="hf-card-body" id="s2-c2-b">bạn không phải mặc định tin rằng nhà cung cấp sẽ luôn xử lý dữ liệu đúng cách.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scene 3: 4 features -->
+  <div class="scene" id="s3">
+    <div class="hf-eyebrow">Not Just Private</div>
+    <h1 class="hf-title" id="s3-title">Nó vẫn cố giữ những thứ người dùng thật sự muốn ở một app ảnh hiện đại</h1>
+    <div class="hf-card-grid hf-grid-4">
+      <div class="hf-card-sm">
+        <div class="hf-card-heading-accent" id="s3-c1-h">Face</div>
+        <div class="hf-card-subtitle" id="s3-c1-s">Detection</div>
+        <div class="hf-card-body" id="s3-c1-b">README nêu rõ face detection ngay trong Ente Photos.</div>
+      </div>
+      <div class="hf-card-sm">
+        <div class="hf-card-heading-accent" id="s3-c2-h">Search</div>
+        <div class="hf-card-subtitle" id="s3-c2-s">Semantic</div>
+        <div class="hf-card-body" id="s3-c2-b">tìm kiếm thông minh thay vì chỉ lướt album thủ công.</div>
+      </div>
+      <div class="hf-card-sm">
+        <div class="hf-card-heading-accent" id="s3-c3-h">Share</div>
+        <div class="hf-card-subtitle" id="s3-c3-s">Private</div>
+        <div class="hf-card-body" id="s3-c3-b">private sharing và collaborative albums cho gia đình hoặc nhóm nhỏ.</div>
+      </div>
+      <div class="hf-card-sm">
+        <div class="hf-card-heading-accent" id="s3-c4-h">Upload</div>
+        <div class="hf-card-subtitle" id="s3-c4-s">Background</div>
+        <div class="hf-card-body" id="s3-c4-b">ảnh vẫn được backup tự động như người dùng cloud app mong đợi.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scene 4: Platform — 2 cột (device | illustration) -->
+  <div class="scene" id="s4">
+    <div class="hf-eyebrow">Full Platform</div>
+    <h1 class="hf-title" id="s4-title">Điểm mạnh tiếp theo là đây không phải app đơn lẻ. Nó là cả một <em class="hl-orange">monorepo đa nền tảng</em></h1>
+    <div class="two-col">
+      <div class="hf-device-mockup">
+        <img src="assets/devices-trio.png" alt="phone + laptop + tablet với Ente UI">
+        <div class="hf-device-caption" id="s4-l-cap">Web + Mobile + Desktop</div>
+        <div class="hf-device-sublabel" id="s4-l-sub">iOS, Android, Web</div>
+      </div>
+      <div class="hf-illustration">
+        <img src="assets/mascot-rocket.png" alt="Ente mascot ducks với rocket launch">
+        <div class="hf-illust-caption" id="s4-r-cap">Clients + Server</div>
+        <div class="hf-illust-sublabel" id="s4-r-sub">Linux, macOS, Windows</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scene 5: Self-host — 2 cột (bullet list | stat block) -->
+  <div class="scene" id="s5">
+    <div class="hf-eyebrow">Self Host Option</div>
+    <h1 class="hf-title" id="s5-title">Theo README, bạn cũng có thể <em class="hl-cyan">clone repo và self-host</em> nếu muốn tự kiểm soát hạ tầng</h1>
+    <div class="two-col">
+      <ul class="hf-bullet-list">
+        <li data-dot="teal"   id="s5-b1">Dùng service sẵn của Ente nếu muốn nhanh</li>
+        <li data-dot="orange" id="s5-b2">Tự triển khai nếu muốn kiểm soát nhiều hơn</li>
+        <li data-dot="cyan"   id="s5-b3">Phù hợp cho cả cá nhân lẫn người dùng nâng cao</li>
+        <li data-dot="orange" id="s5-b4">Không bị buộc vào một mô hình cloud duy nhất</li>
+      </ul>
+      <div class="hf-stat-block">
+        <div class="hf-stat-number" id="s5-stat-num">10GB</div>
+        <div class="hf-stat-label" id="s5-stat-lbl">FREE STORAGE</div>
+        <div class="hf-stat-body" id="s5-stat-body">README nêu Ente Photos là dịch vụ trả phí, nhưng có mười GB lưu trữ miễn phí để bắt đầu.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scene 6: Why Care / CTA -->
+  <div class="scene" id="s6">
+    <div class="hf-eyebrow">Why People Care</div>
+    <h1 class="hf-title" id="s6-title">Đây là kiểu sản phẩm cố giữ được <em class="hl-gradient">tiện dụng kiểu Google Photos</em> nhưng đi theo triết lý privacy first</h1>
+    <div class="hf-card-grid hf-grid-2">
+      <div class="hf-card">
+        <div class="hf-card-heading" id="s6-c1-h">Cho người dùng cá nhân</div>
+        <div class="hf-card-body" id="s6-c1-b">đây là một trong những lựa chọn mạnh nhất nếu bạn muốn ảnh đồng bộ đẹp nhưng không đánh đổi riêng tư quá nhiều.</div>
+      </div>
+      <div class="hf-card">
+        <div class="hf-card-heading" id="s6-c2-h">Cho doanh nghiệp hoặc power user</div>
+        <div class="hf-card-body" id="s6-c2-b">self-host và code mở khiến nó đáng cân nhắc hơn các dịch vụ ảnh đóng.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script>
+window.__timelines = window.__timelines || {};
+const tl = gsap.timeline({ paused: true });
+// Timeline placeholder — compose.py sẽ inject scene fade in/out theo content.timeline
+// Default: 6 scene đều nhau, mỗi scene ~15s
+const SCENE_TIMES = {"s1": {"in": 0, "out": 14}, "s2": {"in": 14, "out": 28}, "s3": {"in": 28, "out": 44}, "s4": {"in": 44, "out": 58}, "s5": {"in": 58, "out": 76}, "s6": {"in": 76, "out": 86}};
+Object.keys(SCENE_TIMES).forEach(sid => {
+  const t = SCENE_TIMES[sid];
+  tl.to('#' + sid, { opacity: 1, duration: 0.5, ease: 'power2.inOut' }, t.in);
+  tl.to('#' + sid, { opacity: 0, duration: 0.5, ease: 'power2.inOut' }, t.out);
+});
+window.__timelines["root"] = tl;
+</script>
+</body>
+</html>

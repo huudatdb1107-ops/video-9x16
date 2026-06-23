@@ -1,28 +1,28 @@
 {
-  "vicon": {
+  "kid": {
     "name": "👶 Vì Con không thể đợi (Brand KID)",
-    "output_dir": "E:\\HuuDat\\VIDEO\\FACEBOOK\\01__Vi_Con",
+    "output_dir": "E:\\HuuDat\\VIDEO\\03_KID",
     "default_voice": "TT_06",
-    "default_template": "01_Text_ViCon",
+    "default_template": "01_Text_KID",
     "brand_watermark": "PK NHI BOOM BOOM",
     "default_hashtag": "#NuoiDayCon",
     "script_master_prompt": ".agent/skills/video-9x16/references/master_prompt_kid.md",
     "note": "Giọng Nữ TT_06 | Nuôi dạy con & Y khoa nhi | Áp dụng Master Prompt Y khoa & Thấu cảm"
   },
-  "gocnho": {
+  "book": {
     "name": "📚 Góc nhỏ - Sách & Đời",
-    "output_dir": "E:\\HuuDat\\VIDEO\\FACEBOOK\\02_Goc_Nho",
+    "output_dir": "E:\\HuuDat\\VIDEO\\02_BOOK",
     "default_voice": "2. PodCast_StickMan",
-    "default_template": "01_Text_ViCon",
+    "default_template": "01_Text_KID",
     "brand_watermark": "GÓC NHỎ",
     "default_hashtag": "#Stoic",
     "note": "Giọng Nam PodCast_StickMan | Stoicism & Sách tinh hoa"
   },
   "bsimple": {
     "name": "🚀 B.Simple",
-    "output_dir": "E:\\HuuDat\\VIDEO\\FACEBOOK\\03_B_Simple",
+    "output_dir": "E:\\HuuDat\\VIDEO\\01_B.Simple",
     "default_voice": "Quang_Cao_SP_Nam_Tre_1",
-    "default_template": "01_Text_ViCon",
+    "default_template": "01_Text_KID",
     "brand_watermark": "B.SIMPLE",
     "default_hashtag": "#AI",
     "note": "Giọng Nam Quang_Cao_SP_Nam_Tre_1 | Vạn Sự Auto & Tech"

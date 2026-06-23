@@ -1,0 +1,84 @@
+{
+  "scenes": {
+    "s1": {
+      "eyebrow": "CẢNH 1",
+      "title": "Em bé năng động nhưng khó tập trung",
+      "byline": "Khi đến trường"
+    },
+    "s2": {
+      "big_text": "7 tuổi",
+      "label": "Nhận diện",
+      "note": "Tăng động, năng lượng dồi dào"
+    },
+    "s3": {
+      "heading": "Hỗ trợ gia đình",
+      "cards": [
+        {
+          "num": "1",
+          "text": "Lịch sinh hoạt ổn định"
+        },
+        {
+          "num": "2",
+          "text": "Thời gian nghỉ ngơi hợp lý"
+        },
+        {
+          "num": "3",
+          "text": "Bài tập nhẹ nhàng"
+        }
+      ]
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "<em class=\"hl-teal\">“Mỗi đứa trẻ đều có cách học riêng, chúng ta chỉ cần tạo môi trường thích hợp.”</em>"
+    },
+    "s5": {
+      "heading": "Bước hành động",
+      "items": [
+        {
+          "text": "Cho phép vận động nhẹ mỗi 30 phút"
+        },
+        {
+          "text": "Sử dụng công cụ quản lý thời gian"
+        },
+        {
+          "text": "Giao tiếp thường xuyên với giáo viên"
+        }
+      ]
+    },
+    "s6": {
+      "title": "Tạo môi trường hỗ trợ cho trẻ tăng động",
+      "sub": "Cùng phụ huynh và giáo viên giúp trẻ phát triển tốt hơn",
+      "hashtag": "#tăngđộng #trẻđộ"
+    }
+  },
+  "voice": {
+    "file": "TT_T06.16_22h27.wav",
+    "duration": 42.62
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 7.1
+    },
+    "s2": {
+      "in": 7.1,
+      "out": 14.21
+    },
+    "s3": {
+      "in": 14.21,
+      "out": 21.31
+    },
+    "s4": {
+      "in": 21.31,
+      "out": 28.41
+    },
+    "s5": {
+      "in": 28.41,
+      "out": 35.52
+    },
+    "s6": {
+      "in": 35.52,
+      "out": 42.62
+    }
+  }
+}

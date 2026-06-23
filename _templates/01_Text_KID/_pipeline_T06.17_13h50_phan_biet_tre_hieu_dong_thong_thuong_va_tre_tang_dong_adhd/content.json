@@ -1,0 +1,89 @@
+{
+  "scenes": {
+    "s1": {
+      "eyebrow": "HIẾU ĐỘNG HAY ADHD?",
+      "title": "Con chỉ <em>hiếu động</em> hay <em>ADHD</em>?",
+      "byline": "Phân biệt và đồng hành đúng cách"
+    },
+    "s2": {
+      "big_text": "BA ĐIỂM",
+      "label": "Phân biệt trẻ hiếu động và trẻ có rối loạn tăng động giảm chú ý",
+      "note": "Ranh giới này quan trọng để có phương pháp đồng hành phù hợp."
+    },
+    "s3": {
+      "heading": "Khác biệt<br>cốt lõi",
+      "cards": [
+        {
+          "num": "1",
+          "text": "Bối cảnh kiểm soát: Trẻ hiếu động có thể <em class=\"hl-teal\">ngồi yên</em> khi hứng thú. Trẻ ADHD <em class=\"hl-orange\">mất kiểm soát</em> ở mọi hoạt động."
+        },
+        {
+          "num": "2",
+          "text": "Khả năng dừng lại: Trẻ hiếu động <em class=\"hl-teal\">tiếp thu</em> lời nhắc và điều chỉnh. Trẻ ADHD <em class=\"hl-orange\">phản ứng bộc phát</em> trước khi xử lý."
+        },
+        {
+          "num": "3",
+          "text": "Tính nhất quán: Hiếu động biểu hiện nơi <em class=\"hl-teal\">quen thuộc.</em> ADHD <em class=\"hl-orange\">nhất quán</em> ở mọi nơi, kéo dài trên sáu tháng."
+        }
+      ],
+      "element_times": {
+        "c1": 16.0,
+        "c2": 29.0,
+        "c3": 14.0
+      }
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Nếu cha mẹ <br>đang phân vân — <br>quan sát trong nhiều <br>bối cảnh, <em class=\"hl-teal\">ghi lại</em> <br>và <em class=\"hl-orange\">chia sẻ</em> với bác sĩ."
+    },
+    "s5": {
+      "heading": "Cùng con<br>khám phá",
+      "items": [
+        {
+          "text": "Chẩn đoán đúng là <em class=\"hl-teal\">bước đầu tiên</em> để <em class=\"hl-orange\">đồng hành</em> đúng."
+        },
+        {
+          "text": "Con không hư, con <em class=\"hl-teal\">chỉ cần</em> được <em class=\"hl-orange\">hiểu đúng</em>."
+        },
+        {
+          "text": "Hãy <em class=\"hl-teal\">kiên nhẫn</em> và <em class=\"hl-orange\">yêu thương</em> mỗi ngày."
+        }
+      ]
+    },
+    "s6": {
+      "title": "Đồng hành cùng con,<br><em>yêu thương</em> và <em>kiên nhẫn</em>",
+      "sub": "Theo dõi BOOM BOOM để không đi một mình — hàng ngàn cha mẹ đang đồng hành cùng con trên hành trình này.",
+      "hashtag": "#ChaMeDongHanh"
+    }
+  },
+  "voice": {
+    "file": "TT_T06.22_06h46.wav",
+    "duration": 73.05
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 7.23
+    },
+    "s2": {
+      "in": 7.23,
+      "out": 12.4
+    },
+    "s3": {
+      "in": 12.4,
+      "out": 37.0
+    },
+    "s4": {
+      "in": 37.0,
+      "out": 56.93
+    },
+    "s5": {
+      "in": 56.93,
+      "out": 68.87
+    },
+    "s6": {
+      "in": 68.87,
+      "out": 73.05
+    }
+  }
+}

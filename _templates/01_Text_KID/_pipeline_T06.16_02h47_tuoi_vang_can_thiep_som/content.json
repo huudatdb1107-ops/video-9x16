@@ -1,0 +1,89 @@
+{
+  "scenes": {
+    "s1": {
+      "eyebrow": "CỬA SỔ VÀNG PHÁT TRIỂN",
+      "title": "Thời gian vàng<br><em>không thể quay lại</em>?",
+      "byline": "Dành cho cha mẹ thông thái"
+    },
+    "s2": {
+      "big_text": "6 TUỔI",
+      "label": "Cửa sổ vàng phát triển não bộ",
+      "note": "Từ sơ sinh đến 6 tuổi, đặc biệt 3 năm đầu đời là giai đoạn não bộ phát triển nhanh và dễ định hình nhất."
+    },
+    "s3": {
+      "heading": "Ba mốc<br><em>quan trọng</em>",
+      "cards": [
+        {
+          "num": "Một",
+          "text": "<em class=\"hl-teal\">18 tháng</em>: Con chưa nói từ đơn, chưa phản ứng với tên, chưa giao tiếp bằng mắt. Cần gặp chuyên gia <em class=\"hl-orange\">ngay lập tức</em>."
+        },
+        {
+          "num": "Hai",
+          "text": "<em class=\"hl-teal\">2-3 tuổi</em>: Chưa ghép câu hai từ, ít chơi giả vờ, hành vi lặp lại kéo dài. Chờ đợi làm <em class=\"hl-orange\">thu hẹp cơ hội</em> can thiệp."
+        },
+        {
+          "num": "Ba",
+          "text": "<em class=\"hl-teal\">4-6 tuổi</em>: Khó hòa nhập, tập trung ngắn, kỹ năng tự phục vụ chậm. Vẫn còn trong cửa sổ vàng, <em class=\"hl-orange\">đừng để muộn hơn</em>."
+        }
+      ],
+      "element_times": {
+        "c1": 26.0,
+        "c2": 37.0,
+        "c3": 47.0
+      }
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Can thiệp sớm không<br>có nghĩa là con có vấn đề.<br>Nó có nghĩa là cha mẹ<br><em class=\"hl-teal\">đủ tỉnh táo</em><br>để cho con <em class=\"hl-orange\">cơ hội tốt nhất</em>."
+    },
+    "s5": {
+      "heading": "Đồng hành cùng con,<br><em>yêu thương</em> và <em>thấu hiểu</em>",
+      "items": [
+        {
+          "text": "Cha mẹ <em class=\"hl-teal\">quan sát</em> để nhận biết <em class=\"hl-orange\">sớm tín</em> hiệu."
+        },
+        {
+          "text": "Tìm kiếm sự hỗ <em class=\"hl-teal\">trợ chuyên</em> nghiệp <em class=\"hl-orange\">kịp thời</em>."
+        },
+        {
+          "text": "Tạo môi trường <em class=\"hl-teal\">yêu thương</em>, khích lệ để con <em class=\"hl-orange\">phát triển</em>."
+        }
+      ]
+    },
+    "s6": {
+      "title": "Hành trình<br><em>không đơn độc</em>",
+      "sub": "Theo dõi kênh BOOM BOOM để nhận thêm kiến thức và sự đồng hành từ hàng ngàn cha mẹ khác.",
+      "hashtag": "#phattriencon"
+    }
+  },
+  "voice": {
+    "file": "TT_T06.22_06h43.wav",
+    "duration": 76.35
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 3.8
+    },
+    "s2": {
+      "in": 3.8,
+      "out": 16.27
+    },
+    "s3": {
+      "in": 16.27,
+      "out": 52.9
+    },
+    "s4": {
+      "in": 52.9,
+      "out": 66.27
+    },
+    "s5": {
+      "in": 66.27,
+      "out": 76.0
+    },
+    "s6": {
+      "in": 76.0,
+      "out": 76.35
+    }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "scenes": {
+    "s1": {
+      "eyebrow": "DẤU HIỆU CHẬM BẬT ÂM",
+      "title": "Nhận biết sớm <em class=\"hl-orange\">dấu hiệu cảnh báo</em> chậm phát triển ngôn ngữ ở trẻ",
+      "byline": "Theo dõi Bom Bom để nhận thêm mẹo nuôi dạy con"
+    },
+    "s2": {
+      "big_text": "Ba",
+      "label": "Dấu hiệu cha mẹ cần đặc biệt chú ý",
+      "note": "Quan sát tỉ mỉ từng mốc phát triển ngôn ngữ của con mỗi ngày"
+    },
+    "s3": {
+      "heading": "Dấu hiệu cảnh báo",
+      "cards": [
+        {
+          "num": "Một",
+          "text": "Con <em class=\"hl-teal\">mười hai tháng tuổi</em> nhưng không phản ứng khi được gọi tên."
+        },
+        {
+          "num": "Hai",
+          "text": "Con <em class=\"hl-teal\">mười tám tháng tuổi</em> nhưng chưa bật âm từ đơn giản như 'ba', 'mẹ'."
+        },
+        {
+          "num": "Ba",
+          "text": "Con <em class=\"hl-teal\">hai tuổi</em> nhưng vốn từ hạn chế, lặp lại lời nói máy móc."
+        }
+      ]
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Sự đồng hành kiên nhẫn của cha mẹ trong giai đoạn vàng<br>quyết định rất lớn đến sự phát triển não bộ<br>và khả năng giao tiếp của trẻ."
+    },
+    "s5": {
+      "heading": "Hỗ trợ con tại nhà",
+      "items": [
+        {
+          "text": "Tích cực trò chuyện, gọi tên con trong hoạt động hàng ngày."
+        },
+        {
+          "text": "Đọc sách cùng con, khuyến khích con chỉ tay vào hình vẽ."
+        },
+        {
+          "text": "Hạn chế tối đa việc cho con tiếp xúc một chiều với <em class=\"hl-cyan\">tivi, điện thoại</em>."
+        }
+      ]
+    },
+    "s6": {
+      "title": "Lắng nghe và thấu hiểu là món quà lớn nhất",
+      "sub": "Nhấn theo dõi Bom Bom để nhận thêm mẹo nuôi dạy con khoa học và hiệu quả.",
+      "hashtag": "#NuoiDayCon"
+    }
+  },
+  "voice": {
+    "file": "TT_T06.17_13h42.wav",
+    "duration": 76.94
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 0.95
+    },
+    "s2": {
+      "in": 0.95,
+      "out": 1.9
+    },
+    "s3": {
+      "in": 1.9,
+      "out": 2.86
+    },
+    "s4": {
+      "in": 2.86,
+      "out": 3.81
+    },
+    "s5": {
+      "in": 3.81,
+      "out": 4.76
+    },
+    "s6": {
+      "in": 4.76,
+      "out": 76.94
+    }
+  },
+  "brand_watermark": "PK NHI BOOM BOOM"
+}

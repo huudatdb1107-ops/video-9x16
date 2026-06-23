@@ -1,0 +1,85 @@
+{
+  "scenes": {
+    "s1": {
+      "eyebrow": "DẤU HIỆU TỰ KỶ SỚM",
+      "title": "Phát hiện sớm <em class=\"hl-teal\">tự kỷ</em> ở trẻ dưới hai tuổi, cơ hội vàng can thiệp và hòa nhập.",
+      "byline": "Cùng Bom Bom tìm hiểu"
+    },
+    "s2": {
+      "big_text": "ba",
+      "label": "Biểu hiện cảnh báo sớm mà mẹ cần chú ý:",
+      "note": "Nhiều cha mẹ chủ quan cho rằng con chỉ trầm tính hoặc phát triển chậm."
+    },
+    "s3": {
+      "heading": "Ba biểu hiện cảnh báo:",
+      "cards": [
+        {
+          "num": "một",
+          "text": "Con <em class=\"hl-orange\">không giao tiếp bằng mắt</em> khi bú mẹ hoặc trò chuyện trực diện."
+        },
+        {
+          "num": "hai",
+          "text": "Mười tám tháng tuổi nhưng con <em class=\"hl-orange\">không biết dùng ngón trỏ chỉ vào đồ vật</em>."
+        },
+        {
+          "num": "ba",
+          "text": "Con <em class=\"hl-orange\">không phản ứng khi gọi tên</em>, nhưng nhạy cảm với tiếng động từ tivi."
+        }
+      ]
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Tự kỷ không phải là <em class=\"hl-teal\">bệnh lý</em> do cách nuôi dạy, mà là một sự khác biệt thần kinh cần được thấu cảm và đồng hành khoa học."
+    },
+    "s5": {
+      "heading": "Ba giải pháp hỗ trợ con tại nhà:",
+      "items": [
+        {
+          "text": "Dành thời gian chơi <em class=\"hl-cyan\">tương tác hai chiều</em> với con, ví dụ ú òa."
+        },
+        {
+          "text": "Nói chuyện <em class=\"hl-cyan\">chậm rãi, rõ ràng</em> và sử dụng hình ảnh trực quan minh họa."
+        },
+        {
+          "text": "Đưa con đi <em class=\"hl-cyan\">khám chuyên khoa nhi</em> ngay khi nhận thấy bất thường."
+        }
+      ]
+    },
+    "s6": {
+      "title": "Đồng hành cùng con <em class=\"hl-orange\">từ những bước đi đầu tiên</em>, xây dựng tương lai vững chắc.",
+      "sub": "Bom Bom - Mẹo nuôi con hữu ích dành cho mẹ.",
+      "hashtag": "#NuoiDayCon"
+    }
+  },
+  "voice": {
+    "file": "TT_T06.17_14h32.wav",
+    "duration": 77.05
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 0.0
+    },
+    "s2": {
+      "in": 0.0,
+      "out": 0.0
+    },
+    "s3": {
+      "in": 0.0,
+      "out": 0.0
+    },
+    "s4": {
+      "in": 0.0,
+      "out": 0.0
+    },
+    "s5": {
+      "in": 0.0,
+      "out": 0.0
+    },
+    "s6": {
+      "in": 0.0,
+      "out": 77.05
+    }
+  },
+  "brand_watermark": "PK NHI BOOM BOOM"
+}

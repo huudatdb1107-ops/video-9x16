@@ -1,0 +1,88 @@
+{
+  "scenes": {
+    "s1": {
+      "eyebrow": "LÀM SAO ĐỂ CON",
+      "title": "<em>Cuộc chiến</em> màn hình<br><em>cha mẹ thắng</em>?",
+      "byline": "Bạn đang gặp khó khăn?"
+    },
+    "s2": {
+      "big_text": "NGHIỆN",
+      "label": "Thiết bị được thiết kế để gây nghiện",
+      "note": "Não trẻ em càng dễ bị cuốn hơn nhiều."
+    },
+    "s3": {
+      "heading": "Dấu hiệu con<br>bị màn hình kiểm soát",
+      "cards": [
+        {
+          "num": "MỘT",
+          "text": "Con <em class=\"hl-teal\">nổi cáu</em>, gào khóc<br>hoặc chống đối khi <em class=\"hl-orange\">bị tắt</em> máy."
+        },
+        {
+          "num": "HAI",
+          "text": "Con giảm giao tiếp mắt,<br>ít hứng thú <em class=\"hl-teal\">với đồ</em> chơi."
+        },
+        {
+          "num": "BA",
+          "text": "Con khó ngủ, ngủ không sâu,<br>hay cáu <em class=\"hl-teal\">kỉnh buổi</em> sáng."
+        }
+      ],
+      "element_times": {
+        "c1": 32.84,
+        "c2": 40.76
+      }
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Cai nghiện màn hình<br>không phải cấm đột ngột<br>mà là thay thế<br><em class=\"hl-teal\">có kế</em> hoạch."
+    },
+    "s5": {
+      "heading": "Thay thế có kế hoạch",
+      "items": [
+        {
+          "text": "Thời gian <em class=\"hl-teal\">chơi cùng cha mẹ</em><br>cần <em class=\"hl-orange\">được lên</em> lịch."
+        },
+        {
+          "text": "<em class=\"hl-teal\">Vận động ngoài trời</em><br>cho con năng <em class=\"hl-orange\">lượng tích</em> cực."
+        },
+        {
+          "text": "<em class=\"hl-teal\">Đọc sách</em> cùng con,<br>kết nối <em class=\"hl-orange\">yêu thương</em>."
+        }
+      ]
+    },
+    "s6": {
+      "title": "Cha mẹ cất điện thoại,<br><em>con sẽ học theo</em>",
+      "sub": "Hãy chủ động thay đổi để con bạn có một tuổi thơ<br>trọn vẹn, không phụ thuộc vào màn hình.",
+      "hashtag": "#ChaMeDongHanh"
+    }
+  },
+  "voice": {
+    "file": "TT_T06.22_06h50.wav",
+    "duration": 80.76
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 6.8
+    },
+    "s2": {
+      "in": 6.8,
+      "out": 27.07
+    },
+    "s3": {
+      "in": 27.07,
+      "out": 43.8
+    },
+    "s4": {
+      "in": 43.8,
+      "out": 63.17
+    },
+    "s5": {
+      "in": 63.17,
+      "out": 72.17
+    },
+    "s6": {
+      "in": 72.17,
+      "out": 80.76
+    }
+  }
+}

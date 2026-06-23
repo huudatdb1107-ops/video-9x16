@@ -1,0 +1,206 @@
+{
+  "_comment": "Schema content cho template 01_Text. AI hoặc Boss fill file content.json theo schema này → compose.py ráp với skeleton.html + style-tokens.json → output HTML render-ready.",
+  "$schema": "01_Text-v1",
+  "required_scenes": [
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5",
+    "s6"
+  ],
+  "scenes": {
+    "s1": {
+      "name": "Hook",
+      "fields": {
+        "eyebrow": {
+          "type": "string",
+          "max_len": 30,
+          "uppercase": true
+        },
+        "title": {
+          "type": "html",
+          "max_len": 80,
+          "allow_em": [
+            "hl-orange",
+            "hl-teal"
+          ]
+        },
+        "byline": {
+          "type": "string",
+          "max_len": 50
+        }
+      }
+    },
+    "s2": {
+      "name": "Khái niệm / Stat",
+      "fields": {
+        "big_text": {
+          "type": "string",
+          "max_len": 8,
+          "note": "Có thể là số (1/36) hoặc text ngắn (ADHD)"
+        },
+        "label": {
+          "type": "string",
+          "max_len": 60
+        },
+        "note": {
+          "type": "string",
+          "max_len": 100
+        }
+      }
+    },
+    "s3": {
+      "name": "List 3 cards có số",
+      "fields": {
+        "heading": {
+          "type": "string",
+          "max_len": 30
+        },
+        "cards": {
+          "type": "array",
+          "length": 3,
+          "item": {
+            "num": "string",
+            "text": "html (allow_em)"
+          }
+        }
+      }
+    },
+    "s4": {
+      "name": "Quote",
+      "fields": {
+        "quote_mark": {
+          "type": "string",
+          "max_len": 2,
+          "default": "✦"
+        },
+        "quote_html": {
+          "type": "html",
+          "max_len": 200,
+          "allow_em": true,
+          "allow_br": true
+        }
+      }
+    },
+    "s5": {
+      "name": "List 3 actions có dot",
+      "fields": {
+        "heading": {
+          "type": "string",
+          "max_len": 30
+        },
+        "items": {
+          "type": "array",
+          "length": 3,
+          "item": {
+            "text": "html (allow_em)"
+          }
+        }
+      }
+    },
+    "s6": {
+      "name": "CTA / Closing",
+      "fields": {
+        "title": {
+          "type": "html",
+          "max_len": 80,
+          "allow_em": [
+            "hl-orange"
+          ]
+        },
+        "sub": {
+          "type": "string",
+          "max_len": 120
+        },
+        "hashtag": {
+          "type": "string",
+          "max_len": 30,
+          "starts_with": "#"
+        }
+      }
+    }
+  },
+  "voice": {
+    "file": "TT_T06.22_06h43.wav",
+    "duration": 79.89
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 13.3
+    },
+    "s2": {
+      "in": 13.3,
+      "out": 26.63
+    },
+    "s3": {
+      "in": 26.63,
+      "out": 39.93
+    },
+    "s4": {
+      "in": 39.93,
+      "out": 53.27
+    },
+    "s5": {
+      "in": 53.27,
+      "out": 66.57
+    },
+    "s6": {
+      "in": 66.57,
+      "out": 79.89
+    }
+  },
+  "content": {
+    "s1": {
+      "eyebrow": "DẤU HIỆU CẦN BIẾT",
+      "title": "Con <br><em>hiếu động</em> hay <em>khác biệt</em>?",
+      "byline": "Dành cho cha mẹ tinh tế"
+    },
+    "s2": {
+      "big_text": "1 TRÊN 6",
+      "label": "Trẻ có biểu hiện chậm phát triển",
+      "note": "Theo thống kê của WHO, 80% không được phát hiện trước 3 tuổi."
+    },
+    "s3": {
+      "heading": "Ba giai đoạn<br>vàng quan sát",
+      "cards": [
+        {
+          "num": "1",
+          "text": "Từ 12-18 tháng: Con chưa bập bẹ, chưa chỉ tay,<br>không quay đầu khi nghe gọi tên. Phản xạ xã hội là dấu chỉ sớm nhất, <em>đừng bỏ qua</em>."
+        },
+        {
+          "num": "2",
+          "text": "Từ 2-3 tuổi: Con chưa nói câu hai từ, ít giao tiếp mắt,<br>hành vi lặp lại. <em>Kích thích ngôn ngữ</em> giai đoạn này rất quan trọng."
+        },
+        {
+          "num": "3",
+          "text": "Từ 3-5 tuổi: Con khó hòa nhập, chậm tự phục vụ<br>(cầm thìa, mặc áo, vệ sinh). <em>Thấu hiểu</em> từng bước nhỏ."
+        }
+      ]
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Khi nghi ngờ,<br>đừng chờ.<br>Đừng tự an ủi.<br>Hãy ghi lại <em>những gì quan sát</em> và đi gặp chuyên gia."
+    },
+    "s5": {
+      "heading": "Hành động<br>khi nghi ngờ",
+      "items": [
+        {
+          "text": "Đừng chờ đợi, <em>hãy hành động</em> sớm."
+        },
+        {
+          "text": "Quan sát và ghi lại <em>những biểu hiện</em> của con."
+        },
+        {
+          "text": "Tìm đến chuyên gia để được <em>đánh giá chính xác</em>."
+        }
+      ]
+    },
+    "s6": {
+      "title": "Phát hiện sớm,<br><em>trao con lợi thế</em>",
+      "sub": "Đồng hành cùng con trên hành trình phát triển, với tình yêu thương và sự kiên nhẫn.",
+      "hashtag": "#ChaMeDongHanh"
+    }
+  }
+}

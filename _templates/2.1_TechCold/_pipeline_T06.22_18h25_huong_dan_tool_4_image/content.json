@@ -1,0 +1,125 @@
+{
+  "global_fields": {
+    "topic": "Tool 4_IMAGE",
+    "footer_brand": "B.SIMPLE"
+  },
+  "scenes": {
+    "s1": {
+      "eyebrow": "KHÓ HƠN BAO GIỜ HẾT",
+      "title": "Tự động hóa<br><em>chuyển ý tưởng</em> thành hình ảnh",
+      "device_image": "device_mockup.png",
+      "device_alt": "Mockup điện thoại"
+    },
+    "s2": {
+      "eyebrow": "CÔNG NGHỆ ĐỘT PHÁ",
+      "title": "Biến Hàng Trăm Ảnh<br>Thành Video Chuyên Nghiệp",
+      "cards": [
+        {
+          "heading": "Text sang Image",
+          "body": "Từ <em>lời mô tả</em>, tạo hàng trăm ảnh đồng nhất phong cách."
+        },
+        {
+          "heading": "Image sang Video",
+          "body": "Biến ảnh tĩnh thành <em>video chuyển động</em> ngắn ấn tượng."
+        }
+      ]
+    },
+    "s3": {
+      "eyebrow": "QUY TRÌNH THÔNG MINH",
+      "title": "Dễ Dàng Hơn<br><em>Chỉ với 5 Bước</em>",
+      "cards": [
+        {
+          "heading": "Bước 1",
+          "subtitle": "ĐĂNG NHẬP",
+          "body": "Chọn <em>profile Chrome</em> đã đăng nhập labs.google."
+        },
+        {
+          "heading": "Bước 2",
+          "subtitle": "NHÂN VẬT",
+          "body": "Thiết lập <em>Characters</em> để giữ khuôn mặt nhân vật đồng nhất."
+        },
+        {
+          "heading": "Bước 3",
+          "subtitle": "TẠO ẢNH",
+          "body": "Nhập prompt, chọn model, bấm <em>START</em> để sinh ảnh."
+        },
+        {
+          "heading": "Bước 4",
+          "subtitle": "TẠO VIDEO",
+          "body": "Upload ảnh, nhập prompt chuyển động, bấm <em>START</em>."
+        }
+      ]
+    },
+    "s4": {
+      "eyebrow": "CHẤT LƯỢNG CAO",
+      "title": "Duyệt từng item,<br><em>chọn lọc</em> sản phẩm",
+      "left_image": "approve_icon.png",
+      "left_caption": "Approve",
+      "left_sublabel": "Giữ lại",
+      "right_image": "regen_icon.png",
+      "right_caption": "Regen",
+      "right_sublabel": "Tạo lại"
+    },
+    "s5": {
+      "eyebrow": "TÍCH HỢP LIỀN MẠCH",
+      "title": "Output <em>gom gọn</em>,<br>sẵn sàng cho mọi dự án",
+      "bullets": [
+        "Folder dự án <em>chuyên nghiệp</em>",
+        "Ba thư mục: images, videos, uploads",
+        "Dễ dàng nạp vào <em>TIME_CC</em>",
+        "Tích hợp CapCut cho <em>chỉnh sửa cuối</em>"
+      ],
+      "stat": {
+        "number": "100%",
+        "label": "TỰ ĐỘNG HÓA",
+        "body": "Giữ quyền <em>duyệt từng tấm</em>, bạn làm chủ mọi thứ."
+      }
+    },
+    "s6": {
+      "eyebrow": "ĐỂ TÔI LO",
+      "title": "Công việc nặng,<br><em>bạn là người quyết định</em>",
+      "cards": [
+        {
+          "heading": "B.SIMPLE",
+          "body": "Tự động hóa quy trình, <em>tối ưu thời gian</em> cho bạn."
+        },
+        {
+          "heading": "Tập trung vào ý tưởng",
+          "body": "Hãy để <em>công nghệ</em> làm điều đó."
+        }
+      ],
+      "hashtag": "#AI"
+    }
+  },
+  "voice": {
+    "file": "TT_T06.22_18h25.wav",
+    "duration": 76.12
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 9.0
+    },
+    "s2": {
+      "in": 9.0,
+      "out": 12.0
+    },
+    "s3": {
+      "in": 12.0,
+      "out": 29.73
+    },
+    "s4": {
+      "in": 29.73,
+      "out": 59.23
+    },
+    "s5": {
+      "in": 59.23,
+      "out": 67.93
+    },
+    "s6": {
+      "in": 67.93,
+      "out": 76.12
+    }
+  },
+  "brand_watermark": "B.SIMPLE"
+}

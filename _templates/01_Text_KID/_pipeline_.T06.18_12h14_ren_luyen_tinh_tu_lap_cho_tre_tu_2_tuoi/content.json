@@ -1,0 +1,97 @@
+{
+  "_comment": "Content fill manual cho script 'Rèn luyện tính tự lập cho trẻ từ 2 tuổi' — schema 01_Text_ViCon v1.",
+  "topic": "Rèn luyện tính tự lập cho trẻ từ 2 tuổi",
+  "language": "vi",
+  "scenes": {
+    "s1": {
+      "eyebrow": "Yêu thương đúng cách",
+      "title": "Đừng <em class=\"hl-orange\">làm hộ</em> — hãy để con <em class=\"hl-orange\">tự lập</em>",
+      "byline": "Tự lập là bệ phóng vững chãi cho con vào đời"
+    },
+    "s2": {
+      "big_text": "Từ 2 tuổi",
+      "label": "Con đã có nhu cầu khẳng định bản thân",
+      "note": "Con muốn tự làm mọi thứ để khám phá năng lực — đừng vì thấy chậm mà làm thay."
+    },
+    "s3": {
+      "heading": "Ba việc nên để con tự làm mỗi ngày",
+      "cards": [
+        {
+          "num": "01",
+          "text": "Tự cất <em class=\"hl-orange\">đồ chơi</em> vào rổ — hình thành thói quen <em class=\"hl-teal\">ngăn nắp</em>"
+        },
+        {
+          "num": "02",
+          "text": "Tự <em class=\"hl-orange\">xúc ăn</em> dù rơi vãi — rèn luyện sự <em class=\"hl-teal\">khéo léo</em>"
+        },
+        {
+          "num": "03",
+          "text": "Tự đi <em class=\"hl-orange\">giày</em> và cất <em class=\"hl-orange\">ba lô</em> đúng nơi quy định"
+        }
+      ],
+      "element_times": {
+        "c2": 24.72,
+        "c3": 29.84
+      }
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Yêu thương con đúng cách là chuẩn bị cho con một <em>đôi cánh tự tin</em>,<br>để con tự đi trên <em>đôi chân của mình</em>."
+    },
+    "s5": {
+      "heading": "Ba nguyên tắc giúp con tự lập",
+      "items": [
+        {
+          "text": "Luôn <em class=\"hl-teal\">kiên nhẫn</em> — không sốt ruột làm thay khi thấy con <em class=\"hl-orange\">chậm</em>"
+        },
+        {
+          "text": "Chia nhỏ công việc phức tạp thành <em class=\"hl-orange\">các bước đơn giản</em>"
+        },
+        {
+          "text": "Dành <em class=\"hl-teal\">lời khen cụ thể</em> cho mỗi cố gắng tự lập của con"
+        }
+      ],
+      "element_times": {
+        "i2": 52.64,
+        "i3": 57.56
+      }
+    },
+    "s6": {
+      "title": "Tự lập — <em>bệ phóng cho con</em>",
+      "sub": "Nhấn theo dõi kênh để nhận thêm nhiều mẹo nuôi dạy con bổ ích.",
+      "hashtag": "#NuoiDayCon"
+    }
+  },
+  "voice": {
+    "file": "TT_T06.18_15h04.wav",
+    "duration": 70.07
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 11.68
+    },
+    "s2": {
+      "in": 11.68,
+      "out": 23.36
+    },
+    "s3": {
+      "in": 23.36,
+      "out": 35.03
+    },
+    "s4": {
+      "in": 35.03,
+      "out": 46.71
+    },
+    "s5": {
+      "in": 46.71,
+      "out": 58.39
+    },
+    "s6": {
+      "in": 58.39,
+      "out": 70.07
+    }
+  },
+  "brand_watermark": "PK NHI BOOM BOOM",
+  "tagline_footer": "HÀNH TRÌNH KIÊN TRÌ CÙNG CON VƯỢT KHÓ"
+}

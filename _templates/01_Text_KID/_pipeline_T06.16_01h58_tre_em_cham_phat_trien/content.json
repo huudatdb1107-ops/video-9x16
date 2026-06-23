@@ -1,0 +1,88 @@
+{
+  "scenes": {
+    "s1": {
+      "eyebrow": "THÔNG ĐIỆP QUAN TRỌNG",
+      "title": "Con chỉ<br><em>chậm nói</em> hay <em>chậm phát triển</em>?",
+      "byline": "Dành cho mẹ có con hai tuổi rưỡi"
+    },
+    "s2": {
+      "big_text": "TÍN HIỆU",
+      "label": "Não bộ con cần thêm hỗ trợ",
+      "note": "Khoa học đã chứng minh: can thiệp đúng giai đoạn có thể thay đổi hoàn toàn quỹ đạo phát triển của trẻ."
+    },
+    "s3": {
+      "heading": "Ba dấu hiệu<br>cần để ý",
+      "cards": [
+        {
+          "num": "01",
+          "text": "Chưa nói được từ đơn khi 18 tháng,<br>hoặc nói rồi nhưng đột nhiên mất đi. Đây là dấu hiệu quan trọng nhất, không <em class=\"hl-teal\">nên chờ</em> thêm.<br><em class=\"hl-orange\">Hành động</em> ngay hôm nay."
+        },
+        {
+          "num": "02",
+          "text": "Ít phản ứng khi gọi tên, ánh mắt ít tiếp xúc,<br>thích chơi một mình theo cách lặp <em class=\"hl-teal\">đi lặp</em> lại.<br><em class=\"hl-orange\">Thấu hiểu</em> cách xử lý thế giới của con."
+        },
+        {
+          "num": "03",
+          "text": "Chậm đạt mốc vận động hoặc tự phục vụ.<br>Hệ thần kinh đang cần được kích <em class=\"hl-teal\">hoạt đúng</em> cách.<br><em class=\"hl-orange\">Hỗ trợ</em> con kịp thời."
+        }
+      ],
+      "element_times": {
+        "c1": 35.04,
+        "c2": 45.52
+      }
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Mẹ không cần<br>hoàn hảo.<br>Mẹ chỉ cần<br><em class=\"hl-teal\">ở đó</em> —<br><em class=\"hl-orange\">đúng lúc</em>."
+    },
+    "s5": {
+      "heading": "Mẹ cần làm gì?",
+      "items": [
+        {
+          "text": "Quan sát và ghi lại<br>những gì con làm được và <em class=\"hl-teal\">chưa làm</em> được.<br><em class=\"hl-orange\">Dữ liệu quý giá</em>."
+        },
+        {
+          "text": "Đưa con đến gặp chuyên gia<br>để được tư vấn <em class=\"hl-teal\">và hỗ</em> trợ<br><em class=\"hl-orange\">phù hợp nhất</em>."
+        },
+        {
+          "text": "Giữ vững <em class=\"hl-teal\">niềm tin</em> và sự <em class=\"hl-orange\">kiên nhẫn</em>,<br>mẹ không đơn độc trên hành trình này."
+        }
+      ]
+    },
+    "s6": {
+      "title": "Đồng hành cùng con,<br><em>yêu thương</em> và <em>kiên nhẫn</em>",
+      "sub": "Theo dõi kênh để không đi một mình — hàng ngàn cha mẹ đang đồng hành cùng con trên hành trình này.",
+      "hashtag": "#mevabe"
+    }
+  },
+  "voice": {
+    "file": "TT_T06.22_06h42.wav",
+    "duration": 89.8
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 16.17
+    },
+    "s2": {
+      "in": 16.17,
+      "out": 29.97
+    },
+    "s3": {
+      "in": 29.97,
+      "out": 62.03
+    },
+    "s4": {
+      "in": 62.03,
+      "out": 83.83
+    },
+    "s5": {
+      "in": 83.83,
+      "out": 89.73
+    },
+    "s6": {
+      "in": 89.73,
+      "out": 89.8
+    }
+  }
+}

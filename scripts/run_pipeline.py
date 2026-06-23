@@ -1,4 +1,4 @@
-"""run_pipeline.py — orchestrator chính cho skill VIDEO-9X16-Br.
+﻿"""run_pipeline.py — orchestrator chính cho skill VIDEO-9X16-Br.
 
 Pipeline 8 bước:
   1. Match template (heuristic)
@@ -42,11 +42,11 @@ except Exception as _e:
 # Fallback
 if not PAGE_PROFILES:
     PAGE_PROFILES = {
-        "vicon": {
+        "kid": {
             "name": "👶 Vì Con không thể đợi",
-            "output_dir": r"E:\HuuDat\VIDEO\FACEBOOK\01__Vi_Con",
+            "output_dir": r"E:\HuuDat\VIDEO\03_KID",
             "default_voice": "TT_06",
-            "default_template": "01_Text_ViCon",
+            "default_template": "01_Text_KID",
             "brand_watermark": "PK NHI BOOM BOOM",
             "default_hashtag": "#NuoiDayCon"
         }

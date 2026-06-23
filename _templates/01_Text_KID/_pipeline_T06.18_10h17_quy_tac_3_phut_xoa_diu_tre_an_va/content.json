@@ -1,0 +1,84 @@
+{
+  "scenes": {
+    "s1": {
+      "eyebrow": "KHÓC GIỮA SIÊU THỊ",
+      "title": "Con chỉ<br><em>gào thét</em> hay <em>mất kiểm soát</em>?",
+      "byline": "Đừng vội phán xét con bạn"
+    },
+    "s2": {
+      "big_text": "TRÍ NÃO OFFLINE",
+      "label": "Khi con ăn vạ, vỏ não trước trán tạm thời 'tắt'",
+      "note": "Con không chọn làm xấu, con đang bị cảm xúc nhấn chìm."
+    },
+    "s3": {
+      "heading": "3 Bước<br>Thấu cảm",
+      "cards": [
+        {
+          "num": "1",
+          "text": "<em class=\"hl-teal\">Hạ mình</em> ngang tầm mắt con.<br>Hít thở sâu, <em class=\"hl-orange\">giữ bình</em> tĩnh."
+        },
+        {
+          "num": "2",
+          "text": "<em class=\"hl-teal\">Kết nối</em> bằng cái ôm nhẹ.<br>Da kề da giúp <em class=\"hl-orange\">con hạ</em> nhiệt."
+        },
+        {
+          "num": "3",
+          "text": "<em class=\"hl-teal\">Gọi tên</em> cảm xúc: «Con tức vì...»<br>Giúp cường độ cảm <em class=\"hl-orange\">xúc giảm</em> đi."
+        }
+      ]
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Khi con<br>có hành <em class=\"hl-teal\">vi<br>tệ</em> nhất<br><em class=\"hl-orange\">là lúc con cần bạn nhất</em>."
+    },
+    "s5": {
+      "heading": "Hành trình<br>Đồng hành",
+      "items": [
+        {
+          "text": "<em class=\"hl-teal\">Kiên nhẫn</em> và <em class=\"hl-orange\">thấu hiểu</em>,<br>cùng con vượt qua cảm xúc."
+        },
+        {
+          "text": "Xây dựng <em class=\"hl-teal\">niềm tin</em> và <em class=\"hl-orange\">sự an toàn</em>,<br>cho con chỗ dựa vững chắc."
+        },
+        {
+          "text": "<em class=\"hl-teal\">Học cách</em> <em class=\"hl-orange\">hỗ trợ</em> con,<br>nhận ra những tín hiệu tinh tế."
+        }
+      ]
+    },
+    "s6": {
+      "title": "Đồng hành cùng con,<br><em>Yêu thương</em> và <em>Kiên nhẫn</em>",
+      "sub": "Tìm hiểu thêm về tâm lý trẻ nhỏ và cách làm cha mẹ tích cực. Hãy theo dõi chúng tôi!",
+      "hashtag": "#ChaMeDongHanh"
+    }
+  },
+  "voice": {
+    "file": "TT_T06.22_06h49.wav",
+    "duration": 84.61
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 21.8
+    },
+    "s2": {
+      "in": 21.8,
+      "out": 25.67
+    },
+    "s3": {
+      "in": 25.67,
+      "out": 51.03
+    },
+    "s4": {
+      "in": 51.03,
+      "out": 78.0
+    },
+    "s5": {
+      "in": 78.0,
+      "out": 85.0
+    },
+    "s6": {
+      "in": 85.0,
+      "out": 84.61
+    }
+  }
+}

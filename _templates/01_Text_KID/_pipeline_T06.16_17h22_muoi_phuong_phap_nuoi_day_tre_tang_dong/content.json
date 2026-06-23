@@ -1,0 +1,87 @@
+{
+  "scenes": {
+    "s1": {
+      "eyebrow": "CHA MẸ CẦN BIẾT",
+      "title": "Con tăng động<br><em>cần cha mẹ</em> thấu hiểu",
+      "byline": "Theo Viện Sức khỏe Tâm thần Quốc gia Mỹ"
+    },
+    "s2": {
+      "big_text": "3",
+      "label": "GIẢI PHÁP CHO CON TĂNG ĐỘNG",
+      "note": "Can thiệp sớm giúp trẻ hòa nhập tốt hơn"
+    },
+    "s3": {
+      "heading": "3 Nhóm Giải Pháp",
+      "cards": [
+        {
+          "num": "01",
+          "text": "Tạo <em class=\"hl-teal\">cấu trúc</em> nhất quán: Lịch trình trực quan, góc học <em class=\"hl-orange\">tập tối</em> giản."
+        },
+        {
+          "num": "02",
+          "text": "Chia nhỏ nhiệm vụ & nghỉ ngơi: Nhiệm vụ 10-15 <em class=\"hl-teal\">phút, cho</em> con <em class=\"hl-orange\">vận động</em> nhu cầu não."
+        },
+        {
+          "num": "03",
+          "text": "<em class=\"hl-teal\">Kỷ luật</em> tích cực: Khen ngợi hành vi tốt, <em class=\"hl-orange\">lắng nghe</em> 15 phút mỗi ngày."
+        }
+      ],
+      "element_times": {
+        "c3": 19.02
+      }
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Sự <em class=\"hl-teal\">kiên nhẫn</em><br>của cha mẹ hôm nay<br>là nền móng con đứng <em class=\"hl-orange\">vững<br>ngày</em> mai."
+    },
+    "s5": {
+      "heading": "Hành Động Ngay Hôm Nay",
+      "items": [
+        {
+          "text": "Áp dụng lịch <em class=\"hl-teal\">trình trực</em> quan, <em class=\"hl-orange\">tạo không gian</em> học tập."
+        },
+        {
+          "text": "Chia nhỏ bài <em class=\"hl-teal\">tập, cho</em> con <em class=\"hl-orange\">nghỉ ngơi</em> đúng lúc."
+        },
+        {
+          "text": "<em class=\"hl-teal\">Lắng nghe</em> con mỗi ngày, <em class=\"hl-orange\">khen ngợi</em> hành vi tích cực."
+        }
+      ]
+    },
+    "s6": {
+      "title": "Đồng hành cùng con,<br><em>yêu thương</em> và kiên nhẫn",
+      "sub": "Nhấn theo dõi BOOM BOOM để nhận thêm kiến thức nuôi dạy con hiệu quả và <em>kết nối</em> với cộng đồng.",
+      "hashtag": "#nuoidaycon"
+    }
+  },
+  "voice": {
+    "file": "TT_T06.22_06h45.wav",
+    "duration": 69.33
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 2.47
+    },
+    "s2": {
+      "in": 2.47,
+      "out": 13.57
+    },
+    "s3": {
+      "in": 13.57,
+      "out": 47.73
+    },
+    "s4": {
+      "in": 47.73,
+      "out": 63.3
+    },
+    "s5": {
+      "in": 63.3,
+      "out": 67.17
+    },
+    "s6": {
+      "in": 67.17,
+      "out": 69.33
+    }
+  }
+}

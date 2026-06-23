@@ -1,0 +1,106 @@
+{
+  "_comment": "Schema content cho template 01_Text. AI hoặc Boss fill file content.json theo schema này → compose.py ráp với skeleton.html + style-tokens.json → output HTML render-ready.",
+  "$schema": "01_Text-v1",
+  "required_scenes": [
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5",
+    "s6"
+  ],
+  "scenes": {
+    "s1": {
+      "name": "Hook",
+      "fields": {
+        "eyebrow": "DẤU HIỆU TỰ KỶ SỚM",
+        "title": "Con<br><em>khác biệt</em> hay <em>tự kỷ</em>?",
+        "byline": "Phát hiện sớm, đồng hành cùng con"
+      }
+    },
+    "s2": {
+      "name": "Khái niệm / Stat",
+      "fields": {
+        "big_text": "TINH TẾ",
+        "label": "Dấu hiệu tự kỷ dưới hai tuổi rất dễ bị nhầm lẫn",
+        "note": "Dễ bị coi là trầm tính hoặc độc lập"
+      }
+    },
+    "s3": {
+      "name": "List 3 cards có số",
+      "fields": {
+        "heading": "Ba biểu hiện<br>mẹ cần biết",
+        "cards": [
+          {
+            "num": "Một",
+            "text": "Con không giao tiếp bằng mắt khi bú mẹ hoặc<br>được trò chuyện trực diện. Đây là <em class=\"hl-teal\">nền tảng</em> của<br><em class=\"hl-orange\">kết nối xã hội</em>."
+          },
+          {
+            "num": "Hai",
+            "text": "Con 18 tháng không dùng ngón trỏ để chỉ vào thứ<br>mình muốn hoặc muốn <em class=\"hl-teal\">chia sẻ</em>. Đây là cột mốc<br><em class=\"hl-orange\">phát triển quan trọng</em>."
+          },
+          {
+            "num": "Ba",
+            "text": "Con không phản ứng khi gọi tên, nhưng lại nhạy<br>với tiếng động khác. Dấu hiệu quan trọng<br>phân biệt với <em class=\"hl-teal\">mất thính</em> lực."
+          }
+        ]
+      }
+    },
+    "s4": {
+      "name": "Quote",
+      "fields": {
+        "quote_mark": "✦",
+        "quote_html": "Tự kỷ<br>không do cách<br>nuôi dạy<br><em class=\"hl-teal\">gây ra</em>.<br>Phát hiện sớm là<br><em class=\"hl-orange\">cơ hội lớn</em>."
+      }
+    },
+    "s5": {
+      "name": "List 3 actions có dot",
+      "fields": {
+        "heading": "Nhận ra sớm,<br>hành động đúng",
+        "items": [
+          "Mẹ nhận ra sớm,<br>con có thêm thời gian <em>thấu hiểu</em>.",
+          "Đồng hành cùng con<br>bằng <em>yêu thương</em> và<br><em>kiên nhẫn</em>.",
+          "Theo dõi kênh để<br>không đi một mình,<br>cùng chia sẻ và<br><em>học hỏi</em>."
+        ]
+      }
+    },
+    "s6": {
+      "name": "CTA / Closing",
+      "fields": {
+        "title": "Đồng hành cùng con,<br><em>yêu thương</em> và <em>kiên nhẫn</em>",
+        "sub": "Hàng ngàn cha mẹ đang chia sẻ hành trình này. Cùng nhau tạo nên sự khác biệt cho con.",
+        "hashtag": "#TuKySom"
+      }
+    }
+  },
+  "voice": {
+    "file": "TT_T06.22_06h47.wav",
+    "duration": 72.19
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 12.03
+    },
+    "s2": {
+      "in": 12.03,
+      "out": 24.07
+    },
+    "s3": {
+      "in": 24.07,
+      "out": 36.1
+    },
+    "s4": {
+      "in": 36.1,
+      "out": 48.13
+    },
+    "s5": {
+      "in": 48.13,
+      "out": 60.17
+    },
+    "s6": {
+      "in": 60.17,
+      "out": 72.19
+    }
+  }
+}

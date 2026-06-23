@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Đồng hành cùng con đến trường</title>
+<style>
+body { margin: 0; background: #000; font-family: "Inter", sans-serif; }
+
+/* Brand watermark — pill cam ở góc trái-trên */
+.brand-watermark {
+  position: absolute;
+  top: 50px;
+  left: 50px;
+  z-index: 100;
+  font-family: "Inter", sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #ff7a2a;
+  padding: 10px 22px;
+  background: rgba(255, 122, 42, 0.12);
+  border: 1.5px solid rgba(255, 122, 42, 0.55);
+  border-radius: 999px;
+  text-shadow: 0 0 12px rgba(255, 122, 42, 0.45);
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+#root {
+  position: relative;
+  width: 1080px;
+  height: 1920px;
+  background: #0a1820;
+  overflow: hidden;
+  font-family: "Inter", sans-serif;
+  color: #ffffff;
+}
+
+/* BG gradient match video ref: dark navy + 2 vùng teal glow + 1 hint warm orange */
+#root::before {
+  content: ""; position: absolute; inset: 0;
+  background:
+    /* Teal glow chính (bottom-right) */
+    radial-gradient(circle at 85% 75%, rgba(58, 188, 188, 0.45) 0%, rgba(58, 188, 188, 0) 50%),
+    /* Teal glow phụ (top-left) */
+    radial-gradient(circle at 12% 18%, rgba(58, 188, 188, 0.28) 0%, rgba(58, 188, 188, 0) 42%),
+    /* Hint warm orange (top-right) — subtle accent như ref */
+    radial-gradient(circle at 92% 8%, rgba(255, 138, 58, 0.22) 0%, rgba(255, 138, 58, 0) 30%),
+    /* Base gradient deep navy */
+    linear-gradient(180deg, #0a1a26 0%, #0a1820 50%, #061018 100%);
+  z-index: 0; pointer-events: none;
+}
+/* Particles layer — GSAP animated dots */
+#particles-layer {
+  position: absolute; inset: 0;
+  z-index: 1; pointer-events: none;
+}
+.particle { position: absolute; border-radius: 50%; opacity: 0.3; }
+
+/* Inline keyword highlight em accent (color reveal via GSAP) */
+em.hl-teal, em.hl-orange {
+  font-style: normal;
+  font-weight: 700;
+  display: inline-block;
+  color: #ffffff;  /* khởi điểm trắng — GSAP reveal sang accent */
+  text-shadow: 0 0 0 rgba(0,0,0,0);
+}
+
+/* Card border shimmer overlay — animated gradient rotate */
+.s3-card, .s5-item {
+  position: relative;
+  overflow: hidden;
+}
+.s3-card::before, .s5-item::before {
+  content: ""; position: absolute; inset: -2px;
+  background: conic-gradient(from 0deg,
+    rgba(58,188,188,0.0)   0deg,
+    rgba(58,188,188,0.55) 40deg,
+    rgba(255,138,58,0.55) 90deg,
+    rgba(58,188,188,0.0)  180deg,
+    rgba(58,188,188,0.0)  360deg);
+  border-radius: inherit;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;  /* GSAP fade in + rotate */
+}
+
+/* Color blobs — mảng màu nhẹ blend, GSAP drift */
+.color-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 140px 90px;
+  box-sizing: border-box;
+  opacity: 0;
+  z-index: 2;
+}
+
+.scene-1, .scene-2, .scene-3, .scene-4, .scene-5, .scene-6 {
+  background: transparent;
+  justify-content: center;
+  align-items: center;
+}
+.scene-1 { justify-content: space-between; }
+.scene-3, .scene-5 { justify-content: flex-start; }
+
+/* Drift glow layer (legacy class names — repurpose to vibrant orbs) */
+.glow-coral {
+  position: absolute;
+  width: 1100px; height: 1100px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 122, 42, 0.35) 0%, rgba(255, 122, 42, 0) 60%);
+  pointer-events: none; z-index: 0;
+}
+.glow-peach {
+  position: absolute;
+  width: 850px; height: 850px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 180, 90, 0.28) 0%, rgba(255, 180, 90, 0) 60%);
+  pointer-events: none; z-index: 0;
+}
+.glow-mint {
+  position: absolute;
+  width: 950px; height: 950px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(58, 188, 188, 0.32) 0%, rgba(58, 188, 188, 0) 60%);
+  pointer-events: none; z-index: 0;
+}
+
+/* ===== Scene 1 — Hook (spread vertical) ===== */
+.s1-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding-top: 80px;
+}
+.s1-tag {
+  font-size: 24px;
+  font-weight: 600;
+  color: #ff7a2a;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  padding: 10px 28px;
+  border: 1.5px solid rgba(255, 122, 42, 0.45);
+  border-radius: 999px;
+  background: rgba(10, 24, 32, 0.4);
+}
+.s1-tag::before { content: "● "; color: #ff7a2a; margin-right: 6px; }
+.s1-tag-line { display: none; }
+.s1-title {
+  font-family: "Inter", sans-serif;
+  font-size: 130px;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1.7;
+  text-align: center;
+  max-width: 960px;
+  margin: 0;
+  letter-spacing: -1px;
+  text-shadow:
+    0 0 30px rgba(255, 122, 42, 0.6),
+    0 0 70px rgba(255, 122, 42, 0.35),
+    0 0 120px rgba(255, 255, 255, 0.22);
+  text-transform: uppercase;
+}
+.s1-title em {
+  font-style: normal;
+  color: #ff7a2a;
+  font-weight: 900;
+  display: inline-block;
+  text-shadow:
+    0 0 25px rgba(255, 122, 42, 0.7),
+    0 0 50px rgba(255, 122, 42, 0.4);
+}
+.s1-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  padding-bottom: 60px;
+}
+.s1-dot {
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #ff7a2a, transparent);
+  border-radius: 2px;
+}
+.s1-byline {
+  font-size: 22px;
+  color: #6db8b8;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* ===== Scene 2 — Stat ===== */
+.s2-stat-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 36px;
+}
+.s2-big {
+  font-family: "Inter", sans-serif;
+  font-size: 360px;
+  font-weight: 900;
+  color: #ff7a2a;
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: baseline;
+  letter-spacing: -8px;
+  text-shadow:
+    0 0 50px rgba(255, 122, 42, 0.55),
+    0 0 100px rgba(255, 255, 255, 0.18);
+}
+.s2-big-sub {
+  font-size: 100px;
+  color: #4dcccc;
+  font-weight: 700;
+}
+.s2-label {
+  font-family: "Inter", sans-serif;
+  font-size: 58px;
+  color: #ffffff;
+  text-align: center;
+  font-weight: 700;
+  line-height: 2;
+  max-width: 880px;
+  text-shadow: 0 0 30px rgba(255, 255, 255, 0.15);
+}
+.s2-note {
+  font-size: 30px;
+  color: #a0c4c4;
+  text-align: center;
+  max-width: 760px;
+  line-height: 1.5;
+  margin-top: 24px;
+}
+
+/* ===== Scene 3 — Cards ===== */
+.s3-heading {
+  font-family: "Inter", sans-serif;
+  font-size: 72px;
+  font-weight: 800;
+  color: #ff7a2a;
+  text-align: center;
+  margin: 80px 0 80px;
+  max-width: 900px;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  text-shadow: 0 0 30px rgba(255, 122, 42, 0.25);
+}
+.s3-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  width: 100%;
+  max-width: 900px;
+}
+.s3-card {
+  background: rgba(10, 24, 32, 0.55);
+  border: 1.5px solid rgba(58, 188, 188, 0.35);
+  border-radius: 20px;
+  padding: 36px 44px;
+  display: flex;
+  align-items: center;
+  gap: 56px;
+  box-shadow: 0 0 40px rgba(255, 122, 42, 0.08), inset 0 0 30px rgba(58, 188, 188, 0.06);
+}
+.s3-card-num {
+  font-family: "Inter", sans-serif;
+  font-size: 80px;
+  font-weight: 900;
+  color: #ff7a2a;
+  min-width: 90px;
+  line-height: 1;
+  text-shadow: 0 0 20px rgba(255, 122, 42, 0.5);
+}
+.s3-card-text {
+  font-size: 40px;
+  color: #ffffff;
+  font-weight: 600;
+  line-height: 2;
+}
+
+/* ===== Scene 4 — Quote ===== */
+.s4-quote-mark {
+  font-family: "Inter", sans-serif;
+  font-size: 180px;
+  color: #ff7a2a;
+  line-height: 0.5;
+  margin-bottom: 50px;
+  text-shadow: 0 0 40px rgba(255, 122, 42, 0.55);
+}
+.s4-quote {
+  font-family: "Inter", sans-serif;
+  font-size: 64px;
+  font-weight: 700;
+  color: #ffffff;
+  text-align: center;
+  line-height: 2;
+  max-width: 920px;
+  letter-spacing: -0.3px;
+  text-shadow: 0 0 30px rgba(255, 255, 255, 0.15);
+}
+.s4-quote em {
+  color: #4dcccc;
+  font-weight: 800;
+  font-style: normal;
+  text-shadow: 0 0 24px rgba(77, 204, 204, 0.45);
+}
+
+/* ===== Scene 5 — List ===== */
+.s5-heading {
+  font-family: "Inter", sans-serif;
+  font-size: 68px;
+  font-weight: 800;
+  color: #ffa726;
+  text-align: center;
+  margin: 80px 0 70px;
+  max-width: 880px;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  text-shadow: 0 0 30px rgba(58, 188, 188, 0.25);
+}
+.s5-list {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  width: 100%;
+  max-width: 880px;
+}
+.s5-item {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  background: rgba(10, 24, 32, 0.55);
+  border: 1.5px solid rgba(58, 188, 188, 0.35);
+  border-radius: 16px;
+  padding: 32px 40px;
+  box-shadow: 0 0 32px rgba(58, 188, 188, 0.08);
+}
+.s5-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4dcccc;
+  flex-shrink: 0;
+  box-shadow: 0 0 20px rgba(77, 204, 204, 0.7);
+}
+.s5-text {
+  font-size: 40px;
+  color: #ffffff;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+/* ===== Scene 6 — CTA ===== */
+.s6-title {
+  font-family: "Inter", sans-serif;
+  font-size: 130px;
+  font-weight: 900;
+  color: #4dcccc;
+  text-align: center;
+  line-height: 1.65;
+  max-width: 940px;
+  margin: 0 0 40px 0;
+  letter-spacing: -1px;
+  text-shadow:
+    0 0 35px rgba(255, 122, 42, 0.6),
+    0 0 70px rgba(255, 122, 42, 0.35),
+    0 0 110px rgba(255, 255, 255, 0.18);
+  text-transform: uppercase;
+}
+.s6-title em {
+  font-style: normal;
+  color: #ff7a2a;
+  font-weight: 900;
+  display: inline-block;
+  text-shadow:
+    0 0 25px rgba(255, 122, 42, 0.7),
+    0 0 50px rgba(255, 122, 42, 0.4);
+}
+.s6-sub {
+  font-size: 36px;
+  color: #a0c4c4;
+  text-align: center;
+  max-width: 820px;
+  line-height: 1.5;
+  margin-bottom: 70px;
+}
+.s6-hashtag {
+  font-size: 34px;
+  font-weight: 700;
+  color: #4dcccc;
+  letter-spacing: 3px;
+  padding: 12px 32px;
+  border: 1.5px solid rgba(58, 188, 188, 0.45);
+  border-radius: 999px;
+  background: rgba(10, 24, 32, 0.4);
+  text-shadow: 0 0 16px rgba(77, 204, 204, 0.4);
+}
+</style>
+</head>
+<body>
+
+<div data-hf-id="hf-d8l2" id="root" data-composition-id="root" data-start="0" data-duration="75" data-width="1080" data-height="1920">
+
+  <audio data-hf-id="hf-oye3" id="narration" data-start="0" data-duration="75" data-track-index="2" src="TT_20260616_162519.wav" data-volume="1"></audio>
+
+  <!-- Brand watermark — góc trên-trái, hiển thị suốt video -->
+  <div class="brand-watermark"></div>
+
+  <!-- Color blobs — mảng màu blend nhẹ, drift (v10) -->
+  <div data-hf-id="hf-i389" class="color-blob" id="blob-1" style="width:520px; height:520px; left:8%; top:5%;  background:radial-gradient(circle, rgba(58,188,188,0.55) 0%, rgba(58,188,188,0) 70%);"></div>
+  <div data-hf-id="hf-3xob" class="color-blob" id="blob-2" style="width:560px; height:560px; right:5%; top:18%; background:radial-gradient(circle, rgba(120,90,200,0.45) 0%, rgba(120,90,200,0) 70%);"></div>
+  <div data-hf-id="hf-xs56" class="color-blob" id="blob-3" style="width:600px; height:600px; left:15%; top:45%; background:radial-gradient(circle, rgba(255,138,58,0.32) 0%, rgba(255,138,58,0) 70%);"></div>
+  <div data-hf-id="hf-epj9" class="color-blob" id="blob-4" style="width:540px; height:540px; right:10%; bottom:18%; background:radial-gradient(circle, rgba(58,188,188,0.5) 0%, rgba(58,188,188,0) 70%);"></div>
+  <div data-hf-id="hf-nsh5" class="color-blob" id="blob-5" style="width:480px; height:480px; left:35%; bottom:5%;  background:radial-gradient(circle, rgba(90,170,220,0.4) 0%, rgba(90,170,220,0) 70%);"></div>
+
+  <!-- Particles layer — đốm sáng tiny multi-color twinkle + drift via GSAP -->
+  <div data-hf-id="hf-gxy6" id="particles-layer"></div>
+  <script>
+  (function(){
+    const layer = document.getElementById('particles-layer');
+    let s = 42;
+    const r = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+    const colors = ['#ffffff', '#ffd9a8', '#7adcdc', '#ff9a4a'];
+    for (let i = 0; i < 55; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = 1.2 + r() * 2.2;
+      const col = colors[Math.floor(r() * 4)];
+      p.style.left = (r() * 100) + '%';
+      p.style.top = (r() * 100) + '%';
+      p.style.width = size + 'px';
+      p.style.height = size + 'px';
+      p.style.background = col;
+      p.style.boxShadow = '0 0 ' + (6 + size * 3) + 'px ' + col + ', 0 0 ' + (2 + size) + 'px ' + col;
+      p.style.opacity = 0.15 + r() * 0.4;
+      p.dataset.dur = (2 + r() * 3).toFixed(2);
+      p.dataset.delay = (r() * 4).toFixed(2);
+      layer.appendChild(p);
+    }
+  })();
+  </script>
+
+  <!-- Scene 1: Hook -->
+  <div class="scene scene-1" id="s1">
+    <div class="s1-top">
+      <div class="s1-tag" id="s1-tag">BÍ QUYẾT NUÔI DẠY CON</div>
+      <div class="s1-tag-line" id="s1-tag-line"></div>
+    </div>
+    <h1 class="s1-title" id="s1-title">Trẻ <em class="hl-orange">tăng động</em> khi lớn học thế nào?</h1>
+    <div class="s1-bottom">
+      <div class="s1-dot" id="s1-dot"></div>
+      <div class="s1-byline" id="s1-byline">Hành trình kiên trì cùng con vượt khó</div>
+    </div>
+  </div>
+
+  <!-- Scene 2: Khái niệm / Big text -->
+  <div class="scene scene-2" id="s2">
+    <div class="s2-stat-wrap">
+      <div class="s2-big" id="s2-num" style="font-size: 200px;">KHÁC BIỆT</div>
+      <div class="s2-label" id="s2-label">Trẻ tăng động có một siêu năng lực</div>
+      <div class="s2-note" id="s2-note">Chúng có khả năng siêu tập trung vào những chủ đề mình thực sự đam mê.</div>
+    </div>
+  </div>
+
+  <!-- Scene 3: 3 cards có số -->
+  <div class="scene scene-3" id="s3">
+    <h2 class="s3-heading" id="s3-heading">3 ĐẶC ĐIỂM HỌC TẬP</h2>
+    <div class="s3-cards">
+      <div class="s3-card s3-c1">
+        <div class="s3-card-num">Một</div>
+        <div id="s3-card-1" class="s3-card-text"><em class="hl-teal">Tư duy hình ảnh</em> cực kỳ nhanh nhạy.</div>
+      </div>
+      <div class="s3-card s3-c2">
+        <div class="s3-card-num">Hai</div>
+        <div id="s3-card-2" class="s3-card-text"><em class="hl-orange">Học qua vận động</em> thay vì ngồi yên một chỗ.</div>
+      </div>
+      <div class="s3-card s3-c3">
+        <div class="s3-card-num">Ba</div>
+        <div id="s3-card-3" class="s3-card-text">Nhạy cảm cao với <em class="hl-teal">áp lực từ môi trường</em> học.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scene 4: Quote -->
+  <div class="scene scene-4" id="s4">
+    <div class="s4-quote-mark" id="s4-mark">✦</div>
+    <div class="s4-quote" id="s4-quote">Đừng ép một <em class="hl-orange">con cá phải leo cây</em>.<br>Trẻ tăng động cần một <em class="hl-teal">phương pháp học động</em>, không phải sự gò bó.</div>
+  </div>
+
+  <!-- Scene 5: 3 actions có dot -->
+  <div class="scene scene-5" id="s5">
+    <h2 class="s5-heading" id="s5-heading">3 GIẢI PHÁP CHO CHA MẸ</h2>
+    <div class="s5-list">
+      <div class="s5-item s5-i1">
+        <div class="s5-dot"></div>
+        <div id="s5-text-1" class="s5-text">Chia nhỏ bài học thành <em class="hl-teal">nhiều phần ngắn</em>.</div>
+      </div>
+      <div class="s5-item s5-i2">
+        <div class="s5-dot"></div>
+        <div id="s5-text-2" class="s5-text">Khuyến khích con <em class="hl-orange">vận động nhẹ</em> giữa giờ học.</div>
+      </div>
+      <div class="s5-item s5-i3">
+        <div class="s5-dot"></div>
+        <div id="s5-text-3" class="s5-text">Tạo góc học tập <em class="hl-teal">tối giản</em>, không gây xao nhãng.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scene 6: CTA / Closing -->
+  <div class="scene scene-6" id="s6">
+    <h1 class="s6-title" id="s6-title">Đồng hành cùng <em class="hl-orange">con bứt phá</em></h1>
+    <div class="s6-sub" id="s6-sub">Hãy kiên nhẫn thấu hiểu và tin tưởng con đường đi riêng của con.</div>
+    <div class="s6-hashtag" id="s6-hashtag">#NuoiDayCon</div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script>
+window.__timelines = window.__timelines || {};
+const tl = gsap.timeline({ paused: true });
+const __TL = {"s1": {"in": 0.0, "out": 12.27}, "s2": {"in": 12.27, "out": 24.53}, "s3": {"in": 24.53, "out": 36.8, "element_times": {"c2": 27.92, "c3": 32.54}}, "s4": {"in": 36.8, "out": 50.93}, "s5": {"in": 50.93, "out": 65.06, "element_times": {"i1": 52.1, "i2": 57.1, "i3": 60.34}}, "s6": {"in": 65.06, "out": 74.82}};
+const __DUR = 74.82;
+
+// Scene fade in/out (sync voice từ content.timeline)
+["s1","s2","s3","s4","s5","s6"].forEach(sid => {
+  const t = __TL[sid]; if (!t) return;
+  tl.to("#" + sid, { opacity: 1, duration: 0.5, ease: "power2.inOut" }, t.in);
+  tl.to("#" + sid, { opacity: 0, duration: 0.5, ease: "power2.inOut" }, t.out);
+});
+
+// Element reveal effects — offset relative từ scene fade-in
+const s1 = __TL.s1;
+if (s1) {
+  tl.from("#s1-tag",    { y: -30, opacity: 0, duration: 0.7, ease: "power3.out" }, s1.in + 0.1);
+  tl.from("#s1-title",  { y: 60, opacity: 0, duration: 1.0, ease: "power3.out" }, s1.in + 0.4);
+  tl.fromTo("#s1-title em",
+    { color: "#ffffff" },
+    { color: "#ff7a2a", textShadow: "0 0 25px rgba(255,122,42,0.7), 0 0 50px rgba(255,122,42,0.4)", duration: 0.5 },
+    s1.in + 1.5);
+  tl.from("#s1-dot",    { scaleX: 0, opacity: 0, duration: 0.6, transformOrigin: "center center" }, s1.in + 2.5);
+  tl.from("#s1-byline", { y: 20, opacity: 0, duration: 0.6 }, s1.in + 2.8);
+}
+const s2 = __TL.s2;
+if (s2) {
+  tl.from("#s2-num",   { scale: 0.5, opacity: 0, duration: 1.0, ease: "back.out(1.5)" }, s2.in + 0.4);
+  tl.from("#s2-label", { y: 30, opacity: 0, duration: 0.8 }, s2.in + 1.5);
+  tl.from("#s2-note",  { y: 20, opacity: 0, duration: 0.9 }, s2.in + 3.0);
+}
+// === Constants cho color reveal ===
+const __OR = "#ff7a2a", __TC = "#4dcccc";
+const __ORS = "0 0 20px rgba(255,122,42,0.6), 0 0 40px rgba(255,122,42,0.3)";
+const __TCS = "0 0 20px rgba(77,204,204,0.6), 0 0 40px rgba(77,204,204,0.3)";
+
+const s3 = __TL.s3;
+if (s3) {
+  const s3dur = s3.out - s3.in;
+  // Ưu tiên element_times absolute từ transcript, fallback scale
+  const et3 = s3.element_times || {};
+  const c1t = et3.c1 != null ? et3.c1 : s3.in + Math.min(2.5, s3dur * 0.15);
+  const c2t = et3.c2 != null ? et3.c2 : s3.in + s3dur * 0.40;
+  const c3t = et3.c3 != null ? et3.c3 : s3.in + s3dur * 0.65;
+  tl.from("#s3-heading", { y: 40, opacity: 0, duration: 0.9, ease: "power3.out" }, s3.in + 0.3);
+  tl.from(".s3-c1", { x: -80, opacity: 0, duration: 0.7, ease: "power3.out" }, c1t);
+  tl.from(".s3-c2", { x: -80, opacity: 0, duration: 0.7, ease: "power3.out" }, c2t);
+  tl.from(".s3-c3", { x: -80, opacity: 0, duration: 0.7, ease: "power3.out" }, c3t);
+  // Color reveal keyword cam + teal sau khi card slide vào
+  tl.to(".s3-c1 em.hl-orange", { color: __OR, textShadow: __ORS, duration: 0.4 }, c1t + 0.5);
+  tl.to(".s3-c1 em.hl-teal",   { color: __TC, textShadow: __TCS, duration: 0.4 }, c1t + 0.8);
+  tl.to(".s3-c2 em.hl-orange", { color: __OR, textShadow: __ORS, duration: 0.4 }, c2t + 0.5);
+  tl.to(".s3-c2 em.hl-teal",   { color: __TC, textShadow: __TCS, duration: 0.4 }, c2t + 0.8);
+  tl.to(".s3-c3 em.hl-orange", { color: __OR, textShadow: __ORS, duration: 0.4 }, c3t + 0.5);
+  tl.to(".s3-c3 em.hl-teal",   { color: __TC, textShadow: __TCS, duration: 0.4 }, c3t + 0.8);
+}
+const s4 = __TL.s4;
+if (s4) {
+  tl.from("#s4-mark",  { scale: 0.4, opacity: 0, duration: 0.9, ease: "back.out(1.6)" }, s4.in + 0.3);
+  tl.from("#s4-quote", { y: 50, opacity: 0, duration: 1.0, ease: "power3.out" }, s4.in + 0.5);
+  // Quote keyword color reveal (teal)
+  tl.fromTo(".s4-quote em",
+    { color: "#ffffff" },
+    { color: __TC, textShadow: "0 0 24px rgba(77,204,204,0.45)", duration: 0.5 },
+    s4.in + 1.5);
+}
+const s5 = __TL.s5;
+if (s5) {
+  const s5dur = s5.out - s5.in;
+  const et5 = s5.element_times || {};
+  const i1t = et5.i1 != null ? et5.i1 : s5.in + Math.min(2.5, s5dur * 0.20);
+  const i2t = et5.i2 != null ? et5.i2 : s5.in + s5dur * 0.45;
+  const i3t = et5.i3 != null ? et5.i3 : s5.in + s5dur * 0.70;
+  tl.from("#s5-heading", { y: 40, opacity: 0, duration: 0.9, ease: "power3.out" }, s5.in + 0.3);
+  tl.from(".s5-i1", { x: -60, opacity: 0, duration: 0.7 }, i1t);
+  tl.from(".s5-i2", { x: -60, opacity: 0, duration: 0.7 }, i2t);
+  tl.from(".s5-i3", { x: -60, opacity: 0, duration: 0.7 }, i3t);
+  // Color reveal cho items
+  tl.to(".s5-i1 em.hl-orange", { color: __OR, textShadow: __ORS, duration: 0.4 }, i1t + 0.5);
+  tl.to(".s5-i1 em.hl-teal",   { color: __TC, textShadow: __TCS, duration: 0.4 }, i1t + 0.8);
+  tl.to(".s5-i2 em.hl-orange", { color: __OR, textShadow: __ORS, duration: 0.4 }, i2t + 0.5);
+  tl.to(".s5-i2 em.hl-teal",   { color: __TC, textShadow: __TCS, duration: 0.4 }, i2t + 0.8);
+  tl.to(".s5-i3 em.hl-orange", { color: __OR, textShadow: __ORS, duration: 0.4 }, i3t + 0.5);
+  tl.to(".s5-i3 em.hl-teal",   { color: __TC, textShadow: __TCS, duration: 0.4 }, i3t + 0.8);
+}
+const s6 = __TL.s6;
+if (s6) {
+  tl.from("#s6-title", { y: 50, opacity: 0, duration: 1.0, ease: "power3.out" }, s6.in + 0.4);
+  tl.fromTo("#s6-title em",
+    { color: "#ffffff" },
+    { color: "#ff7a2a", textShadow: "0 0 25px rgba(255,122,42,0.75), 0 0 50px rgba(255,122,42,0.4)", duration: 0.5 },
+    s6.in + 1.5);
+  tl.from("#s6-sub",     { y: 30, opacity: 0, duration: 0.7 }, s6.in + 2.0);
+  tl.from("#s6-hashtag", { y: 20, opacity: 0, duration: 0.6 }, s6.in + 2.8);
+}
+
+// Ambient: color blobs drift
+[
+  { sel: "#blob-1", x: 60,  y: 40, d: 26 },
+  { sel: "#blob-2", x: -55, y: 50, d: 30 },
+  { sel: "#blob-3", x: 70,  y: -45, d: 28 },
+  { sel: "#blob-4", x: -50, y: -60, d: 32 },
+  { sel: "#blob-5", x: 45,  y: -40, d: 24 },
+].forEach((b) => {
+  tl.to(b.sel, { x: b.x, y: b.y, duration: b.d, ease: "sine.inOut",
+    yoyo: true, repeat: Math.ceil(__DUR / b.d) }, 0);
+});
+
+// Ambient: particles twinkle + drift
+document.querySelectorAll(".particle").forEach((p, i) => {
+  const dur = parseFloat(p.dataset.dur) || 3;
+  const delay = parseFloat(p.dataset.delay) || 0;
+  const peak = 0.65 + (parseFloat(p.dataset.dur) % 1) * 0.3;
+  tl.to(p, { opacity: peak, duration: dur, ease: "sine.inOut",
+    yoyo: true, repeat: Math.ceil(__DUR / dur) }, delay);
+  const dx = ((i * 37) % 12) - 6 + (i % 2 === 0 ? 4 : -4);
+  const dy = ((i * 53) % 14) - 7;
+  const ddur = 12 + (i * 7) % 11;
+  tl.to(p, { x: dx, y: dy, duration: ddur, ease: "sine.inOut",
+    yoyo: true, repeat: Math.ceil(__DUR / ddur) }, 0);
+});
+
+window.__timelines["root"] = tl;
+</script>
+
+</body>
+</html>

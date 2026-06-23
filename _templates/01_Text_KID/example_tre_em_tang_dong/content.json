@@ -1,0 +1,54 @@
+{
+  "_comment": "Content cho video tre_em_tang_dong — fill theo schema 01_Text v1.",
+  "topic": "Trẻ em hiếu động vs tăng động (ADHD)",
+  "language": "vi",
+  "scenes": {
+    "s1": {
+      "eyebrow": "Hiếu động hay Tăng động",
+      "title":   "Con bạn <em class=\"hl-orange\">hiếu động</em> hay <em class=\"hl-orange\">tăng động</em>?",
+      "byline":  "Hai từ giống nhau — khác nhau hoàn toàn"
+    },
+    "s2": {
+      "big_text": "ADHD",
+      "label":    "Tăng động là một rối loạn phát triển thần kinh",
+      "note":     "Không phải con nghịch — con không tự kiểm soát được dù muốn."
+    },
+    "s3": {
+      "heading":  "Ba dấu hiệu tăng động",
+      "cards": [
+        { "num": "01", "text": "Không thể <em class=\"hl-orange\">ngồi yên</em> kể cả việc <em class=\"hl-teal\">con thích</em>" },
+        { "num": "02", "text": "Con <em class=\"hl-orange\">bốc đồng</em> — nói, làm trước khi <em class=\"hl-teal\">nghĩ</em>" },
+        { "num": "03", "text": "Con <em class=\"hl-orange\">thiếu chú ý</em> — quên, đánh rơi, <em class=\"hl-teal\">bỏ dở</em>" }
+      ]
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Hiếu động sẽ <em>giảm dần</em>.<br>Tăng động cần <em>can thiệp sớm</em>."
+    },
+    "s5": {
+      "heading": "Cha mẹ nên làm gì",
+      "items": [
+        { "text": "<em class=\"hl-teal\">Quan sát</em> con ở nhiều <em class=\"hl-orange\">tình huống</em>" },
+        { "text": "<em class=\"hl-orange\">Ghi lại</em> điều bất thường, lặp lại" },
+        { "text": "Gặp <em class=\"hl-teal\">chuyên gia tâm lý nhi</em> khi nghi ngờ" }
+      ]
+    },
+    "s6": {
+      "title":   "Hiểu đúng — <em>đồng hành đúng</em>.",
+      "sub":     "Đừng vội mắng con hư. Đừng vội kết luận con bệnh.",
+      "hashtag": "#HieuConDungCach"
+    }
+  },
+  "voice": {
+    "file":     "narration.wav",
+    "duration": 97.75
+  },
+  "timeline": {
+    "s1": { "in": 0.0,  "out": 26.0 },
+    "s2": { "in": 26.0, "out": 36.6 },
+    "s3": { "in": 36.6, "out": 60.8 },
+    "s4": { "in": 60.8, "out": 81.2 },
+    "s5": { "in": 81.2, "out": 94.0 },
+    "s6": { "in": 94.0, "out": 98.0 }
+  }
+}

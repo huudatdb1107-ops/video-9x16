@@ -1,0 +1,89 @@
+{
+  "scenes": {
+    "s1": {
+      "eyebrow": "HÀNH TRÌNH NGÔN NGỮ CỦA CON",
+      "title": "Con chỉ<br><em>chậm nói</em> hay <em>cần hỗ trợ</em>?",
+      "byline": "Cùng thấu hiểu giai đoạn vàng"
+    },
+    "s2": {
+      "big_text": "3",
+      "label": "MỐC NGÔN NGỮ QUAN TRỌNG DƯỚI 18 THÁNG",
+      "note": "Não bộ cần thêm hỗ trợ nếu bỏ lỡ"
+    },
+    "s3": {
+      "heading": "Các mốc <br>cần theo dõi",
+      "cards": [
+        {
+          "num": "1",
+          "text": "<em class=\"hl-teal\">6-9 tháng</em>:<br>Bập bẹ âm đôi, quay đầu khi gọi tên. Tương tác giọng người thật là<strong></strong> <em class=\"hl-orange\">quan trọng</em> nhất."
+        },
+        {
+          "num": "2",
+          "text": "<em class=\"hl-teal\">12 tháng</em>:<br>Nói 1-2 từ có nghĩa, hiểu lệnh đơn giản.<strong></strong> Hiểu ngôn ngữ <em class=\"hl-orange\">đi trước</em> nói."
+        },
+        {
+          "num": "3",
+          "text": "<em class=\"hl-teal\">15-18 tháng</em>:<br>Vốn từ 6-10 từ, chỉ tay giao tiếp. Nếu chưa có từ đơn,<strong></strong> hãy <em class=\"hl-orange\">gặp chuyên</em> gia."
+        }
+      ],
+      "element_times": {
+        "c1": 23.0,
+        "c2": 38.6,
+        "c3": 50.0
+      }
+    },
+    "s4": {
+      "quote_mark": "✦",
+      "quote_html": "Giọng của cha mẹ<br>là ngôn ngữ đầu tiên<br>con học —<br>không có gì <em class=\"hl-teal\">thay thế</em> được."
+    },
+    "s5": {
+      "heading": "Cha mẹ<br>làm gì mỗi ngày?",
+      "items": [
+        {
+          "text": "Nói chuyện với con<br>trong <em class=\"hl-teal\">mọi hoạt</em> động."
+        },
+        {
+          "text": "Đọc <em class=\"hl-teal\">sách cùng</em> con."
+        },
+        {
+          "text": "Giới hạn màn <em class=\"hl-teal\">hình<br>một</em> chiều."
+        }
+      ]
+    },
+    "s6": {
+      "title": "Đồng hành cùng con,<br><em>yêu thương</em> và <em>kiên nhẫn</em>",
+      "sub": "Không đi một mình trên hành trình quan trọng này. Hàng ngàn cha mẹ khác cũng đang ở đây.",
+      "hashtag": "#HanhTrinhCuaCon"
+    }
+  },
+  "voice": {
+    "file": "TT_T06.22_06h53.wav",
+    "duration": 87.44
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 15.83
+    },
+    "s2": {
+      "in": 15.83,
+      "out": 18.03
+    },
+    "s3": {
+      "in": 18.03,
+      "out": 76.4
+    },
+    "s4": {
+      "in": 76.4,
+      "out": 81.4
+    },
+    "s5": {
+      "in": 81.4,
+      "out": 87.4
+    },
+    "s6": {
+      "in": 87.4,
+      "out": 87.44
+    }
+  }
+}

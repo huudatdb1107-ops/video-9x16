@@ -1,0 +1,274 @@
+{
+  "_comment": "Schema content cho template 01_Text. AI hoặc Boss fill file content.json theo schema này → compose.py ráp với skeleton.html + style-tokens.json → output HTML render-ready.",
+  "$schema": "01_Text-v1",
+  "required_scenes": [
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5",
+    "s6"
+  ],
+  "scenes": {
+    "s1": {
+      "name": "Hook",
+      "fields": {
+        "eyebrow": "TÂM LÝ PHÁT TRIỂN",
+        "title": "Con tự làm<br><em>hay cha mẹ làm thay</em>?",
+        "byline": "Cùng con bước vào thế giới phát triển"
+      },
+      "eyebrow": "TÂM LÝ PHÁT TRIỂN",
+      "title": "CON TỰ LÀM<br><em>HAY CHA MẸ LÀM THAY</em>?",
+      "byline": ""
+    },
+    "s2": {
+      "name": "Khái niệm / Stat",
+      "fields": {
+        "big_text": "KHỦNG HOẢNG",
+        "label": "Từ 2 tuổi, trẻ bước vào giai đoạn 'khủng hoảng tự chủ'",
+        "note": "Nhu cầu sinh học tự làm, tự khám phá, tự quyết định trong phạm vi an toàn."
+      },
+      "big_text": "KHỦNG HOẢNG",
+      "label": "Từ 2 tuổi, trẻ bước vào giai đoạn 'khủng hoảng tự chủ'",
+      "note": "Nhu cầu sinh học tự làm, tự khám phá, tự quyết định trong phạm vi an toàn."
+    },
+    "s3": {
+      "name": "List 3 cards có số",
+      "fields": {
+        "heading": "Ba việc con<br><em>nên tự làm</em>",
+        "cards": [
+          {
+            "num": "1",
+            "text": "<em class=\"hl-teal\">Tự cất đồ chơi</em> sau khi chơi. Học hành động có hệ quả và trách nhiệm <em class=\"hl-orange\">với không</em> gian."
+          },
+          {
+            "num": "2",
+            "text": "<em class=\"hl-teal\">Tự xúc ăn</em> dù có rơi vãi. Luyện phối hợp não-tay và xây dựng lòng <em class=\"hl-orange\">tự tin</em>."
+          },
+          {
+            "num": "3",
+            "text": "<em class=\"hl-teal\">Tự đi giày</em> và cất ba lô. Hình thành thói quen nhỏ, tạo kỹ năng tổ chức <em class=\"hl-orange\">cho tương</em> lai."
+          }
+        ]
+      },
+      "heading": "Ba việc con<br><em>nên tự làm</em>",
+      "cards": [
+        {
+          "num": "01",
+          "text": "<em class=\"hl-teal\">Tự cất đồ chơi</em> sau khi chơi. Học hành động có hệ quả và trách nhiệm với không gian."
+        },
+        {
+          "num": "02",
+          "text": "<em class=\"hl-teal\">Tự xúc ăn</em> dù có rơi vãi. Luyện phối hợp não-tay và xây dựng lòng tự tin."
+        },
+        {
+          "num": "03",
+          "text": "<em class=\"hl-teal\">Tự đi giày</em> và cất ba lô. Hình thành thói quen nhỏ, tạo kỹ năng tổ chức cho tương lai."
+        }
+      ],
+      "element_times": {
+        "c2": 41.68
+      }
+    },
+    "s4": {
+      "name": "Quote",
+      "fields": {
+        "quote_mark": "✦",
+        "quote_html": "Mỗi lần<br>cha mẹ làm thay<br>con <em class=\"hl-teal\">nhận tín</em> hiệu:<br><em class=\"hl-orange\">Con chưa đủ khả năng</em>."
+      },
+      "quote_html": "Mỗi lần<br>cha mẹ làm thay<br>con <em class=\"hl-teal\">nhận tín</em> hiệu:<br><em class=\"hl-orange\">Con chưa đủ khả năng</em>."
+    },
+    "s5": {
+      "name": "List 3 actions có dot",
+      "fields": {
+        "heading": "Cha mẹ cần<br><em>kiên nhẫn chờ</em>",
+        "items": [
+          {
+            "text": "Dù <em class=\"hl-teal\">con làm</em> chậm,<br><em class=\"hl-orange\">làm sai</em>."
+          },
+          {
+            "text": "Trao cho con thứ quý hơn<br>sự <em class=\"hl-teal\">giúp đỡ</em>: <em class=\"hl-orange\">niềm tin</em>."
+          },
+          {
+            "text": "<em class=\"hl-teal\">Đồng hành</em> cùng con trên hành trình<br><em class=\"hl-orange\">tự lập</em>."
+          }
+        ]
+      },
+      "heading": "Cha mẹ cần<br><em>kiên nhẫn chờ</em>",
+      "items": [
+        {
+          "text": "Dù <em class=\"hl-teal\">con làm</em> chậm,<br><em class=\"hl-orange\">làm sai</em>."
+        },
+        {
+          "text": "Trao cho con thứ quý hơn<br>sự <em class=\"hl-teal\">giúp đỡ</em>: <em class=\"hl-orange\">niềm tin</em>."
+        },
+        {
+          "text": "<em class=\"hl-teal\">Đồng hành</em> cùng con trên hành trình<br><em class=\"hl-orange\">tự lập</em>."
+        }
+      ]
+    },
+    "s6": {
+      "name": "CTA / Closing",
+      "fields": {
+        "title": "Cùng con<br><em>vững bước tự tin</em>",
+        "sub": "Theo dõi kênh BOOM BOOM để không đi một mình, hàng ngàn cha mẹ đang đồng hành cùng con.",
+        "hashtag": "#phattriencon"
+      },
+      "title": "CÙNG CON<br><em>VỮNG BƯỚC TỰ TIN</em>",
+      "sub": "Theo dõi kênh BOOM BOOM để không đi một mình, hàng ngàn cha mẹ đang đồng hành cùng con.",
+      "hashtag": "#phattriencon"
+    }
+  },
+  "voice": {
+    "file": "TT_T06.22_06h52.wav",
+    "duration": 75.7
+  },
+  "timeline": {
+    "s1": {
+      "in": 0.0,
+      "out": 2.0
+    },
+    "s2": {
+      "in": 2.0,
+      "out": 22.23
+    },
+    "s3": {
+      "in": 22.23,
+      "out": 48.7
+    },
+    "s4": {
+      "in": 48.7,
+      "out": 67.1
+    },
+    "s5": {
+      "in": 67.1,
+      "out": 75.77
+    },
+    "s6": {
+      "in": 75.77,
+      "out": 75.7
+    }
+  },
+  "styles": {
+    ".s1-tag": {
+      "font-size": "24px",
+      "line-height": "",
+      "letter-spacing": "3px",
+      "color": "#ff7a2a"
+    },
+    ".s1-title": {
+      "font-size": "130px",
+      "line-height": "1.50",
+      "letter-spacing": "-1px",
+      "color": "#ffffff"
+    },
+    ".s1-title em": {
+      "font-size": "",
+      "line-height": "",
+      "letter-spacing": "",
+      "color": "#ff7a2a"
+    },
+    ".s1-byline": {
+      "font-size": "22px",
+      "line-height": "",
+      "letter-spacing": "2px",
+      "color": "#6db8b8"
+    },
+    ".s2-big": {
+      "font-size": "200px",
+      "line-height": "1.2",
+      "letter-spacing": "-8px",
+      "color": "#ff7a2a"
+    },
+    ".s2-label": {
+      "font-size": "58px",
+      "line-height": "1.50",
+      "letter-spacing": "",
+      "color": "#ffffff"
+    },
+    ".s2-note": {
+      "font-size": "30px",
+      "line-height": "1.5",
+      "letter-spacing": "",
+      "color": "#a0c4c4"
+    },
+    ".s3-heading": {
+      "font-size": "80px",
+      "line-height": "1.50",
+      "letter-spacing": "-1px",
+      "color": "#ff7a2a"
+    },
+    ".s3-card-text": {
+      "font-size": "38px",
+      "line-height": "1.6",
+      "letter-spacing": "",
+      "color": "#ffffff"
+    },
+    "em.hl-teal": {
+      "font-size": "",
+      "line-height": "",
+      "letter-spacing": "",
+      "color": "#4dcccc"
+    },
+    "em.hl-orange": {
+      "font-size": "",
+      "line-height": "",
+      "letter-spacing": "",
+      "color": "#ff7a2a"
+    },
+    ".s3-card-num": {
+      "font-size": "80px",
+      "line-height": "1.2",
+      "letter-spacing": "",
+      "color": "#ff7a2a"
+    },
+    ".s4-quote": {
+      "font-size": "",
+      "line-height": "",
+      "letter-spacing": "",
+      "color": ""
+    },
+    ".s4-quote em": {
+      "font-size": "",
+      "line-height": "",
+      "letter-spacing": "",
+      "color": "#4dcccc"
+    },
+    ".s5-heading": {
+      "font-size": "80px",
+      "line-height": "1.50",
+      "letter-spacing": "-1px",
+      "color": "#ffa726"
+    },
+    ".s5-text": {
+      "font-size": "38px",
+      "line-height": "1.6",
+      "letter-spacing": "",
+      "color": "#ffffff"
+    },
+    ".s6-title": {
+      "font-size": "130px",
+      "line-height": "1.25",
+      "letter-spacing": "-1px",
+      "color": "#ffffff"
+    },
+    ".s6-title em": {
+      "font-size": "",
+      "line-height": "",
+      "letter-spacing": "",
+      "color": "#ff7a2a"
+    },
+    ".s6-sub": {
+      "font-size": "36px",
+      "line-height": "1.5",
+      "letter-spacing": "",
+      "color": "#a0c4c4"
+    },
+    ".s6-hashtag": {
+      "font-size": "34px",
+      "line-height": "",
+      "letter-spacing": "3px",
+      "color": "#4dcccc"
+    }
+  }
+}
